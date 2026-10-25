@@ -1,7 +1,6 @@
 // Boot, wiring of the modules' hooks, and the remote-control keys while watching.
 (function () {
-  var lastBack = 0, guideNoticeShown = false;
-  var BAD_KEY = 'Неверный или просроченный ключ — откройте настройки (синяя кнопка)';
+  var lastBack = 0, guideNoticeShown = false, BAD_KEY = 'Неверный или просроченный ключ — откройте настройки (синяя кнопка)';
 
   // Optional platform setup: a throw is recorded and boot carries on (a TV refusing one of these calls
   // must never leave the screen black).
@@ -17,18 +16,19 @@
       onLoading: function (pct) { if (!Zap.choosing()) Banner.loading(pct); },
       // The picture is up: the banner with this stream's technical line, at once.
       onFirstFrame: function () {
-        UI.spinner(false);
+        UI.spinner(false); Playback.onFirstFrame();
         Zap.onFirstFrame();
         if (!Zap.choosing()) Banner.onFirstFrame();
       },
       onStable: Playback.onStable,
-      // The first three retries (≈3.5 s) are silent: a channel switch or a short hiccup is not "no signal".
-      onError: function (n, delay) { if (n >= 4) UI.toast('Нет сигнала, переподключаюсь… (' + n + ')', delay + 500); if (!Zap.choosing()) Banner.retrying(n, delay); },
+      // The first three retries (≈3.5 s) are silent (a channel switch or a short hiccup is not "no signal"); none over a menu.
+      onError: function (n, delay) { if (n >= 4 && Overlay.isNone()) UI.toast('Нет сигнала, переподключаюсь… (' + n + ')', delay + 500); if (!Zap.choosing()) Banner.retrying(n, delay); },
       onEnded: Playback.onEnded,
       onMutedStart: function () { UI.toast('Звук включится после любого нажатия или клика', 6000); },
       retryTarget: Playback.retryTarget
     });
     Playback.setHooks({ onOpened: function () { Banner.show(false); }, onBanner: function () { Banner.show(true); } });
+    NowLines.setHooks({ onUpdate: Overlay.refreshQuiet });
     Sources.setHooks({ onApplied: onListApplied, onFatal: UI.fatal, onSpinner: UI.spinner, onGuide: Overlay.refresh,
       onNotice: function (text) { UI.toast(text, 5000); } });
     Health.setHooks({ onSwept: function (checked, removed) {
@@ -45,7 +45,7 @@
       onKey(e);
     });
     document.addEventListener('click', onClick);
-    document.addEventListener('visibilitychange', function () { if (document.hidden) Zap.cancel(); Playback.onVisibility(document.hidden); });
+    document.addEventListener('visibilitychange', onVisibility);
     startSource();
     optional('fit', function () { UI.fitDesktop(); window.addEventListener('resize', UI.fitDesktop); });
     optional('hint', function () {
@@ -78,6 +78,8 @@
     for (var i = 0; legacy && i < items.length; i++) if (Channels.at(items[i]).url === legacy) pickIdx = items[i];
     if (pickIdx !== undefined) Zap.pick(Channels.at(pickIdx));
   }
+
+  function onVisibility() { if (document.hidden) { Zap.cancel(); NowLines.cancel(); } else NowLines.update(); Playback.onVisibility(document.hidden); }
 
   // ---------- keys ----------
   function onKey(e) {

@@ -4,7 +4,7 @@
 var Playback = (function () {
   var mode = 'idle';           // 'idle' | 'live' | 'archive' | 'paused'
   var ch = null;               // the playing channel's record; stays valid when a refresh drops the channel
-  var anchorWallMs = 0, anchorMediaMs = 0, frozenMs = 0, pausedAt = 0;
+  var anchorWallMs = 0, anchorMediaMs = null, frozenMs = 0, pausedAt = 0;   // anchorMediaMs null: until the first frame
   var pipelineLost = false, hiddenMs = null, selection = 0, audioIdx = 0, hooks = {}, healthTimer = null;
 
   // hooks: { onOpened(ch) } — a new stream started (banner, landing bookkeeping).
@@ -36,7 +36,7 @@ var Playback = (function () {
     quiet();
     selection++;
     ch = c; mode = 'archive'; pipelineLost = false; audioIdx = 0;
-    anchorWallMs = fromMs; anchorMediaMs = 0;
+    anchorWallMs = fromMs; anchorMediaMs = null;
     Player.open({ url: archiveUrl(c, fromMs), archive: true });
     hooks.onOpened(c);
   }
@@ -44,7 +44,7 @@ var Playback = (function () {
 
   // Wall-clock moment on screen.
   function position() {
-    if (mode === 'archive') return anchorWallMs + (Player.mediaTimeMs() - anchorMediaMs);
+    if (mode === 'archive') return anchorMediaMs === null ? anchorWallMs : anchorWallMs + (Player.mediaTimeMs() - anchorMediaMs);
     if (mode === 'paused') return frozenMs;
     return Date.now();
   }
@@ -53,8 +53,8 @@ var Playback = (function () {
   // { url, archive } change together: a live stream resumed after a pause continues as archive.
   function retryTarget() {
     if (mode !== 'archive') return null;
-    var pos = position();
-    anchorWallMs = pos; anchorMediaMs = 0;
+    var pos = Math.max(position(), Catchup.earliest(ch, Date.now()));   // past the window's edge: move forward
+    anchorWallMs = pos; anchorMediaMs = null;
     return { url: archiveUrl(ch, pos), archive: true };
   }
 
@@ -107,6 +107,10 @@ var Playback = (function () {
   // End of an archive recording: carry on from that moment (the next show), or live if it is now.
   function onEnded() { archive(ch, position()); }
 
+  // A recording's first frame: the clock is anchored to the media time the player reports there. A
+  // continuation's stream may start its clock ~50 s in (TV test D2); the requested moment is what shows.
+  function onFirstFrame() { if (mode === 'archive' && anchorMediaMs === null) anchorMediaMs = Player.mediaTimeMs(); }
+
   // RED: the next audio track of the stream (the choice starts over with every new stream).
   function cycleAudio() {
     var tracks = Player.audioTracks();
@@ -124,7 +128,7 @@ var Playback = (function () {
       var net = window.webapis && webapis.network;
       if (!net || !net.addNetworkStateChangeListener) return;
       net.addNetworkStateChangeListener(function (v) {
-        if (v === net.NetworkState.GATEWAY_CONNECTED) { UI.toast('Сеть восстановлена'); Player.reconnect(); }
+        if (v === net.NetworkState.GATEWAY_CONNECTED) { UI.toast('Сеть восстановлена'); Player.reconnect(); Sources.onNetwork(); }
         if (v === net.NetworkState.GATEWAY_DISCONNECTED) UI.toast('Нет сети', 5000);
       });
     } catch (e) { Diag.note('network', (e && (e.code || e.message)) || String(e)); }
@@ -135,7 +139,7 @@ var Playback = (function () {
 
   return {
     setHooks: setHooks, live: live, archive: archive, position: position, retryTarget: retryTarget, togglePause: togglePause,
-    goLive: goLive, onVisibility: onVisibility, quiet: quiet, onStable: onStable, watchNetwork: watchNetwork, onEnded: onEnded, adopt: adopt, cycleAudio: cycleAudio,
+    goLive: goLive, onVisibility: onVisibility, onFirstFrame: onFirstFrame, quiet: quiet, onStable: onStable, watchNetwork: watchNetwork, onEnded: onEnded, adopt: adopt, cycleAudio: cycleAudio,
     current: function () { return ch; }, mode: function () { return mode; }, selection: function () { return selection; }
   };
 }());

@@ -40,6 +40,7 @@ var Sources = (function () {
 
   function load(blocking) {
     if (req) req.abort();
+    NowLines.cancel();
     if (parsing) parsing.cancel();
     if (blocking) hooks.onSpinner(true);
     var m = mode();
@@ -88,12 +89,20 @@ var Sources = (function () {
     Favs.migrate(result.channels);
     Channels.replace(result.channels);
     hooks.onFatal('');
-    if (m === 'ott') EPG.setSeeds(result.seeds || Util.dict());
+    if (m === 'ott') { EPG.setSeeds(result.seeds || Util.dict()); if (!fromSaved) NowLines.loaded(); }
     else if (!CONFIG.EPG_URL) xmltvPending = { url: result.epgUrl, channels: result.channels };
     if (!fromSaved) persistPending = { m: m, epgUrl: result.epgUrl || '', channels: result.channels };
     Health.schedule(result.channels, m);
     if (firstFrameSeen) afterFirstFrame();
     hooks.onApplied(firstLoad);
+  }
+
+  // The network is back: a list shown from the offline copy (no "now" lines) is loaded at once.
+  function onNetwork() {
+    if (!fromSaved || req) return;
+    clearTimeout(retryTimer);
+    retryTimer = null;
+    load(false);
   }
 
   // Called on every first frame: the stream had the bandwidth first, now the guide and the offline copy.
@@ -162,6 +171,7 @@ var Sources = (function () {
 
   return {
     setHooks: setHooks, mode: mode, setOtt: setOtt, setM3u: setM3u, start: start,
-    onFirstFrame: onFirstFrame, rememberLanding: rememberLanding, lastChannel: lastChannel
+    onFirstFrame: onFirstFrame, rememberLanding: rememberLanding, lastChannel: lastChannel, onNetwork: onNetwork,
+    loading: function () { return !!req; }
   };
 }());

@@ -18,20 +18,29 @@
     cursor = at;
     UI.show('guide', true);
     render();
+    NowLines.watch(visibleIds);
   }
-  function close() { UI.show('guide', false); }
+  function close() { NowLines.watch(null); UI.show('guide', false); }
+
+  // The channel ids of the rows on screen (whose "now" lines must stay current).
+  function visibleIds() {
+    var v = ListView.shown('channels'), g = group(), out = [];
+    for (var i = v ? v.first : 0; v && g && i < v.first + v.count && i < g.items.length; i++) out.push(Channels.at(g.items[i]).id);
+    return out;
+  }
 
   function render() {
     var g = group(), gi = Zap.group();
     if (!g) return;
     cursor = clamp(cursor, g.items.length);            // a refresh may have shortened the group
-    var playing = playingIdx();
+    var playing = playingIdx(), now = Date.now();
     ListView.columns([{ name: 'groups', view: { total: groups().length, cursor: gi, active: focus === 'groups', row: groupRow } },
       { name: 'channels', view: { total: g.items.length, cursor: cursor, active: focus === 'channels', row: function (i) {
-        var c = Channels.at(g.items[i]), on = EPG.upcoming(c.id, 1)[0];
+        var c = Channels.at(g.items[i]), on = EPG.at(c.id, now);   // the programme on air: the banner's lookup too
         return { num: c.num, logo: c.logo, title: (Favs.has(c.key) ? '★ ' : '') + c.name + (g.items[i] === playing ? '  ▶' : ''),
           sub: c.dead ? 'отключён провайдером' : (on ? on.title : ''), playing: g.items[i] === playing };
       } } }]);
+    NowLines.update();
   }
   function groupRow(i) {
     var g = groups()[i];

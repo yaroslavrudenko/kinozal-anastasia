@@ -52,6 +52,12 @@ var OttClub = (function () {
 
   // Text of /api/channel_now -> { channels, seeds, epgUrl: '' }; null when it is not a channel list.
   function parse(text) {
+    var recs = records(text);
+    return recs ? build(recs) : null;
+  }
+
+  // The valid channel records of a /api/channel_now answer, or null.
+  function records(text) {
     var data;
     try { data = JSON.parse(text); } catch (e) { return null; }
     if (!data || typeof data !== 'object') return null;
@@ -62,7 +68,18 @@ var OttClub = (function () {
       else skipped++;
     }
     if (skipped) Diag.note('list.skipped', skipped);
-    return recs.length ? build(recs) : null;
+    return recs.length ? recs : null;
+  }
+
+  // The programme on air now for one record (the API gives no "next"), or null.
+  function seedOf(rec) { return rec.name && rec.time ? [{ start: rec.time * 1000, stop: rec.time_to * 1000, title: rec.name }] : null; }
+
+  // The same answer read for the "now" lines only (no channels built): dict id -> [programme], or null.
+  function seedsOf(text) {
+    var recs = records(text), seeds = Util.dict();
+    if (!recs) return null;
+    for (var i = 0; i < recs.length; i++) { var s = seedOf(recs[i]); if (s) seeds[recs[i].ch_id] = s; }
+    return seeds;
   }
 
   // Same order as the official app: Israeli channels first by the number in the name, then group rank,
@@ -91,7 +108,8 @@ var OttClub = (function () {
         url: b + '/stream/' + k + '/' + rec.ch_id + '.m3u8', catchup: archive ? 'ottclub' : '', catchupSource: '',
         catchupDays: archive ? CONFIG.ARCHIVE_DAYS : 0, il: r.cc.il, ua: r.cc.ua, dead: false
       });
-      if (rec.name && rec.time) seeds[rec.ch_id] = [{ start: rec.time * 1000, stop: rec.time_to * 1000, title: rec.name }];
+      var seed = seedOf(rec);
+      if (seed) seeds[rec.ch_id] = seed;
     }
     return { channels: channels, seeds: seeds, epgUrl: '' };
   }
@@ -120,6 +138,6 @@ var OttClub = (function () {
 
   return {
     enabled: enabled, extractKey: extractKey, checkKey: checkKey, saveKey: saveKey, classify: classify,
-    sourceUrl: sourceUrl, streamUrl: streamUrl, parse: parse, guide: guide
+    sourceUrl: sourceUrl, streamUrl: streamUrl, parse: parse, seedsOf: seedsOf, guide: guide
   };
 }());

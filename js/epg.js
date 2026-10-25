@@ -18,7 +18,17 @@ var EPG = (function () {
   function setLoader(fn) { loader = fn; }
   function setSeeds(map) { seeds = map; }
 
-  function list(id) { return full[id] || seeds[id] || []; }
+  // A full guide first; otherwise the short list kept from an evicted guide when it still covers now
+  // (it also knows what comes next), else the channel list's "now" line.
+  var kept = Util.dict();      // id -> the few programmes from now on, kept when a full guide is evicted
+  function list(id) {
+    if (full[id]) return full[id];
+    var k = kept[id];
+    if (k && k.length && k[k.length - 1].stop > Date.now()) return k;
+    return seeds[id] || k || [];
+  }
+  // When the last programme known for the channel ends (0: none known).
+  function knownEnd(id) { var l = list(id); return l.length ? l[l.length - 1].stop : 0; }
 
   // First index whose programme has not ended at t (list.length when all have ended).
   function indexAt(l, t) {
@@ -42,14 +52,10 @@ var EPG = (function () {
     var cur = at(id, t);
     return { cur: cur, next: cur ? at(id, cur.stop + 1000) : null };
   }
-  // Up to `count` programmes starting with the current one.
-  function upcoming(id, count) {
-    var l = list(id), i = indexAt(l, Date.now());
-    return l.slice(i, i + count);
-  }
-  // Programmes of one calendar day (0 = today, -1 = yesterday ...), DST-safe.
+  // Programmes of one calendar day (0 = today, -1 = yesterday ...), DST-safe. The programme panel shows the
+  // full guide (or the channel list's "now" line until it arrives), not the few lines kept after eviction.
   function day(id, offset) {
-    var l = list(id), from = Util.addDays(Util.dayStart(Date.now()), offset), to = Util.addDays(from, 1);
+    var l = full[id] || seeds[id] || [], from = Util.addDays(Util.dayStart(Date.now()), offset), to = Util.addDays(from, 1);
     var out = [];
     for (var i = firstFrom(l, from); i < l.length && l[i].start < to; i++) out.push(l[i]);
     return out;
@@ -85,7 +91,8 @@ var EPG = (function () {
     lru.push(id);
     for (var i = 0; lru.length > CONFIG.GUIDE_CACHE_CHANNELS && i < lru.length; ) {
       if (lru[i] === focusId) { i++; continue; }          // the watched channel is never evicted
-      var old = lru.splice(i, 1)[0];
+      var old = lru.splice(i, 1)[0], from = indexAt(full[old], Date.now());
+      kept[old] = full[old].slice(from, from + CONFIG.GUIDE_KEEP_AFTER_EVICT);   // a few bytes: now and next
       delete full[old]; delete fullAt[old];
     }
   }
@@ -158,7 +165,7 @@ var EPG = (function () {
   }
 
   return {
-    setHooks: setHooks, setLoader: setLoader, setSeeds: setSeeds, ensure: ensure, cancelExcept: cancelExcept,
-    load: load, at: at, nowNext: nowNext, upcoming: upcoming, day: day, indexAt: indexAt
+    setHooks: setHooks, setLoader: setLoader, setSeeds: setSeeds, knownEnd: knownEnd, ensure: ensure, cancelExcept: cancelExcept,
+    load: load, at: at, nowNext: nowNext, day: day, indexAt: indexAt
   };
 }());

@@ -6,8 +6,9 @@ var Catchup = (function () {
 
   function supported(ch) { return ch.catchupDays > 0 || !!ch.catchup || !!ch.catchupSource; }
   function days(ch) { return ch.catchupDays || CONFIG.ARCHIVE_DAYS; }
-  // The earliest moment the provider keeps for this channel.
-  function earliest(ch, nowMs) { return nowMs - days(ch) * Util.DAY_MS; }
+  // The earliest moment the app opens: the provider's window minus a safety margin (its oldest minutes
+  // are already gone by the time a stream opens — a moment at the very edge never starts, TV test D1).
+  function earliest(ch, nowMs) { return nowMs - days(ch) * Util.DAY_MS + CONFIG.ARCHIVE_EDGE_MARGIN_MS; }
 
   // startMs: wall-clock moment to play from. durationMs: programme length (0 = open-ended).
   function url(ch, startMs, durationMs) {
