@@ -58,9 +58,9 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
 <table>
   <tr>
     <td><img src="docs/screenshots/channel-m1.jpg" alt="М1, Ukrainian music channel"></td>
-    <td><img src="docs/screenshots/channel-nature.jpg" alt="Живая природа: a waterfall and a turquoise lake in the forest"></td>
+    <td><img src="docs/screenshots/channel-1plus1-voice-coaches.jpg" alt="1+1 Україна — «Голос країни»: the four coaches in the red chairs"></td>
   </tr>
-  <tr><td align="center"><b>М1</b> · Ukrainian music</td><td align="center"><b>Живая природа</b> · nature</td></tr>
+  <tr><td align="center"><b>М1</b> · Ukrainian music</td><td align="center"><b>1+1 Україна</b> · «Голос країни»</td></tr>
   <tr>
     <td><img src="docs/screenshots/channel-channel9.jpg" alt="Channel 9, Israel, news"></td>
     <td><img src="docs/screenshots/channel-cartoons90.jpg" alt="Cartoons 90: cartoons of the 90s"></td>
@@ -78,7 +78,7 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
 <table>
   <tr>
     <td><img src="docs/screenshots/ui-slider.jpg" alt="Archive slider over the picture: scrub to any minute of the show"></td>
-    <td><img src="docs/screenshots/ui-panel.jpg" alt="Programme panel over the picture: today's shows, the one on air highlighted"></td>
+    <td><img src="docs/screenshots/ui-panel-1plus1.jpg" alt="Programme panel over 1+1 Україна: today's shows, «Голос країни» on air highlighted"></td>
   </tr>
   <tr><td align="center"><b>▲ Archive slider</b>: scrub to any minute</td><td align="center"><b>▼ Programme</b>: past shows play from the archive</td></tr>
   <tr>
@@ -133,6 +133,8 @@ The app is named after the person it was made for: a cinema at home, one that si
 | Archive on the TV (programme panel, slider) | first frame in 2.2 s; 60 s without a single failure |
 | Archive that catches up with live | continues by itself, no "no signal" |
 | Full channel re-check | 389 channels in ~9 s, in the background |
+
+Open performance issues and every performance change, with before/after numbers: **[docs/PERFORMANCE.md](docs/PERFORMANCE.md)**.
 
 ## 📡 Use it with any IPTV provider
 
