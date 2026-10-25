@@ -7,6 +7,9 @@ var Catchup = (function () {
     var start = Math.floor(startMs / 1000);
     var now = Math.floor(Date.now() / 1000);
     var dur = Math.floor((durationMs || (Date.now() - startMs)) / 1000);
+    // Never ask for a recording that ends in the future (a show still on air): the server returns an
+    // unfinished recording and the TV player waits on it forever. The player continues at its end.
+    if (start + dur > now - 10) dur = Math.max(60, now - 10 - start);
     var type = (ch.catchup || '').toLowerCase();
 
     if (type === 'ottclub') {

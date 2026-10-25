@@ -92,3 +92,19 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
   font-size: 28px; color: #9aa6b8; }
 .scrub-delta { color: #e4efff; }
 .scrub-hint { margin-top: 18px; font-size: 24px; color: #8d99ad; }
+
+/* programme panel (▼ while watching) */
+.prog { position: absolute; right: 60px; top: 60px; bottom: 60px; width: 900px; padding: 30px 30px 20px; border-radius: 22px;
+  background: rgba(10,14,22,.94); box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+.prog-title { font-size: 36px; font-weight: 700; height: 64px; line-height: 64px; padding: 0 22px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; }
+.prog-hint, .search-hint { position: absolute; left: 50px; bottom: 26px; font-size: 24px; color: #8d99ad; }
+
+/* search */
+.search { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; padding: 70px 360px; background: rgba(6,9,15,.95); }
+.search-title { font-size: 48px; font-weight: 700; color: #4da3ff; margin-bottom: 26px; }
+.search-input { width: 1200px; height: 86px; font-size: 40px; padding: 0 28px; border-radius: 16px; border: 3px solid #2f7ee8;
+  background: #101724; color: #fff; outline: none; margin-bottom: 24px; }
+.search-input:focus { border-color: #8cc2ff; }
+.search-hint { left: 360px; bottom: 50px; }
+.ver { position: absolute; right: 60px; bottom: 40px; font-size: 22px; color: #5d6a7e; }

@@ -18,7 +18,10 @@ source ./build.local.env
 rm -rf .buildResult && mkdir .buildResult
 cp -R config.xml index.html css js img .buildResult/
 rm -f .buildResult/img/icon.svg
-sed -i '' -e "s#__OTT_KEY__#${OTT_KEY:-__OTT_KEY__}#" -e "s#__PLAYLIST_URL__#${PLAYLIST_URL:-__PLAYLIST_URL__}#" .buildResult/js/config.js
+# Build stamp shown in the app: commit (+ if the tree has uncommitted changes) and date.
+BUILD="$(git rev-parse --short HEAD)$(git diff --quiet HEAD || echo +) $(date +%d.%m.%Y)"
+sed -i '' -e "s#__OTT_KEY__#${OTT_KEY:-__OTT_KEY__}#" -e "s#__PLAYLIST_URL__#${PLAYLIST_URL:-__PLAYLIST_URL__}#" \
+  -e "s#__BUILD__#${BUILD}#" .buildResult/js/config.js
 
 $TIZEN package -t wgt -s "$CERT_PROFILE" -- .buildResult
 mv .buildResult/*.wgt .buildResult/package.wgt

@@ -23,6 +23,10 @@
   };
 
   // ---------- boot ----------
+  function versionText() {
+    return 'Кинозал Анастасия v' + CONFIG.VERSION + (CONFIG.BUILD.indexOf('__') === 0 ? '' : ' · сборка ' + CONFIG.BUILD);
+  }
+
   // Desktop check only: fit the 1920×1080 TV layout into the browser window.
   function fitDesktop() {
     if (window.webapis) return;
@@ -40,8 +44,11 @@
       onBuffering: function (on) { UI.spinner(on); },
       onPlaying: function () { UI.spinner(false); },
       onError: function (reason, n, delay) {
-        if (n >= 2) UI.toast('Нет сигнала, переподключаюсь… (' + n + ')', delay + 500);
+        // The first three retries (≈3.5 s) are silent: a channel switch or a short hiccup is not "no signal".
+        if (n >= 4) UI.toast('Нет сигнала, переподключаюсь… (' + n + ')', delay + 500);
       },
+      // End of an archive recording: carry on from that moment (the next show), or live if it is now.
+      onEnded: function () { playArchive(position()); },
       onMutedStart: function () { UI.toast('Звук включится после любого нажатия или клика', 6000); }
     });
     document.addEventListener('keydown', function (e) {
@@ -49,7 +56,8 @@
       onKey(e);
     });
     document.addEventListener('click', onClick);
-    UI.toast(window.webapis ? '◀ ▶ — каналы · ▲ — программа и архив · OK — все каналы' : '← → каналы · ↑ программа и архив · Enter или клик — все каналы', 7000);
+    Util.$('ver').textContent = versionText();
+    UI.toast(window.webapis ? '◀ ▶ — каналы · ▲ — архив · ▼ — программа · OK — меню и поиск' : '← → каналы · ↑ архив · ↓ программа · Enter — меню и поиск', 7000);
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) Player.suspend(); else Player.resume();
     });
@@ -161,6 +169,7 @@
     groups = M3U.groupsOf(all, function (c) { return !c.dead; });
     addPinnedGroups();
     rebuildFavGroup();
+    groups.unshift({ name: '🔍 Поиск', items: [], search: true });
     s.groupIdx = clamp(s.groupIdx, groups.length);
     if (groups[s.groupIdx]) s.chCursor = clamp(s.chCursor, groups[s.groupIdx].items.length);
   }
@@ -202,16 +211,22 @@
       var pin = ORDER.PINNED[p], items = [];
       for (var i = 0; i < all.length; i++) if (!all[i].dead && all[i].name.indexOf(pin.match) >= 0) items.push(i);
       items.sort(function (a, b) { return nameNumber(all[a].name) - nameNumber(all[b].name) || a - b; });
-      if (items.length) groups.splice(1 + p, 0, { name: pin.name, items: items });
+      if (items.length) groups.splice(allIdx() + 1 + p, 0, { name: pin.name, items: items });
     }
   }
   function nameNumber(name) { var m = /\b(\d{1,3})\b/.exec(name); return m ? +m[1] : 1000; }
 
   function rebuildFavGroup() {
     for (var g = groups.length - 1; g >= 0; g--) if (groups[g].fav) groups.splice(g, 1);
+    var after = allIdx() + 1;
     var items = [];
     for (var i = 0; i < all.length; i++) if (favs[all[i].url]) items.push(i);
-    if (items.length) groups.splice(1, 0, { name: '★ Избранное', items: items, fav: true });
+    if (items.length) groups.splice(after, 0, { name: '★ Избранное', items: items, fav: true });
+  }
+
+  function allIdx() {
+    for (var g = 0; g < groups.length; g++) if (groups[g].all) return g;
+    return 0;
   }
 
   function indexOfUrl(u) {
@@ -224,6 +239,8 @@
   function tune(idx, dir) {
     if (idx < 0 || idx >= all.length) return;
     var ch = all[idx];
+    // The channel already on screen (live) is not reopened: OK on it just closes the menu.
+    if (idx === s.playing && !s.archiveStart && !s.pausedAt) { showBanner(); return; }
     if (ch.dead) {
       if (dir) { tune(nextFrom(idx, dir), dir); return; }
       UI.toast('Канал «' + ch.name + '» отключён провайдером');
@@ -238,7 +255,10 @@
     s.playing = idx;
     s.archiveStart = 0; s.pausedAt = 0;
     Util.store('lastUrl', all[idx].url);
-    Player.play(all[idx].url);
+    // Fast zapping shows each name at once but opens only the channel the viewer stops on.
+    clearTimeout(s.zapTimer);
+    if (dir) s.zapTimer = setTimeout(function () { Player.play(ch.url); }, 350);
+    else Player.play(ch.url);
     s.playStartedAt = Date.now();
     showBanner();
   }
@@ -375,7 +395,7 @@
     s.focus = 'channels';
     var g = groups[s.groupIdx];
     var at = g ? g.items.indexOf(s.playing) : -1;
-    if (at < 0) { s.groupIdx = 0; at = s.playing; }
+    if (at < 0) { s.groupIdx = allIdx(); at = Math.max(0, groups[s.groupIdx].items.indexOf(s.playing)); }
     s.chCursor = Math.max(0, at);
     s.dayOffset = 0; s.progCursor = 0;
     UI.hideBanner();
@@ -437,10 +457,12 @@
       case K.LEFT:
         s.focus = s.focus === 'programs' ? 'channels' : 'groups'; break;
       case K.RIGHT:
+        if (s.focus === 'groups' && g.search) { openSearch(); return; }
         s.focus = s.focus === 'groups' ? 'channels' : 'programs';
         if (s.focus === 'programs') s.progCursor = currentProgIndex(dayPrograms());
         break;
       case K.ENTER:
+        if (s.focus === 'groups' && g.search) { openSearch(); return; }
         if (s.focus === 'groups') { s.focus = 'channels'; s.chCursor = 0; break; }
         if (s.focus === 'channels') { closeGuide(); tune(g.items[s.chCursor]); return; }
         playProgram(); return;
@@ -479,9 +501,98 @@
     var now = Date.now();
     if (p.start > now) { UI.toast('Передача ещё не началась'); return; }
     closeGuide();
-    if (s.playing !== idx) { s.previous = s.playing; s.playing = idx; Util.store('lastUrl', all[idx].url); }
     if (p.stop > now && !Catchup.supported(all[idx])) { tune(idx); return; }
+    if (s.playing !== idx) { s.previous = s.playing; s.playing = idx; Util.store('lastUrl', all[idx].url); }
     playArchive(p.start);
+  }
+
+  // ---------- programme panel (▼ while watching) ----------
+  // Over the video, without the channel menu: ▲▼ shows, ◀ ▶ days, OK watches (archive or live).
+  function openPanel() {
+    var ch = all[s.playing];
+    if (!ch) return;
+    s.panel = { day: 0, cursor: -1 };
+    UI.hideBanner();
+    Util.show(Util.$('prog'), true);
+    EPG.ensure(ch.id, function () { if (s.panel) renderPanel(); });
+    renderPanel();
+  }
+  function closePanel() { s.panel = null; Util.show(Util.$('prog'), false); }
+
+  function panelList() { var ch = all[s.playing]; return ch ? EPG.day(ch.id, s.panel.day) : []; }
+
+  function renderPanel() {
+    var ch = all[s.playing], list = panelList();
+    if (s.panel.cursor < 0 || s.panel.cursor >= list.length) s.panel.cursor = s.panel.day === 0 ? currentProgIndex(list) : 0;
+    var dayName = s.panel.day === 0 ? 'Сегодня' : s.panel.day === -1 ? 'Вчера' : s.panel.day === 1 ? 'Завтра' : dateName(s.panel.day);
+    UI.panel(ch.name + ' — ' + dayName,
+      list.length ? list : [{ start: Date.now(), stop: Date.now(), title: 'Программа загружается…' }],
+      s.panel.cursor, Date.now(), Catchup.supported(ch));
+  }
+
+  function panelKey(k) {
+    var ch = all[s.playing], list = panelList();
+    var maxBack = -(ch.catchupDays || 7);
+    if (k === K.UP) s.panel.cursor = Math.max(0, s.panel.cursor - 1);
+    else if (k === K.DOWN) s.panel.cursor = Math.min(list.length - 1, s.panel.cursor + 1);
+    else if (k === K.LEFT || k === K.CH_DOWN || k === K.PG_DOWN) { s.panel.day = Math.max(maxBack, s.panel.day - 1); s.panel.cursor = -1; }
+    else if (k === K.RIGHT || k === K.CH_UP || k === K.PG_UP) { s.panel.day = Math.min(1, s.panel.day + 1); s.panel.cursor = -1; }
+    else if (k === K.ENTER) {
+      var p = list[s.panel.cursor], now = Date.now();
+      if (!p) return;
+      if (p.start > now) { UI.toast('Передача ещё не началась'); return; }
+      closePanel();
+      if (p.stop > now && !Catchup.supported(ch)) { tune(s.playing); return; }
+      playArchive(p.start);
+      return;
+    } else if (k === K.BACK || k === K.BACK_DESKTOP) { closePanel(); return; }
+    else return;
+    renderPanel();
+  }
+
+  // ---------- search (first row of the channel menu) ----------
+  function openSearch() {
+    closeGuide();
+    s.search = { results: [], cursor: 0, inList: false };
+    var input = Util.$('search-input');
+    input.value = '';
+    Util.show(Util.$('search'), true);
+    input.oninput = function () { s.search.cursor = 0; filterSearch(); };
+    filterSearch();
+    setTimeout(function () { input.focus(); }, 200);
+  }
+  function closeSearch() { s.search = null; Util.$('search-input').blur(); Util.show(Util.$('search'), false); }
+
+  // Case-insensitive match on the name; digits also match the channel number.
+  function filterSearch() {
+    var q = Util.$('search-input').value.replace(/^\s+|\s+$/g, '').toLowerCase(), out = [];
+    for (var i = 0; i < all.length && out.length < 60; i++) {
+      var ch = all[i];
+      if (ch.dead) continue;
+      if (!q || ch.name.toLowerCase().indexOf(q) >= 0 || String(ch.num) === q) out.push(i);
+    }
+    s.search.results = out;
+    s.search.cursor = Math.min(s.search.cursor, Math.max(0, out.length - 1));
+    UI.searchResults(out, s.search.cursor, s.search.inList, all);
+  }
+
+  function searchKey(k, e) {
+    var sr = s.search, input = Util.$('search-input');
+    if (!sr.inList) {
+      // Typing goes to the field; OK / Done / ▼ moves into the results.
+      if (k === 13 || k === 65376 || k === K.DOWN) {
+        e.preventDefault();
+        if (sr.results.length) { sr.inList = true; input.blur(); UI.searchResults(sr.results, sr.cursor, true, all); }
+      } else if (k === K.BACK || k === 27) { e.preventDefault(); closeSearch(); openGuide(); }
+      return;
+    }
+    e.preventDefault();
+    if (k === K.UP) {
+      if (sr.cursor === 0) { sr.inList = false; input.focus(); } else sr.cursor--;
+    } else if (k === K.DOWN) sr.cursor = Math.min(sr.results.length - 1, sr.cursor + 1);
+    else if (k === K.ENTER) { var idx = sr.results[sr.cursor]; closeSearch(); tune(idx); return; }
+    else if (k === K.BACK || k === K.BACK_DESKTOP) { sr.inList = false; input.focus(); }
+    UI.searchResults(sr.results, sr.cursor, sr.inList, all);
   }
 
   function toggleFav() {
@@ -525,16 +636,18 @@
       }
       return;
     }
+    if (s.search) { searchKey(k, e); return; }
+    if (s.panel) { panelKey(k); e.preventDefault(); return; }
     if (s.scrub) { scrubKey(k); e.preventDefault(); return; }
     if (s.guideOpen) { guideKey(k); e.preventDefault(); return; }
     if (k >= 48 && k <= 57) { digit(k - 48); return; }
     var g = groups[0];
     switch (k) {
-      // ◀ ▶ (and CH−/CH+) zap; ▲ opens this channel's programme; ▼ / ⏪ ⏩ open the archive slider.
+      // ◀ ▶ (and CH−/CH+) zap; ▲ (or ⏪ ⏩) opens the archive slider; ▼ shows this channel's programme.
       case K.RIGHT: case K.CH_UP: tune(next(1), 1); break;
       case K.LEFT: case K.CH_DOWN: tune(next(-1), -1); break;
-      case K.UP: openProgramme(); break;
-      case K.DOWN: case K.REWIND: case K.FF: openScrub(); if (s.scrub && k !== K.DOWN) scrubKey(k); break;
+      case K.UP: case K.REWIND: case K.FF: openScrub(); if (s.scrub && k !== K.UP) scrubKey(k); break;
+      case K.DOWN: openPanel(); break;
       case K.INFO: showBanner(); break;
       case K.ENTER: case K.CH_LIST: openGuide(); break;
       case K.PLAY_PAUSE: case K.PAUSE: togglePause(); break;
@@ -545,7 +658,7 @@
       case K.GREEN: UI.toast('Экран: ' + Player.cycleDisplay()); break;
       case K.BLUE: UI.toast(Player.videoInfo() || 'Нет данных о потоке', 3000); break;
       case K.YELLOW:
-        s.groupIdx = 0; s.chCursor = s.playing; toggleFav(); break;
+        s.groupIdx = allIdx(); s.chCursor = Math.max(0, groups[s.groupIdx].items.indexOf(s.playing)); toggleFav(); break;
       case K.BACK: case K.BACK_DESKTOP:
         if (s.archiveStart) { tune(s.playing); UI.toast('Прямой эфир'); break; }
         if (Date.now() - s.lastBack < 2000) { try { tizen.application.getCurrentApplication().exit(); } catch (x) {} }
@@ -560,7 +673,7 @@
   // Channel up/down walks the group the viewer last browsed, so favourites zap only favourites.
   // Known-dead channels are stepped over; the loop is bounded by the group size.
   function nextFrom(from, d) {
-    var items = groups[s.groupIdx] && groups[s.groupIdx].items.indexOf(from) >= 0 ? groups[s.groupIdx].items : groups[0].items;
+    var items = groups[s.groupIdx] && groups[s.groupIdx].items.indexOf(from) >= 0 ? groups[s.groupIdx].items : groups[allIdx()].items;
     var at = items.indexOf(from);
     for (var i = 1; i <= items.length; i++) {
       var cand = items[(at + d * i + items.length * i) % items.length];

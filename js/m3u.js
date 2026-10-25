@@ -64,7 +64,7 @@ var M3U = (function () {
     }
     var all = [];
     for (var k = 0; k < channels.length; k++) if (!keep || keep(channels[k])) all.push(k);
-    var groups = [{ name: 'Все каналы', items: all }];
+    var groups = [{ name: 'Все каналы', items: all, all: true }];
     for (var j = 0; j < order.length; j++) groups.push({ name: order[j], items: map[order[j]] });
     return groups;
   }

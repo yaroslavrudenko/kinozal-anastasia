@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/1-live.jpg" width="900" alt="A film playing with the info banner: channel, current show, progress and what is next">
+  <img src="docs/screenshots/channel-discovery.jpg" width="900" alt="Discovery playing with the info banner: channel, current show, progress and what is next">
 </p>
 
 ---
@@ -28,16 +28,19 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
 
 **Кинозал Анастасия fixes that in one install.** It is a player written for the web engine your TV actually has, and it plays through the TV's own hardware decoder. Everything you open is fast, and every stream heals itself.
 
-**[⬇ Install it on your TV](#-install-in-10-minutes) · [⭐ Star the repo](https://github.com/yaroslavrudenko/kinozal-anastasia) · [💬 Tell us your TV model](https://github.com/yaroslavrudenko/kinozal-anastasia/issues)**
+**[⬇ Install it on your TV](#-install) · [⭐ Star the repo](https://github.com/yaroslavrudenko/kinozal-anastasia) · [💬 Tell us your TV model](https://github.com/yaroslavrudenko/kinozal-anastasia/issues)**
 
 ---
+
+> **This is a player, not a TV service.** Кинозал Анастасия shows no channels by itself. You need **your own paid IPTV subscription**: it was built for [OTT Club](https://www.ottclub.tv) and has first-class support for it, and it also plays **any provider's M3U playlist** ([see below](#-use-it-with-any-iptv-provider)). No channels, keys or playlists are included in this repository.
 
 ## Why you'll love it
 
 | | |
 |---|---|
 | 🎬 **Films never stop** | Hardware H.264 decoding, a 10‑second safety buffer, and a watchdog that reconnects a stalled stream on its own. Measured: three movie channels for 10 minutes each, **0 stalls, 0 rebuffers, 0 reconnects**. |
-| ⏪ **Rewind TV like a video** | Press ▼ while watching and a timeline slider appears. Hold ◀ ▶ to scrub (it speeds up as you hold), jump between shows with ▲ ▼, and press OK to watch from that moment. Up to 7 days back. |
+| ⏪ **Rewind TV like a video** | Press ▲ while watching and a timeline slider appears. Hold ◀ ▶ to scrub (it speeds up as you hold), jump between shows with ▲ ▼, and press OK to watch from that moment. Up to 7 days back. |
+| 🔍 **Find any channel** | Type part of a name (or a number) in 🔍 Search at the top of the menu; results update as you type. |
 | 📺 **Every channel, in order** | The full live list of **389 channels** from the provider: 🇮🇱 Israel first, then National, News, Documentary, Movies, Kids, Sport and more. The list is fetched fresh on every start. Channels the provider removed are hidden automatically. |
 | ★ **Your own favourites** | Press ⏯ (or Yellow) on any channel to pin it to ★ Favourites. CH+/CH− inside Favourites zaps through favourites only. |
 | ⚡ **Instant on old hardware** | Virtualised lists keep a 1000‑channel playlist as fast as a 10‑channel one. The programme guide loads per channel, only when you look at it. |
@@ -45,23 +48,34 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
 
 ## See it in action
 
+### Channels
+
 <table>
   <tr>
-    <td><img src="docs/screenshots/2-guide-movies.jpg" alt="Guide: groups on the left, movie channels with logos and what is on, today's programme on the right"></td>
-    <td><img src="docs/screenshots/6-archive-slider.jpg" alt="Archive slider: the knob 2 h 15 min behind live, at the start of the previous show"></td>
+    <td><img src="docs/screenshots/channel-m1.jpg" alt="М1, Ukrainian music channel"></td>
+    <td><img src="docs/screenshots/channel-m2.jpg" alt="М2, Ukrainian music channel"></td>
   </tr>
+  <tr><td align="center"><b>М1</b> · Ukrainian music</td><td align="center"><b>М2</b> · Ukrainian music</td></tr>
   <tr>
-    <td align="center"><b>Groups, channels and today's programme</b></td>
-    <td align="center"><b>Archive slider: scrub to any minute</b></td>
+    <td><img src="docs/screenshots/channel-channel9.jpg" alt="Channel 9, Israel, news"></td>
+    <td><img src="docs/screenshots/channel-cartoons90.jpg" alt="Cartoons 90: cartoons of the 90s"></td>
   </tr>
+  <tr><td align="center"><b>Channel 9</b> · Israel, news</td><td align="center"><b>Cartoons 90</b> · cartoons of the 90s</td></tr>
+</table>
+
+### The player
+
+<table>
   <tr>
-    <td><img src="docs/screenshots/4-israel.jpg" alt="Israel group: Channel 9, 11, 12, 13, 14, 24 and more"></td>
-    <td><img src="docs/screenshots/3-archive-yesterday.jpg" alt="Yesterday's programme, every show marked as available in the archive"></td>
+    <td><img src="docs/screenshots/ui-slider.jpg" alt="Archive slider over the picture: scrub to any minute of the show"></td>
+    <td><img src="docs/screenshots/ui-panel.jpg" alt="Programme panel over the picture: today's shows, the one on air highlighted"></td>
   </tr>
+  <tr><td align="center"><b>▲ Archive slider</b>: scrub to any minute</td><td align="center"><b>▼ Programme</b>: past shows play from the archive</td></tr>
   <tr>
-    <td align="center"><b>Israeli channels first</b></td>
-    <td align="center"><b>Yesterday, the day before… a week of archive</b></td>
+    <td><img src="docs/screenshots/2-guide-movies.jpg" alt="Channel menu: groups, channels with logos and what is on, the programme"></td>
+    <td><img src="docs/screenshots/ui-search.jpg" alt="Search: typing муз lists the music channels"></td>
   </tr>
+  <tr><td align="center"><b>OK · Channel menu</b>: groups, logos, what's on</td><td align="center"><b>🔍 Search</b>: results as you type</td></tr>
 </table>
 
 ## Remote control
@@ -71,9 +85,9 @@ The player works with the basic Samsung Smart Remote. No number or colour keys a
 | Key | While watching | In the guide |
 |---|---|---|
 | ◀ ▶ | previous / next channel | switch column |
-| ▲ | this channel's programme and archive | move up |
-| ▼ | archive slider | move down |
-| OK | open the guide | watch the channel or the show |
+| ▲ | archive slider: scrub to any minute | move up |
+| ▼ | this channel's programme: ◀ ▶ change the day, OK watches | move down |
+| OK | the channel menu with 🔍 Search | watch the channel or the show (the channel already on screen is not restarted) |
 | ⏯ | pause / play | add or remove a favourite |
 | ⏪ ⏩ | archive slider, big steps | — |
 | CH+ / CH− | next / previous channel | archive day, or page through channels |
@@ -106,27 +120,39 @@ The app is named after the person it was made for: a cinema at home, one that si
 | Playback on the TV (UE50MU7000, Tizen 3.0) | hardware H.264 1920×1080, ~6 Mbit/s, `PLAYING` |
 | Channel list request | ~0.1 s, 389 channels, 9 groups |
 | Archive depth | 7 days; every hour complete |
+| Archive on the TV (programme panel, slider) | first frame in 2.2 s; 60 s without a single failure |
+| Archive that catches up with live | continues by itself, no "no signal" |
 | Full channel re-check | 389 channels in ~9 s, in the background |
 
-## 🚀 Install in 10 minutes
+## 📡 Use it with any IPTV provider
 
-You need a Samsung Tizen TV, a Mac or PC on the same network, and an OTT Club subscription key. The key is entered on the TV the first time the app starts, so it is never stored in this repository.
+**OTT Club** (built-in): enter your subscriber key when the app starts for the first time, or put `OTT_KEY=` into `build.local.env`. The channels, groups, logos, the 7-day guide and the archive then come from OTT Club directly.
 
-1. **Enable Developer Mode on the TV.** Apps → press `1 2 3 4 5` → On, and enter your computer's IP address. Restart the TV.
-2. **Install the Tizen CLI** (`web-cli_Tizen_SDK_*`). On Apple Silicon, install Rosetta first.
-3. **Get a Samsung certificate for your TV.** Sign in with your Samsung account and request an author and a distributor certificate for your TV's DUID (`sdb shell 0 getduid`). Keep the `device-profile.xml` that Samsung returns with the distributor certificate. **Without it on the TV, every install fails with `install failed[118]`.**
-4. **Create `build.local.env`:**
-   ```sh
-   CERT_PROFILE=<your tizen security profile>
-   DEVICE_PROFILE=<path to device-profile.xml>
-   TV=<tv-ip>:26101
-   ```
-5. **Build, sign and install:**
-   ```sh
-   ./build.sh
-   ```
+**Any other provider**: on the first-run screen, paste your **M3U playlist URL** instead of a key, or build it in with `PLAYLIST_URL=` in `build.local.env`. Typing a long URL with a TV remote is slow, so building it in is easier. From a standard extended M3U the player takes:
 
-The script packages the app, pushes the device profile, installs the app with `vd_appinstall` and starts it. The daisy icon appears in your TV's apps.
+| Playlist attribute | What it gives you |
+|---|---|
+| `group-title` / `#EXTGRP` | the groups in the menu |
+| `tvg-logo`, `tvg-id` | logos; programme guide matching |
+| `url-tvg` / `x-tvg-url` in `#EXTM3U` | the programme guide (XMLTV, uncompressed) |
+| `catchup`, `catchup-source`, `catchup-days` (or `tvg-rec`, `timeshift`) | the archive and the slider: `default` / `append` templates (`{utc}`, `{lutc}`, `{start}`, `{end}`, `{duration}`, `{offset}`, `{Y}{m}{d}{H}{M}{S}`), `shift` (`?utc=…&lutc=…`) and `flussonic` |
+
+Without catch-up attributes, live TV, groups, favourites and search still work; only the archive is missing.
+
+## 🚀 Install
+
+**[docs/DEPLOY.md](docs/DEPLOY.md) is the full guide**, written from a real install. It covers Developer Mode, the Tizen CLI on Apple Silicon, the macOS local-network trap, Samsung certificates without the broken Certificate Manager, and the **device profile without which every install fails with `118`**.
+
+In short:
+
+```sh
+sdb connect <tv-ip>:26101 && sdb shell 0 getduid             # the TV's DUID
+node tools/samsung-cert.mjs --duid <DUID> --name kinozal     # sign in to Samsung once; certificates + device profile
+printf 'CERT_PROFILE=kinozal\nDEVICE_PROFILE=%s\nTV=<tv-ip>:26101\n' ~/tizen-studio-data/keystore/kinozal/device-profile.xml > build.local.env
+./build.sh                                                   # sign, push the device profile, install, start
+```
+
+The daisy icon appears in your TV's apps.
 
 ---
 

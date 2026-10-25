@@ -6,7 +6,8 @@ var Player = (function () {
   var gen = 0;                 // bumps on every open(); stale callbacks compare against it
   var url = null;
   var lastTime = -1, lastTimeAt = 0, bufferingSince = 0;
-  var retries = 0, retryTimer = null;
+  var retries = 0, retryTimer = null, retryPending = false;
+  var isArchive = false;      // archive playback = a finite recording: slower to prepare, and it ends
   var displayModes = ['PLAYER_DISPLAY_MODE_AUTO_ASPECT_RATIO', 'PLAYER_DISPLAY_MODE_FULL_SCREEN', 'PLAYER_DISPLAY_MODE_LETTER_BOX'];
   var displayNames = ['Авто', 'Во весь экран', 'С полями'];
   var displayIdx = Util.store('displayIdx') || 0;
@@ -18,12 +19,14 @@ var Player = (function () {
 
   function play(newUrl) {
     url = newUrl;
+    isArchive = /[?&](archive|utc)=/.test(newUrl);
     retries = 0;
     start();
   }
 
   function start() {
     clearTimeout(retryTimer);
+    retryPending = false;
     var my = ++gen;
     lastTime = -1; lastTimeAt = Date.now(); bufferingSince = Date.now();
     hooks.onBuffering(true);
@@ -42,7 +45,8 @@ var Player = (function () {
         onbufferingstart: function () { if (my === gen) { bufferingSince = Date.now(); hooks.onBuffering(true); } },
         onbufferingcomplete: function () { if (my === gen) { bufferingSince = 0; hooks.onBuffering(false); } },
         oncurrentplaytime: function (t) { if (my === gen && t !== lastTime) { lastTime = t; lastTimeAt = Date.now(); } },
-        onstreamcompleted: function () { if (my === gen) fail('stream ended'); },
+        // A recording that reaches its end is not an error: the app continues with what follows it.
+        onstreamcompleted: function () { if (my === gen) { if (isArchive && hooks.onEnded) hooks.onEnded(); else fail('stream ended'); } },
         onerror: function (e) { if (my === gen) fail(String(e)); },
         onevent: function () {}
       });
@@ -106,8 +110,15 @@ var Player = (function () {
   function fail(reason) {
     var delay = Math.min(500 * Math.pow(2, retries), CONFIG.MAX_BACKOFF_MS);
     retries++;
+    console.log('[player] fail #' + retries + ' gen=' + gen + ' ' + reason);
+    // Keep the last 40 failures on the device, so a "no signal" seen by the viewer can be explained later.
+    var log = Util.store('failLog') || [];
+    log.push(new Date().toISOString() + ' #' + retries + ' ' + reason + ' ' + String(url).replace(/\/stream\/[^/]+\//, '/stream/<key>/'));
+    Util.store('failLog', log.slice(-40));
     hooks.onError(reason, retries, delay);
     clearTimeout(retryTimer);
+    retryPending = true;
+    bufferingSince = 0;
     retryTimer = setTimeout(start, delay);
   }
 
@@ -115,7 +126,11 @@ var Player = (function () {
     if (!url) return;
     var now = Date.now(), state;
     if (av) { try { state = av.getState(); } catch (e) { return; } } else state = video.paused ? 'PAUSED' : 'PLAYING';
-    if (bufferingSince && now - bufferingSince > CONFIG.BUFFER_TIMEOUT_MS) { fail('buffering timeout'); return; }
+    // While a restart is already scheduled the watchdog stays quiet (otherwise it re-fails every second
+    // and the restart never happens).
+    if (retryPending) return;
+    var limit = isArchive ? CONFIG.ARCHIVE_BUFFER_TIMEOUT_MS : CONFIG.BUFFER_TIMEOUT_MS;
+    if (bufferingSince && now - bufferingSince > limit) { fail('buffering timeout ' + Math.round((now - bufferingSince) / 1000) + ' s'); return; }
     if (state === 'PLAYING' && !bufferingSince && now - lastTimeAt > CONFIG.STALL_TIMEOUT_MS) fail('stalled');
   }
   setInterval(tick, 1000);
@@ -123,6 +138,8 @@ var Player = (function () {
   function suspend() { try { if (av) av.suspend(); } catch (e) {} }
   function resume() {
     if (!url) return;
+    // Tizen reports "visible" right after launch too; a stream that is already playing is left alone.
+    try { if (av && av.getState() === 'PLAYING') return; } catch (e) {}
     try { if (av) { av.restore(url, 0, true); lastTimeAt = Date.now(); return; } } catch (e) {}
     start();
   }

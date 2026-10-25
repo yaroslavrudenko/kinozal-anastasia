@@ -2,7 +2,7 @@
 // so a 1000-channel playlist costs the same as a 13-channel one.
 var UI = (function () {
   var $ = Util.$;
-  var rows = [], groupRows = [], progRows = [];
+  var rows = [], groupRows = [], progRows = [], panelRows = [], searchRows = [];
   var toastTimer = null, bannerTimer = null;
 
   function pool(container, n, cls) {
@@ -21,6 +21,25 @@ var UI = (function () {
     rows = pool($('channels'), CONFIG.VISIBLE_ROWS, 'row');
     groupRows = pool($('groups'), CONFIG.VISIBLE_ROWS, 'grow');
     progRows = pool($('d-list'), CONFIG.VISIBLE_ROWS - 1, 'prow');
+    panelRows = pool($('p-list'), CONFIG.VISIBLE_ROWS - 3, 'prow');   // leaves room for the hint
+    searchRows = pool($('search-list'), 9, 'row');
+  }
+
+  // Programme panel shown over the video (▼): same rows as the guide's programme column.
+  function panel(title, list, cursor, nowMs, archive) {
+    $('p-title').textContent = title;
+    fillPrograms(panelRows, list, cursor, true, nowMs, archive);
+  }
+
+  function searchResults(list, cursor, active, all) {
+    renderList(searchRows, list, cursor, active, function (r, chIdx) {
+      var ch = all[chIdx];
+      var now = EPG.upcoming(ch.id, 1)[0];
+      r.n.textContent = ch.num;
+      setLogo(r, ch.logo);
+      r.t.textContent = ch.name;
+      r.s.textContent = ch.group + (now ? ' · ' + now.title : '');
+    });
   }
 
   function windowStart(cursor, total, visible) {
@@ -56,7 +75,7 @@ var UI = (function () {
       r.n.textContent = '';
       setLogo(r, '');
       r.t.textContent = g.name;
-      r.s.textContent = g.items.length;
+      r.s.textContent = g.search ? '' : g.items.length;
     });
   }
 
@@ -73,7 +92,11 @@ var UI = (function () {
 
   function programs(title, list, cursor, active, nowMs, archive) {
     $('d-title').textContent = title;
-    renderList(progRows, list, cursor, active, function (r, p) {
+    fillPrograms(progRows, list, cursor, active, nowMs, archive);
+  }
+
+  function fillPrograms(pool_, list, cursor, active, nowMs, archive) {
+    renderList(pool_, list, cursor, active, function (r, p) {
       var past = p.stop <= nowMs, live = p.start <= nowMs && p.stop > nowMs;
       r.n.textContent = Util.hhmm(new Date(p.start));
       setLogo(r, '');
@@ -110,7 +133,7 @@ var UI = (function () {
   function fatal(text) { $('fatal').textContent = text; Util.show($('fatal'), !!text); }
 
   return {
-    init: init, guide: guide, groups: groups, channels: channels, programs: programs,
+    init: init, guide: guide, groups: groups, channels: channels, programs: programs, panel: panel, searchResults: searchResults,
     banner: banner, hideBanner: hideBanner, toast: toast, spinner: spinner, numEntry: numEntry, fatal: fatal
   };
 }());
