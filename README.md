@@ -46,7 +46,7 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
 | 🎬 **Films never stop** | Hardware H.264 decoding, a 10‑second safety buffer, and a watchdog that reconnects a stalled stream on its own. Measured: three movie channels for 10 minutes each, **0 stalls, 0 rebuffers, 0 reconnects**. |
 | ⏪ **Rewind TV like a video** | Press ▲ while watching and a timeline slider appears. Hold ◀ ▶ to scrub (it speeds up as you hold), jump between shows with ▲ ▼, and press OK to watch from that moment. Up to 7 days back. |
 | 🔍 **Find any channel** | Type part of a name (or a number) in 🔍 Search at the top of the menu; results update as you type. |
-| 📺 **Every channel, in order** | The full live list of **389 channels** from the provider: 🇮🇱 Israel first, then National, News, Documentary, Movies, Kids, Sport and more. The list is fetched fresh on every start. Channels the provider removed are hidden automatically. |
+| 📺 **Every channel, in order** | The full live list of **389 channels** from the provider, with 🇮🇱 Israel and 🇺🇦 Ukraine groups: Israel first, then National, News, Documentary, Movies, Kids, Sport and more. The list is fetched fresh on every start. Channels the provider removed are hidden automatically. |
 | ★ **Your own favourites** | Press ⏯ (or Yellow) on any channel to pin it to ★ Favourites. CH+/CH− inside Favourites zaps through favourites only. |
 | ⚡ **Instant on old hardware** | Virtualised lists keep a 1000‑channel playlist as fast as a 10‑channel one. The programme guide loads per channel, only when you look at it. |
 | 🔊 **Picture and sound under control** | Every channel switch shows the stream briefly: resolution, codec, bitrate and sound (for example `1920×1080 · H264 · 7,5 Мбит/с · звук стерео`). Choose the audio track and the picture mode (auto, full screen or letter‑box). |
@@ -58,9 +58,9 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
 <table>
   <tr>
     <td><img src="docs/screenshots/channel-m1.jpg" alt="М1, Ukrainian music channel"></td>
-    <td><img src="docs/screenshots/channel-m2.jpg" alt="М2, Ukrainian music channel"></td>
+    <td><img src="docs/screenshots/channel-nature.jpg" alt="Живая природа: a waterfall and a turquoise lake in the forest"></td>
   </tr>
-  <tr><td align="center"><b>М1</b> · Ukrainian music</td><td align="center"><b>М2</b> · Ukrainian music</td></tr>
+  <tr><td align="center"><b>М1</b> · Ukrainian music</td><td align="center"><b>Живая природа</b> · nature</td></tr>
   <tr>
     <td><img src="docs/screenshots/channel-channel9.jpg" alt="Channel 9, Israel, news"></td>
     <td><img src="docs/screenshots/channel-cartoons90.jpg" alt="Cartoons 90: cartoons of the 90s"></td>

@@ -50,7 +50,10 @@ var OttClub = (function () {
     function seq(id) { return ORDER.SEQ[id] || 100000; }
     // Pinned channels (Israel) open the list: Channel 9 is number 1, then 11, 12 ... by the number in the name.
     function pinRank(id) {
-      for (var p = 0; p < ORDER.PINNED.length; p++) if (data[id].channel_name.indexOf(ORDER.PINNED[p].match) >= 0) return p;
+      for (var p = 0; p < ORDER.PINNED.length; p++) {
+        var pin = ORDER.PINNED[p];
+        if (pin.numbered && data[id].channel_name.indexOf(pin.match) >= 0) return p;
+      }
       return ORDER.PINNED.length;
     }
     function nameNumber(id) { var m = /\b(\d{1,3})\b/.exec(data[id].channel_name); return m ? +m[1] : 1000; }
@@ -74,10 +77,21 @@ var OttClub = (function () {
         catchupSource: '',
         catchupDays: c.rec === '1' ? 7 : 0
       };
+      ch.ua = isUkrainian(c);
       channels.push(ch);
       if (c.name && c.time) EPG.put(c.ch_id, [{ start: c.time * 1000, stop: c.time_to * 1000, title: c.name }], false);
     }
     return { channels: channels, groups: M3U.groupsOf(channels), epgUrl: '' };
+  }
+
+  // Ukrainian = a well-known Ukrainian name, or (no other country in the name) Ukrainian letters in the
+  // name or in what is on now, without Belarusian (ў) or Kazakh letters, which share "і".
+  function isUkrainian(c) {
+    var name = c.channel_name || '', text = name + ' ' + (c.name || '');
+    if (ORDER.UA_NAMES.indexOf(name) >= 0) return true;
+    if (/\((?!Украина)[^)]*\)/.test(name)) return false;
+    if (/[ўЎәғқңөұүһӘҒҚҢӨҰҮҺ]/.test(text)) return false;
+    return /[іїєґІЇЄҐ]/.test(text);
   }
 
   // Full 7-day guide of one channel, fetched only when the viewer looks at it.

@@ -241,8 +241,11 @@
   function addPinnedGroups() {
     for (var p = 0; p < ORDER.PINNED.length; p++) {
       var pin = ORDER.PINNED[p], items = [];
-      for (var i = 0; i < all.length; i++) if (!all[i].dead && all[i].name.indexOf(pin.match) >= 0) items.push(i);
-      items.sort(function (a, b) { return nameNumber(all[a].name) - nameNumber(all[b].name) || a - b; });
+      for (var i = 0; i < all.length; i++) {
+        var c = all[i];
+        if (!c.dead && (pin.flag ? c[pin.flag] : c.name.indexOf(pin.match) >= 0)) items.push(i);
+      }
+      if (pin.numbered) items.sort(function (a, b) { return nameNumber(all[a].name) - nameNumber(all[b].name) || a - b; });
       if (items.length) groups.splice(allIdx() + 1 + p, 0, { name: pin.name, items: items });
     }
   }
