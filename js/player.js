@@ -132,6 +132,8 @@ var Player = (function () {
     var limit = isArchive ? CONFIG.ARCHIVE_BUFFER_TIMEOUT_MS : CONFIG.BUFFER_TIMEOUT_MS;
     if (bufferingSince && now - bufferingSince > limit) { fail('buffering timeout ' + Math.round((now - bufferingSince) / 1000) + ' s'); return; }
     if (state === 'PLAYING' && !bufferingSince && now - lastTimeAt > CONFIG.STALL_TIMEOUT_MS) fail('stalled');
+    // A player left IDLE/NONE (released by the TV or another app) never plays again by itself.
+    if (av && !document.hidden && (state === 'IDLE' || state === 'NONE') && now - lastTimeAt > CONFIG.STALL_TIMEOUT_MS) fail('player released (' + state + ')');
   }
   setInterval(tick, 1000);
 
@@ -139,8 +141,10 @@ var Player = (function () {
   function resume() {
     if (!url) return;
     // Tizen reports "visible" right after launch too; a stream that is already playing is left alone.
+    // Another app may have taken the TV's player while we were hidden: then the state is IDLE/NONE and
+    // restore() silently does nothing (black screen). Anything but PLAYING is reopened from scratch.
     try { if (av && av.getState() === 'PLAYING') return; } catch (e) {}
-    try { if (av) { av.restore(url, 0, true); lastTimeAt = Date.now(); return; } } catch (e) {}
+    retries = 0;
     start();
   }
   function reconnect() { if (url) { retries = 0; start(); } }
