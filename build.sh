@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Build, sign and install Кинозал Анастасия on a Samsung TV.
+# Build, sign and install Кинозал Анастасии on a Samsung TV.
 # Settings come from build.local.env (git-ignored):
 #   OTT_KEY=...            OTT Club subscriber key (optional: it can be entered on the TV instead)
 #   CERT_PROFILE=...       Tizen security profile with the Samsung author + distributor certificates

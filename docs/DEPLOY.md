@@ -1,6 +1,6 @@
 # Deploying to a Samsung TV: the full story
 
-This is exactly how Кинозал Анастасия was put on a 2017 Samsung UE50MU7000 (Tizen 3.0) from a Mac (Apple Silicon, macOS 27). The work was done with Claude Code, the AI coding agent, which drove the terminal. The guide records every step that worked, every step that failed and why, so you don't repeat the dead ends.
+This is exactly how Кинозал Анастасии was put on a 2017 Samsung UE50MU7000 (Tizen 3.0) from a Mac (Apple Silicon, macOS 27). The work was done with Claude Code, the AI coding agent, which drove the terminal. The guide records every step that worked, every step that failed and why, so you don't repeat the dead ends.
 
 Short version: Samsung TVs accept apps only if they are signed with **your own Samsung certificate tied to the TV's ID**, and **only if the device profile that Samsung issues with that certificate is on the TV**. The second part is missing from most guides. Without it, every install fails with `install failed[118]`.
 

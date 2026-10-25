@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/icon.png" width="160" alt="Кинозал Анастасия icon: a white daisy with the name Настя">
+  <img src="docs/icon.png" width="160" alt="Кинозал Анастасии icon: a white daisy with the name Настя">
 </p>
 
-<h1 align="center">Кинозал Анастасия</h1>
+<h1 align="center">Кинозал Анастасии</h1>
 
 <p align="center">
   <b>Your old Samsung TV deserves a cinema that never freezes.</b><br>
@@ -31,13 +31,13 @@
 
 That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus throw JavaScript errors, channels freeze, and nothing gets updated any more.
 
-**Кинозал Анастасия fixes that in one install.** It is a player written for the web engine your TV actually has, and it plays through the TV's own hardware decoder. Everything you open is fast, and every stream heals itself.
+**Кинозал Анастасии fixes that in one install.** It is a player written for the web engine your TV actually has, and it plays through the TV's own hardware decoder. Everything you open is fast, and every stream heals itself.
 
 **[⬇ Install it on your TV](#-install) · [⭐ Star the repo](https://github.com/yaroslavrudenko/kinozal-anastasia) · [💬 Tell us your TV model](https://github.com/yaroslavrudenko/kinozal-anastasia/issues)**
 
 ---
 
-> **This is a player, not a TV service.** Кинозал Анастасия shows no channels by itself. You need **your own paid IPTV subscription**: it was built for [OTT Club](https://www.ottclub.tv) and has first-class support for it, and it also plays **any provider's M3U playlist** ([see below](#-use-it-with-any-iptv-provider)). No channels, keys or playlists are included in this repository.
+> **This is a player, not a TV service.** Кинозал Анастасии shows no channels by itself. You need **your own paid IPTV subscription**: it was built for [OTT Club](https://www.ottclub.tv) and has first-class support for it, and it also plays **any provider's M3U playlist** ([see below](#-use-it-with-any-iptv-provider)). No channels, keys or playlists are included in this repository.
 
 ## Why you'll love it
 
