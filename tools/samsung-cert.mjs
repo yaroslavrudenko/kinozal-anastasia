@@ -8,8 +8,18 @@
 //   4. author.p12 / distributor.p12 (-legacy, the TV's Tizen cannot read newer PKCS#12)
 //   5. a Tizen CLI security profile
 //
-// usage: node tools/samsung-cert.mjs --duid <TV DUID> [--name kinozal] [--out ~/tizen-studio-data/keystore/kinozal]
+// usage: node tools/samsung-cert.mjs --duid <TV DUID> [--name kinozal] [--out ~/tizen-studio-data/keystore/kinozal] [--force]
 // The DUID comes from the TV: `sdb shell 0 getduid`.
+//
+// Safety: an existing non-empty --out is refused unless --force (then it is moved aside, never deleted).
+// Everything is written into a temporary sibling directory and renamed into place only when complete.
+// The directory is 0700 and every file 0600; the private-key PEMs and CSRs are deleted once the p12
+// files exist. Kept: .password (0600) — the Tizen CLI needs it, and it keeps the same password in its own
+// profiles.xml anyway. openssl gets the password through its environment; `tizen security-profiles add`
+// has no such option, so the password is on that one command line for under a second.
+// The sign-in callback accepts only GET/POST /signin/callback with the expected fields; anything else is
+// answered 400 and the listener keeps waiting (10 minutes at most). No "state" nonce is added: Samsung
+// redirects to a fixed registered callback and the tool cannot verify that extra parameters are echoed.
 import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -19,6 +29,8 @@ import { execFileSync } from 'node:child_process';
 
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const DUID = arg('duid');
+const FORCE = process.argv.includes('--force');
+const SIGNIN_TIMEOUT_MS = 10 * 60000, HTTP_TIMEOUT_MS = 30000;
 const NAME = arg('name', 'kinozal');
 const OUT = path.resolve(arg('out', path.join(os.homedir(), 'tizen-studio-data', 'keystore', NAME)).replace(/^~/, os.homedir()));
 const TIZEN = path.join(os.homedir(), 'tizen-studio', 'tools', 'ide', 'bin', 'tizen');
@@ -28,9 +40,16 @@ const LOGIN = `https://account.samsung.com/mobile/account/check.do?serviceID=${S
 const CA_API = 'https://svdca.samsungqbe.com/apis/v1';
 
 if (!DUID) { console.error('usage: node tools/samsung-cert.mjs --duid <TV DUID> [--name kinozal] [--out dir]'); process.exit(1); }
-fs.mkdirSync(OUT, { recursive: true, mode: 0o700 });
-const f = (n) => path.join(OUT, n);
-const sh = (cmd, args) => execFileSync(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] }).toString();
+if (fs.existsSync(OUT) && fs.readdirSync(OUT).length && !FORCE) {
+  console.error(`${OUT} already holds a signing identity; refusing to overwrite it (pass --force to move it aside).`);
+  process.exit(1);
+}
+const WORK = `${OUT}.tmp-${process.pid}`;
+fs.mkdirSync(WORK, { recursive: true, mode: 0o700 });
+fs.chmodSync(WORK, 0o700);
+let dir = WORK;
+const f = (n) => path.join(dir, n);
+const sh = (cmd, args, env) => execFileSync(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'], env: env ? { ...process.env, ...env } : process.env }).toString();
 
 // Samsung's CA certificates ship inside the installed Samsung Certificate Extension.
 function caCertificates() {
@@ -43,21 +62,34 @@ function caCertificates() {
   return { author, dist };
 }
 
+// The callback's "code" field: JSON with string access_token, userId and inputEmailID; null otherwise.
+function readCallback(req, body) {
+  let u;
+  try { u = new URL(req.url, 'http://localhost'); } catch { return null; }
+  if (u.pathname !== '/signin/callback' || (req.method !== 'GET' && req.method !== 'POST')) return null;
+  const fields = new URLSearchParams(body.length ? body : u.search.slice(1));
+  let code;
+  try { code = JSON.parse(fields.get('code')); } catch { return null; }
+  const ok = code && ['access_token', 'userId', 'inputEmailID'].every((k) => typeof code[k] === 'string' && code[k]);
+  return ok ? { token: code.access_token, user: code.userId, email: code.inputEmailID } : null;
+}
+
 function signIn() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
       let body = '';
       req.on('data', (d) => { body += d; });
       req.on('end', () => {
-        if (!req.url.startsWith('/signin/callback')) { res.writeHead(404); res.end(); return; }
-        const fields = new URLSearchParams(body.length ? body : req.url.split('?')[1] || '');
-        const code = JSON.parse(fields.get('code'));
+        const login = readCallback(req, body);
+        if (!login) { res.writeHead(400); res.end('bad request'); return; }
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end('<h2 style="font-family:sans-serif">Signed in to Samsung. You can close this tab.</h2>');
+        clearTimeout(timer);
         server.close();
-        resolve({ token: code.access_token, user: code.userId, email: code.inputEmailID });
+        resolve(login);
       });
     }).listen(4794, '127.0.0.1');
+    const timer = setTimeout(() => { server.close(); reject(new Error('no Samsung sign-in within 10 minutes')); }, SIGNIN_TIMEOUT_MS);
     console.log('\nOpen this Samsung sign-in page and sign in with your Samsung account:\n\n  ' + LOGIN + '\n');
   });
 }
@@ -66,7 +98,7 @@ async function post(endpoint, fields, csrFile) {
   const form = new FormData();
   for (const [k, v] of Object.entries(fields)) form.append(k, v);
   form.append('csr', new Blob([fs.readFileSync(csrFile)]), 'request.csr');
-  const r = await fetch(`${CA_API}/${endpoint}`, { method: 'POST', body: form });
+  const r = await fetch(`${CA_API}/${endpoint}`, { method: 'POST', body: form, signal: AbortSignal.timeout(HTTP_TIMEOUT_MS) });
   const text = await r.text();
   if (!r.ok) throw new Error(`${endpoint}: HTTP ${r.status} ${text.slice(0, 200)}`);
   return text;
@@ -101,9 +133,16 @@ fs.writeFileSync(f('author-and-ca.crt'), fs.readFileSync(f('author.crt'), 'utf8'
 fs.writeFileSync(f('distributor-and-ca.crt'), fs.readFileSync(f('distributor.crt'), 'utf8') + ca.dist);
 for (const n of ['author', 'distributor']) {
   sh('openssl', ['pkcs12', '-export', '-legacy', '-out', f(`${n}.p12`), '-inkey', f(`${n}.key.pem`),
-    '-in', f(`${n}-and-ca.crt`), '-name', 'usercertificate', '-passout', `pass:${password}`]);
+    '-in', f(`${n}-and-ca.crt`), '-name', 'usercertificate', '-passout', 'env:P12_PASS'], { P12_PASS: password });
 }
-for (const n of fs.readdirSync(OUT)) fs.chmodSync(f(n), 0o600);
+for (const n of ['author.key.pem', 'distributor.key.pem', 'author.csr', 'distributor.csr']) fs.rmSync(f(n), { force: true });
+for (const n of fs.readdirSync(dir)) fs.chmodSync(f(n), 0o600);
+
+// Complete: the new identity takes the --out name; an old one (--force) is moved aside, not deleted.
+if (fs.existsSync(OUT)) fs.renameSync(OUT, `${OUT}.old-${Date.now()}`);
+fs.renameSync(WORK, OUT);
+dir = OUT;
+fs.chmodSync(OUT, 0o700);
 
 sh(TIZEN, ['security-profiles', 'add', '-n', NAME, '-a', f('author.p12'), '-p', password, '-d', f('distributor.p12'), '-dp', password]);
 sh(TIZEN, ['cli-config', `profiles.path=${path.join(os.homedir(), 'tizen-studio-data', 'profile', 'profiles.xml')}`]);

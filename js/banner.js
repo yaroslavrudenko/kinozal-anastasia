@@ -1,0 +1,56 @@
+// The channel banner: name, number, what is on, progress and (once the picture is up) the stream's
+// technical line. preview() shows a channel being zapped to before it plays.
+var Banner = (function () {
+  var techTimer = null, tech = '', techUntil = 0, techSel = -1;   // the latest landing's technical line, its window, its selection
+
+  // fetchGuide: also make sure the full guide is loaded (INFO, the first frame); off while zapping.
+  // Inside a landing's tech window every redraw keeps that line («…» or the value) and the banner stays
+  // until the window ends; outside it the line is what the player knows about the current stream.
+  function show(fetchGuide) {
+    var c = Playback.current();
+    if (!c) return;
+    if (fetchGuide) EPG.ensure(c.id, onGuide);
+    if (techSel !== Playback.selection()) techUntil = 0;   // a newer choice (zap, archive, pause) ends the window
+    var t = Playback.position(), archive = Playback.mode() !== 'live', left = techUntil - Date.now();
+    UI.banner(model(c, { t: t, extra: archive ? 'Архив · ' + Util.hhmm(new Date(t)) : '', tech: left > 0 ? tech : Player.streamInfo(false) }),
+      Math.max(CONFIG.BANNER_MS, left));
+  }
+
+  // A channel (live or archive) shows its first frame: the banner at once with this stream's technical
+  // line; "…" while the player has not described the stream yet, filled in as soon as it has (a local
+  // read every TECH_POLL_MS, no request); the line goes after TECH_LINE_MS.
+  function onFirstFrame() {
+    clearTimeout(techTimer);
+    techUntil = 0;
+    if (!Overlay.isNone()) return;
+    var sel = techSel = Playback.selection();
+    tech = Player.streamInfo(false) || '…';
+    techUntil = Date.now() + CONFIG.TECH_LINE_MS;
+    show(false);
+    function tick() {
+      if (sel !== Playback.selection()) { techUntil = 0; return; }
+      if (Date.now() >= techUntil) { techUntil = 0; UI.bannerTech(''); return; }
+      if (tech === '…') { var info = Player.streamInfo(true); if (info) { tech = info; UI.bannerTech(info); } }
+      techTimer = setTimeout(tick, tech === '…' ? CONFIG.TECH_POLL_MS : techUntil - Date.now());
+    }
+    techTimer = setTimeout(tick, tech === '…' ? CONFIG.TECH_POLL_MS : CONFIG.TECH_LINE_MS);
+  }
+  function preview(c) { UI.banner(model(c, { t: Date.now(), extra: '', tech: '' })); }
+
+  // A guide that arrived refreshes a banner that is still on screen (it is never reopened by it).
+  function onGuide(err) { if (!err && UI.bannerShown() && Overlay.isNone()) show(false); }
+
+  // at: { t (moment shown), extra (after the name), tech (technical line) }
+  function model(c, at) {
+    var t = at.t, nn = EPG.nowNext(c.id, t), cur = nn.cur, next = nn.next;
+    return {
+      num: c.num, logo: c.logo, title: c.name + (at.extra ? '   ·   ' + at.extra : ''), tech: at.tech,
+      // U+2060 word joiners keep "21:00–22:00" on one line when the title wraps.
+      now: cur ? Util.hhmm(new Date(cur.start)) + '\u2060–\u2060' + Util.hhmm(new Date(cur.stop)) + '  ' + cur.title : '',
+      next: next ? 'Далее ' + Util.hhmm(new Date(next.start)) + '  ' + next.title : '',
+      progress: cur ? (t - cur.start) / (cur.stop - cur.start) * 100 : 0
+    };
+  }
+
+  return { show: show, preview: preview, onGuide: onGuide, onFirstFrame: onFirstFrame };
+}());

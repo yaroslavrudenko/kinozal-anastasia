@@ -1,20 +1,71 @@
-// Build-time settings, filled by build.sh from build.local.env (never committed).
+// Build-time settings and every tuning number of the app (SSOT). build.sh fills the three '__…__'
+// placeholders from build.local.env (never committed).
 // OTT_KEY set -> channels come from the OTT Club API; otherwise PLAYLIST_URL (any M3U) is used.
 var CONFIG = {
   OTT_SERVER: 'myott.top',
+  OTT_SCHEME: 'http',          // the provider serves keys and streams over http; https is unverified on the TV
   OTT_KEY: '__OTT_KEY__',
   PLAYLIST_URL: '__PLAYLIST_URL__',
   EPG_URL: '',                 // empty = use url-tvg from the playlist header
+  VERSION: '1.7.0',            // must equal config.xml's version
+  BUILD: '__BUILD__',          // filled by build.sh: commit and date
+
+  // channel list
   PLAYLIST_REFRESH_MS: 6 * 3600 * 1000,
-  VERSION: '1.7.0',
-  BUILD: '__BUILD__',           // filled by build.sh: commit and date
-  BUFFER_TIMEOUT_MS: 15000,    // live: stuck in buffering this long -> reconnect
+  LIST_TIMEOUT_MS: 20000,
+  LIST_RETRY_MIN_MS: 10000,
+  LIST_RETRY_MAX_MS: 300000,
+  SNAPSHOT_MAX_CHARS: 2500000, // offline copy of the list; bigger lists are not kept
+  KEY_CHECK_TIMEOUT_MS: 15000,
+
+  // per-channel guide (OTT Club) and XMLTV (M3U)
+  ARCHIVE_DAYS: 7,
+  GUIDE_TIMEOUT_MS: 15000,
+  GUIDE_FRESH_MS: 3600000,
+  GUIDE_RETRY_MIN_MS: 30000,
+  GUIDE_RETRY_MAX_MS: 600000,
+  GUIDE_CACHE_CHANNELS: 24,    // full guides kept in memory; older ones fall back to the "now" line
+  XMLTV_TIMEOUT_MS: 60000,
+  XMLTV_MAX_BYTES: 30 * 1024 * 1024,
+  XMLTV_REFRESH_MS: 12 * 3600 * 1000,
+  XMLTV_RETRY_MIN_MS: 60000,
+  XMLTV_RETRY_MAX_MS: 30 * 60000,
+  SLICE_MS: 8,                 // longest piece of parsing per task, so a key press never waits
+
+  // channel health (dead streams)
+  PROBE_TIMEOUT_MS: 8000,
+  PROBE_MAX_BYTES: 65536,      // a master playlist is a few KB; anything bigger is not read to the end
+  HEALTH_PERIOD_MS: 6 * 3600 * 1000,
+  HEALTH_CONCURRENCY: 2,
+  HEALTH_START_AFTER_STABLE_MS: 60000,
+
+  // player
+  BUFFER_PLAY_S: 5,
+  BUFFER_RESUME_S: 10,
+  BUFFER_TIMEOUT_MS: 15000,    // live: stuck in buffering this long (no progress) -> reconnect
   ARCHIVE_BUFFER_TIMEOUT_MS: 30000,   // archive recordings take longer to open
-  LIVE_SNAP_MS: 120000,        // archive within 2 min of live plays live instead
   STALL_TIMEOUT_MS: 8000,      // playing but time not advancing this long -> reconnect
+  RETRY_MIN_MS: 500,
   MAX_BACKOFF_MS: 15000,
+  STABLE_MS: 20000,            // the retry backoff resets only after this much advancing playback
+  LIVE_SNAP_MS: 120000,        // archive within 2 min of live plays live instead
+  HLS_JS_URL: 'https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js',
+  HLS_JS_SRI: 'sha384-9v3HcdYrO3D+OPDTjZ40RXocgE4GtXVCd3/mCS62JsM93JXgI1afJVuwjFvsu6ni',
+
+  // zapping and screens
+  ZAP_SETTLE_MS: 350,          // inside a burst of presses only the channel stopped on is opened
+  ZAP_IDLE_MS: 1000,           // a press this long after the previous one opens at once
+  ZAP_BUSY_MS: 3000,
+  LANDING_SAVE_MS: 1000,       // a channel is remembered once it has played this long
   BANNER_MS: 5000,
+  TECH_LINE_MS: 5000,          // the stream's technical line shows this long after a channel opens
+  TECH_POLL_MS: 500,           // re-read while the player has not described the stream yet
+  TOAST_MS: 2500,
   NUMBER_ENTRY_MS: 1800,
-  ROW_HEIGHT: 72,
-  VISIBLE_ROWS: 13
+  EXIT_CONFIRM_MS: 2000,
+  VISIBLE_ROWS: 13,
+  SEARCH_ROWS: 9,
+  SEARCH_LIMIT: 60,
+  DIAG_FLUSH_MS: 30000,
+  DIAG_LOG_LINES: 40
 };
