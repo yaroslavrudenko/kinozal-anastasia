@@ -166,6 +166,27 @@ printf 'CERT_PROFILE=kinozal\nDEVICE_PROFILE=%s\nTV=<tv-ip>:26101\n' ~/tizen-stu
 
 The daisy icon appears in your TV's apps.
 
+## 🗺 Roadmap
+
+**A universal player for any provider**
+- [ ] A setup screen to pick the source: any M3U/M3U8 playlist URL, Xtream Codes (server + login), and possibly Stalker/MAG portals.
+- [ ] Programme guide (XMLTV) by URL, independent of the playlist.
+- [ ] Catch-up formats (`flussonic`, `shift`, templates) always taken from the playlist itself.
+- [ ] OTT Club becomes one built-in preset instead of the default.
+- Builds on what is already here: `js/m3u.js`, `js/epg.js`, `js/catchup.js` and the provider-independent 🇮🇱 Israel / 🇺🇦 Ukraine grouping in `js/country.js`.
+
+**Publish in the Samsung TV app store** (Samsung Apps, via Tizen Seller Office)
+- [ ] No built-in provider or channels: users bring their own subscription.
+- [ ] A privacy policy.
+- [ ] Store icons and screenshots.
+- [ ] Pass Samsung certification on several TV generations.
+
+**Ideas: more providers and platforms**
+- [ ] Enter the playlist from a phone by scanning a QR code on the TV.
+- [ ] An LG webOS port.
+- [ ] An Android TV build.
+- [ ] Settings backup and restore.
+
 ---
 
 <p align="center">
