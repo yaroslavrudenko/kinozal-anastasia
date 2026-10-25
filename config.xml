@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
-        id="http://yaroslav.local/ottclubplayer" version="1.4.0" viewmodes="maximized">
+        id="http://yaroslav.local/ottclubplayer" version="1.5.0" viewmodes="maximized">
     <tizen:application id="Yr0ttPlay1.OttClubPlayer" package="Yr0ttPlay1" required_version="2.3"/>
     <name>Кинозал Анастасия</name>
     <icon src="img/icon.png"/>

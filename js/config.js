@@ -6,7 +6,7 @@ var CONFIG = {
   PLAYLIST_URL: '__PLAYLIST_URL__',
   EPG_URL: '',                 // empty = use url-tvg from the playlist header
   PLAYLIST_REFRESH_MS: 6 * 3600 * 1000,
-  VERSION: '1.4.0',
+  VERSION: '1.5.0',
   BUILD: '__BUILD__',           // filled by build.sh: commit and date
   BUFFER_TIMEOUT_MS: 15000,    // live: stuck in buffering this long -> reconnect
   ARCHIVE_BUFFER_TIMEOUT_MS: 30000,   // archive recordings take longer to open

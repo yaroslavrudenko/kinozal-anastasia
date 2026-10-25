@@ -12,6 +12,9 @@
 
   var all = [], groups = [];
   var favs = Util.store('favs') || {};
+  var ADULT = 'Для взрослых';
+  var showAdult = Util.store('showAdult') === true;     // off by default; switched in «О программе»
+  function hiddenChannel(c) { return c.dead || (!showAdult && c.group === ADULT); }
   var s = {
     playing: -1, previous: -1,
     guideOpen: false, focus: 'channels',          // 'groups' | 'channels'
@@ -47,7 +50,18 @@
     var html = '';
     for (var r = 0; r < rows.length; r++) html += '<div class="about-row"><span class="about-k">' + Util.esc(rows[r][0]) + '</span><span class="about-v">' + Util.esc(rows[r][1]) + '</span></div>';
     Util.$('about-table').innerHTML = html;
+    renderAdultToggle();
     Util.show(Util.$('about'), true);
+  }
+  function renderAdultToggle() {
+    Util.$('about-adult').textContent = (showAdult ? '☑' : '☐') + '  Показывать каналы для взрослых';
+  }
+  function toggleAdult() {
+    showAdult = !showAdult;
+    Util.store('showAdult', showAdult);
+    rebuildGroups();
+    renderAdultToggle();
+    UI.toast(showAdult ? 'Группа «Для взрослых» добавлена в меню' : 'Группа «Для взрослых» скрыта', 2500);
   }
   function closeAbout() { s.about = false; Util.show(Util.$('about'), false); openGuide(); }
 
@@ -197,7 +211,7 @@
   }
 
   function rebuildGroups() {
-    groups = M3U.groupsOf(all, function (c) { return !c.dead; });
+    groups = M3U.groupsOf(all, function (c) { return !hiddenChannel(c); });
     addPinnedGroups();
     rebuildFavGroup();
     groups.unshift({ name: '🔍 Поиск', items: [], search: true });
@@ -243,7 +257,7 @@
       var pin = ORDER.PINNED[p], items = [];
       for (var i = 0; i < all.length; i++) {
         var c = all[i];
-        if (!c.dead && (pin.flag ? c[pin.flag] : c.name.indexOf(pin.match) >= 0)) items.push(i);
+        if (!hiddenChannel(c) && (pin.flag ? c[pin.flag] : c.name.indexOf(pin.match) >= 0)) items.push(i);
       }
       if (pin.numbered) items.sort(function (a, b) { return nameNumber(all[a].name) - nameNumber(all[b].name) || a - b; });
       if (items.length) groups.splice(allIdx() + 1 + p, 0, { name: pin.name, items: items });
@@ -556,7 +570,7 @@
     var q = Util.$('search-input').value.replace(/^\s+|\s+$/g, '').toLowerCase(), out = [];
     for (var i = 0; i < all.length && out.length < 60; i++) {
       var ch = all[i];
-      if (ch.dead) continue;
+      if (hiddenChannel(ch)) continue;
       if (!q || ch.name.toLowerCase().indexOf(q) >= 0 || String(ch.num) === q) out.push(i);
     }
     s.search.results = out;
@@ -623,7 +637,11 @@
       }
       return;
     }
-    if (s.about) { if (k === K.BACK || k === K.BACK_DESKTOP || k === K.ENTER || k === 27) { e.preventDefault(); closeAbout(); } return; }
+    if (s.about) {
+      if (k === K.ENTER) { e.preventDefault(); toggleAdult(); }
+      else if (k === K.BACK || k === K.BACK_DESKTOP || k === 27) { e.preventDefault(); closeAbout(); }
+      return;
+    }
     if (s.search) { searchKey(k, e); return; }
     if (s.panel) { panelKey(k); e.preventDefault(); return; }
     if (s.scrub) { scrubKey(k); e.preventDefault(); return; }
@@ -685,7 +703,7 @@
     clearTimeout(s.numTimer);
     s.numTimer = setTimeout(function () {
       var n = parseInt(s.num, 10); s.num = ''; UI.numEntry('');
-      if (n >= 1 && n <= all.length) tune(n - 1); else UI.toast('Нет канала ' + n);
+      if (n >= 1 && n <= all.length && !hiddenChannel(all[n - 1])) tune(n - 1); else UI.toast('Нет канала ' + n);
     }, CONFIG.NUMBER_ENTRY_MS);
   }
 
