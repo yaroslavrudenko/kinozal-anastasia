@@ -138,7 +138,11 @@ Open performance issues and every performance change, with before/after numbers:
 
 ## ⚡ Performance
 
-In 2026 six independent reviewers went through the whole player. The 230 findings were then fixed over five reviewed iterations, and 131 behaviour tests now guard the fixes. Measured on a desktop (harness and headless Chrome); TV measurements are still to come:
+In October 2026 six independent reviewers went through the whole player. The 230 findings were then fixed over six reviewed iterations, and 159 behaviour tests now guard the fixes.
+
+On the TV (2026-10-25/26) the build passes the life-cycle test: close, open, exit and reopen, and Home → another app → back, twice. The heaviest movie channel, Viju+ Megahit at 1080p and 10.9 Mbit/s, plays without stalls. The acceptance plan is in [docs/TESTING.md](docs/TESTING.md).
+
+The numbers below were measured on a desktop (harness and headless Chrome):
 
 - **Zapping:** requests per 10 quick presses 20 → 3; a single press opens the channel after 0 ms instead of 350 ms.
 - **Startup:** the channel list is parsed once instead of twice, with 0 storage writes before the first frame (was 2). The offline copy shrank from 500 KB to 44 KB. No long tasks over 50 ms (was 66–74 ms at 6× CPU).

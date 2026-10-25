@@ -55,3 +55,23 @@ Run it once from a second-half channel and once from the heaviest movie channel.
 
 ## Results
 Each run adds a table under this line; rows are never deleted.
+
+### 2026-10-26 00:10 — main `0375363`
+Owner's cycle only, landing channel 1+1 Україна:
+
+| Scenario | Result | PASS/FAIL |
+|---|---|---|
+| close → open | PLAYING, time 13.0 → 17.1 s | PASS |
+| exit → open | PLAYING, time 13.7 → 17.7 s | PASS |
+| Home → OTT Club → back (1) | PLAYING, time 10.8 → 14.8 s | PASS |
+| Home → OTT Club → back (2) | PLAYING, time 10.9 → 14.9 s | PASS |
+| failure log | empty | PASS |
+
+### 2026-10-26 00:30–00:55 — main `0375363`, partial (stopped for the night)
+
+| Scenario | Channel | Result | PASS/FAIL |
+|---|---|---|---|
+| Return from another app during an archive film | «Now You See Me» (movie channel, archive) | PLAYING, position advancing | PASS |
+| Live soak | Viju+ Megahit · 1080p · 10.9 Mbit/s | 5+ min PLAYING, 60 s of media per minute, no new failures | PASS (shortened) |
+| Archive start / to live / archive pause / live pause | movie channels | logs captured; 2 failure-log entries during the pause tests | OPEN — to analyse |
+| Sections 2, 3, 5 and 6 on far high-bitrate «Кино» channels | — | not run yet | NOT-RUN |

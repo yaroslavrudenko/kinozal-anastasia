@@ -19,7 +19,8 @@ On 2026-10-25 six independent reviewers read the whole code of v1.7.0 (HEAD `20c
   | 2 | REJECT | APPROVE | APPROVE |
   | 3 | APPROVE | REJECT (wrapped rows still clipped) | APPROVE |
   | 4 | REJECT (one LOW item, R4-1) | APPROVE | APPROVE |
-  | 5 | pending at the time of writing | pending at the time of writing | pending at the time of writing |
+  | 5 | REJECT (R5-1, LOW) | REJECT (page-up overlap, tech line, panel cursor) | APPROVE |
+  | 6 | APPROVE | APPROVE | — |
 
 - **A behaviour test suite grown from 0 to 131 tests**, all passing (`tests/run.sh`, iteration 5). It includes headless-browser layout tests for wrapping, paging and the tall-row case. Every pin is mutation-proven: the guard is removed, the test turns red, the guard is restored, the test turns green.
 
@@ -46,6 +47,31 @@ Every row has a matching row with its exact command in the [change log](#6-chang
 
 One cost did not change. Opening the menu is still a single long task: 57–74 ms on the real list and 127–133 ms on a worst-case list of 60 long names, at 6× CPU. The baseline measured the same (56–72 / 119–141 ms), so this work did not cause it. It is recorded for the next batch (N-5).
 
+### On the TV — 2026-10-25 / 2026-10-26
+
+What happened when the work met the real TV (UE50MU7000), in order:
+
+1. **2026-10-25 ~23:45 — the first deploy failed.** The desktop-verified build showed a black screen. On this TV `webapis.network.addNetworkStateChangeListener` throws error 18. v1.7.0 had wrapped that call in try/catch; the refactor had dropped the wrapper, so boot stopped before the channel list loaded. The build was rolled back at once.
+2. **A second black screen, already present in v1.7.0.** Home → another app → back to our app left the screen black for minutes. The other app takes the TV's player, so ours is left IDLE, and `restore()` silently did nothing. Fixed in `e0c8758`: anything but PLAYING is reopened, and the watchdog fails an IDLE/NONE player.
+3. **The fixed overhaul passed the owner's cycle on the TV.** This is main `0375363` / `a856e77`. Each step reads the AVPlay state and the advancing media time through the Tizen inspector.
+
+   | Step | Result |
+   |---|---|
+   | close → open | PLAYING, time advancing |
+   | exit → open again | PLAYING, time advancing |
+   | Home → OTT Club (20 s) → back, ×2 | PLAYING within 6–11 s, time advancing |
+   | failure log | empty |
+
+4. **2026-10-26, testing on heavy channels and archives** (partial run; the full table is still to come):
+   - **Viju+ Megahit** (1920×1080 · H.264 · 10.9 Mbit/s · stereo): 5+ minutes live, PLAYING throughout, 60 s of video per minute, no new failures.
+   - An archive film («Now You See Me») resumed in place after a return from another app.
+   - Two failure-log entries appeared during the pause tests. They are not explained yet.
+
+Lessons now written into [docs/TESTING.md](TESTING.md):
+- No build is accepted until it plays on the TV.
+- Every deploy has a smoke check with automatic rollback.
+- Testing uses far, high-bitrate movie channels, not the default channel.
+
 ### What the viewer notices
 
 - **Instant zapping.** A single press opens the channel at once. In a burst of presses only the channel you stop on loads its guide, and the channels you skipped past are cancelled.
@@ -56,6 +82,11 @@ One cost did not change. Opening the menu is still a single long task: 57–74 m
 - **A stream tech line on every channel open:** resolution, codec, bitrate and sound appear with the banner for 5 seconds. It never shows the previous channel's values.
 - **Paging never skips channels.** CH± / PG± turn the page by the rows that were completely visible, so every channel appears fully on some page.
 - **A new name:** the app is now called «Настин кинозал» (Nastin Kinozal).
+- **No black screen after another app:** returning from Home / another app reopens the channel (verified on the TV).
+- **Coming next, on branch `perf-fixes`, not yet verified on the TV:**
+  - a status banner from channel open to the first frame («Подключение…», «Загрузка видео… N%», «Нет сигнала — повтор через N с (попытка K)», «Канал отключён провайдером»);
+  - a clear message for a wrong or expired key instead of hiding every channel;
+  - media keys that work from the first seconds.
 
 ### Still to verify on the TV
 
