@@ -116,14 +116,22 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 .toast, .fatal, .spinner { z-index: 30; }
 
 /* «О программе» */
-.about { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 20; padding: 70px 260px;
+.about { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 20; padding: 46px 260px;
   background: #06090f; text-align: center; }
-.about-icon { width: 150px; height: 150px; border-radius: 30px; }
-.about-title { font-size: 60px; font-weight: 700; color: #4da3ff; margin: 18px 0 14px; }
-.about-dedication { font-size: 32px; line-height: 46px; color: #eef1f6; font-style: italic; margin-bottom: 38px; }
+.about-icon { width: 120px; height: 120px; border-radius: 26px; }
+.about-title { font-size: 54px; font-weight: 700; color: #4da3ff; margin: 12px 0 10px; }
+.about-dedication { font-size: 30px; line-height: 42px; color: #eef1f6; font-style: italic; margin-bottom: 26px; }
 .about-table { text-align: left; border-top: 1px solid rgba(255,255,255,.12); }
-.about-row { display: -webkit-flex; display: flex; padding: 12px 10px; font-size: 26px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.about-row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 11px 16px; font-size: 26px; border-bottom: 1px solid rgba(255,255,255,.08); }
 .about-k { -webkit-flex: 0 0 300px; flex: 0 0 300px; color: #8d99ad; }
 .about-v { -webkit-flex: 1; flex: 1; color: #e4efff; }
 .about-hint { position: absolute; left: 0; right: 0; bottom: 40px; font-size: 24px; color: #8d99ad; }
-.about-toggle { margin-top: 26px; padding: 16px 24px; font-size: 30px; border-radius: 14px; text-align: left; display: inline-block; }
+.about-setting { margin-top: 10px; border-radius: 12px; background: rgba(47,126,232,.16); border-bottom: 0;
+  box-shadow: inset 4px 0 0 #4da3ff; }
+.about-setting .about-v { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; }
+.switch { position: relative; width: 64px; height: 34px; border-radius: 17px; background: #3a4456; margin-right: 18px;
+  -webkit-transition: background .15s; transition: background .15s; }
+.switch i { position: absolute; left: 4px; top: 4px; width: 26px; height: 26px; border-radius: 50%; background: #fff;
+  -webkit-transition: left .15s; transition: left .15s; }
+.switch.on { background: #2f7ee8; }
+.switch.on i { left: 34px; }

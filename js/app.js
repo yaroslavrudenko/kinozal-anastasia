@@ -49,12 +49,16 @@
     ];
     var html = '';
     for (var r = 0; r < rows.length; r++) html += '<div class="about-row"><span class="about-k">' + Util.esc(rows[r][0]) + '</span><span class="about-v">' + Util.esc(rows[r][1]) + '</span></div>';
+    // The one setting: a row like the others, with a switch, highlighted because OK toggles it.
+    html += '<div class="about-row about-setting"><span class="about-k">Каналы для взрослых</span>' +
+      '<span class="about-v"><span class="switch" id="adult-switch"><i></i></span><span id="adult-state"></span></span></div>';
     Util.$('about-table').innerHTML = html;
     renderAdultToggle();
     Util.show(Util.$('about'), true);
   }
   function renderAdultToggle() {
-    Util.$('about-adult').textContent = (showAdult ? '☑' : '☐') + '  Показывать каналы для взрослых';
+    Util.$('adult-switch').className = 'switch' + (showAdult ? ' on' : '');
+    Util.$('adult-state').textContent = showAdult ? 'показываются в меню' : 'скрыты';
   }
   function toggleAdult() {
     showAdult = !showAdult;
