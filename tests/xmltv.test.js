@@ -69,3 +69,34 @@ test('P-C (pin): a well-formed guide is parsed completely', () => {
   for (let d = -8; d <= 2; d++) n += app.ctx.EPG.day('c1', d).length;
   assert.equal(n, 100);
 });
+
+// verify/codex.md Q3 / verify/mad_react…md N2: many unclosed <programme> tags followed by ONE closed one
+// (the shape that defeats "stop at the first missing close"). Linear: each doubling ≤ 2.5× the time.
+function closedTailMs(count) {
+  let best = Infinity;
+  for (let run = 0; run < 3; run++) {
+    const app = createApp();
+    const url = 'http://epg.example.test/tail-' + count + '.xml';
+    app.net.route((u) => u === url, () => ({ body: f.xmltvUnclosed(count, { closedTail: true }), delay: 20 }));
+    let done = false;
+    const t0 = app.tasks.length;
+    app.runTask('epg-load', () => app.ctx.EPG.load(url, { c1: true }, () => { done = true; }));
+    app.advanceUntil(() => done, 600000, 5);
+    assert.ok(done, 'the parse of ' + count + ' tags never finished');
+    best = Math.min(best, app.tasks.slice(t0).filter((t) => t.label !== 'av-clock' && t.label !== 'setInterval').reduce((s, t) => s + t.ms, 0));
+  }
+  return best;
+}
+
+test('P-C: many unclosed <programme> + one closed one is parsed in linear time (2k → 32k, each doubling ≤ 2.5×)', () => {
+  const sizes = [2000, 4000, 8000, 16000, 32000];
+  const ms = [];
+  for (const n of sizes) {
+    ms.push(closedTailMs(n));
+    const k = ms.length - 1;
+    // Sub-5 ms timings are noise; compare only when the larger one is measurable. Stop at the first
+    // super-linear step (a quadratic parser would take ~20 s at 32k).
+    if (k > 0 && ms[k] >= 5) assert.ok(ms[k] <= 2.5 * Math.max(ms[k - 1], 2), 'ms per size ' + sizes.slice(0, k + 1).join('/') + ': ' + ms.map((x) => x.toFixed(1)).join(' / '));
+  }
+  assert.ok(ms[2] < 50, '8000 tags took ' + ms[2].toFixed(1) + ' ms (target < 50)');
+});

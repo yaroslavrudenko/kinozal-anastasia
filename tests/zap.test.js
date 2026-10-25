@@ -87,3 +87,16 @@ test('P-M: zapping writes nothing to localStorage on the key path (target 0 writ
   const writes = app.storage.writes().filter((w) => w.seq > keySeq);
   assert.equal(writes.length, 0, 'writes: ' + writes.map((w) => w.key).join(', '));
 });
+
+// verify/codex.md Q3: with a fast first frame the leading press already fetched its guide and probe
+// before press two; the whole burst must still stay within 3 requests.
+test('P-A: a burst stays within 3 requests even when the first press\'s picture appears before press two', () => {
+  const app = f.untilPlaying(f.ottApp({ channels: 30, avPrepareMs: 20, guideLatency: 300, streamLatency: 300 }));
+  app.advance(3000);
+  const fromSeq = app.seq();
+  app.press(KEYS.RIGHT, 700);                           // opens at once; its first frame arrives within 700 ms
+  for (let i = 0; i < PRESSES - 1; i++) app.press(KEYS.RIGHT, PRESS_GAP_MS);
+  app.advance(3000);
+  const burst = app.net.requests((r) => r.sendSeq > fromSeq && (f.isGuide(r.url) || f.isStream(r.url)));
+  assert.ok(burst.length <= 3, 'requests during the burst: ' + burst.length + '\n' + burst.map((r) => r.url + (r.aborted ? ' (aborted)' : '')).join('\n'));
+});

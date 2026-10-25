@@ -89,3 +89,26 @@ test('P-I (pin): the channel being watched keeps its full guide while browsing',
   app.advance(500);
   assert.ok(guideEntries(app, playing).length > 24, 'the watched channel lost its guide');
 });
+
+// ---------- verification round 2026-10-25 (verify/codex.md Q2 #7, Q3; implementer's mutation survivor) ----------
+test('P-O: a failing guide is requested at most 5 times in 10 minutes, even with the shortest jitter every time', () => {
+  const app = f.untilPlaying(f.ottApp({ guide: 'fail', guideLatency: 50, random: () => 0 }));
+  app.advance(600000);
+  const sent = guideRequests(app).map((r) => Math.round(r.sentAt / 100) / 10);
+  assert.ok(sent.length <= 5, 'guide requests in 10 min: ' + sent.length);
+});
+
+test('P-O: pressing INFO repeatedly during the cool-down after a guide failure sends no new guide request', () => {
+  const app = f.untilPlaying(f.ottApp({ guide: 'fail', guideLatency: 50 }));
+  app.advance(3000);
+  const before = guideRequests(app).length;
+  for (let i = 0; i < 10; i++) app.press(KEYS.INFO, 1000);   // 10 s, well inside the cool-down
+  assert.equal(guideRequests(app).length, before, 'INFO re-requested the failing guide');
+});
+
+test('guide: an OTT guide sent newest-first still finds the programme on air now', () => {
+  const app = f.untilPlaying(f.ottApp({ guideOrder: 'desc', guideLatency: 10 }));
+  app.advance(1500);
+  app.press(KEYS.INFO, 100);
+  assert.match(app.text('b-now'), /Передача/, 'banner "now" line: "' + app.text('b-now') + '"');
+});

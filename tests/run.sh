@@ -3,20 +3,30 @@
 # Prints one line per test name (ok / not ok), the counts, and exits non-zero on any failure.
 #   tests/run.sh                 the whole suite
 #   tests/run.sh --junit FILE    also write a JUnit report (per-test names, for by-name regression diffs)
-# The headless-browser checks in tests/e2e/ are run separately (they need Chrome and the network).
+#   tests/run.sh --browser       also run tests/browser/*.test.mjs (layout in headless Chrome; needs
+#                                PUPPETEER_CORE_DIR — they fail, never skip, without it)
+# Options combine in any order. The network scripts in tests/e2e/ are run separately.
 set -u
 cd "${0:A:h}/.."
 NODE="${NODE:-/Users/yaroslavr/.nvm/versions/node/v22.22.0/bin/node}"
 [[ -x "$NODE" ]] || NODE="$(command -v node)"
 
+junit="" browser=0
+while (( $# )); do
+  case "$1" in
+    --junit) junit="${2:-}"; shift 2 ;;
+    --browser) browser=1; shift ;;
+    *) echo "unknown option: $1" >&2; exit 2 ;;
+  esac
+done
+
 files=(tests/*.test.js)
+(( browser )) && files+=(tests/browser/*.test.mjs)
 if (( ${#files} == 0 )); then echo "no test files found in tests/" >&2; exit 2; fi
-echo "node $("$NODE" --version) · ${#files} test files"
+echo "node $("$NODE" --version) · ${#files} test files$( (( browser )) && echo ' (with browser layout)')"
 
 reporters=(--test-reporter=tap --test-reporter-destination=stdout)
-if [[ "${1:-}" == "--junit" && -n "${2:-}" ]]; then
-  reporters+=(--test-reporter=junit "--test-reporter-destination=$2")
-fi
+[[ -n "$junit" ]] && reporters+=(--test-reporter=junit "--test-reporter-destination=$junit")
 
 out="$("$NODE" --test --test-concurrency=4 "${reporters[@]}" "${files[@]}" 2>&1)"
 rc=$?

@@ -188,6 +188,9 @@ function createApp(opts) {
     defaultLatencyMs: 50,
     avPrepareMs: 300,
     avSuspendState: 'PAUSED',    // state AVPlay reports after suspend(); the TV behaviour is unverified
+    avPauseState: 'PAUSED',      // state AVPlay reports after pause(); the TV behaviour is unverified
+    random: null,                // Math.random replacement (e.g. () => 0: the shortest jitter every time)
+    platformThrows: [],          // paths of TV platform calls that throw, like the real TV can (see below)
     maxStepsPerAdvance: 300000
   }, opts || {});
 
@@ -321,21 +324,24 @@ function createApp(opts) {
   const net = {
     route,
     requests: (filter) => (filter ? requests.filter(filter) : requests.slice()),
-    // Highest number of matching requests in flight at any moment within [fromSeq, toSeq].
+    // Highest number of matching requests in flight at any moment after event `fromSeq` up to `toSeq`.
+    // Events up to and including fromSeq are history: a request that ended at or before fromSeq is not
+    // counted (decision FP-2026-10-25, NC-2: the window starts after the triggering event).
     maxInflight(filter, fromSeq, toSeq) {
       const to = toSeq == null ? Infinity : toSeq;
       let live = 0;
       let max = 0;
+      let entered = false;
       for (const e of events) {
         if (e.type !== 'xhr-send' && e.type !== 'xhr-end') continue;
         const req = requests[e.id - 1];
         if (!filter(req)) continue;
         if (e.seq > to) break;
+        if (!entered && e.seq > fromSeq) { entered = true; max = live; }
         live += e.type === 'xhr-send' ? 1 : -1;
-        if (e.seq >= fromSeq) max = Math.max(max, live);
-        else max = live;      // the count on entering the window
+        if (entered) max = Math.max(max, live);
       }
-      return max;
+      return entered ? max : live;
     }
   };
 
@@ -361,7 +367,7 @@ function createApp(opts) {
         throw err;
       }
       store.set(key, val);
-      log('storage-write', { key, size: val.length });
+      log('storage-write', { key, size: val.length, value: val });
     },
     removeItem(k) { store.delete(String(k)); log('storage-remove', { key: String(k) }); },
     clear() { store.clear(); },
@@ -378,13 +384,16 @@ function createApp(opts) {
     prepareMs: o.avPrepareMs,
     prepareFails: false,
     suspendState: o.avSuspendState,
+    pauseState: o.avPauseState,
+    paused: false,
     suspended: false,
     stalled: false,              // true: the stream is stuck — play time stops advancing
+    streamInfo: null,            // (url) -> AVPlay stream-info list for that stream (null: none)
     calls: []
   };
   function avCall(fn, args) { const e = log('av', { fn, args }); av.calls.push(e); return e; }
   const avplay = {
-    open(url) { avCall('open', [url]); av.url = url; av.state = 'IDLE'; av.currentTime = 0; av.suspended = false; },
+    open(url) { avCall('open', [url]); av.url = url; av.state = 'IDLE'; av.currentTime = 0; av.suspended = false; av.paused = false; },
     close() { avCall('close', []); av.state = 'NONE'; },
     stop() { avCall('stop', []); if (av.state !== 'NONE') av.state = 'IDLE'; },
     setDisplayRect() {},
@@ -403,8 +412,8 @@ function createApp(opts) {
       }, av.prepareMs, false, 'av-prepare');
     },
     prepare() { avCall('prepare', []); av.state = 'READY'; },
-    play() { avCall('play', []); av.state = 'PLAYING'; },
-    pause() { avCall('pause', []); av.state = 'PAUSED'; },
+    play() { avCall('play', []); av.paused = false; av.state = 'PLAYING'; },
+    pause() { avCall('pause', []); av.paused = true; av.state = av.pauseState; },
     suspend() { avCall('suspend', []); av.suspended = true; if (av.suspendState) av.state = av.suspendState; },
     restore(url, resumeTime, prepare) {
       avCall('restore', [url, resumeTime, prepare]); av.url = url; av.state = 'PLAYING'; av.suspended = false; av.currentTime = resumeTime || 0;
@@ -416,7 +425,7 @@ function createApp(opts) {
     getCurrentTime() { return av.currentTime; },
     getDuration() { return 0; },
     getTotalTrackInfo() { return []; },
-    getCurrentStreamInfo() { return []; },
+    getCurrentStreamInfo() { avCall('getCurrentStreamInfo', []); return av.streamInfo ? av.streamInfo(av.url) : []; },
     setSelectTrack() {}
   };
   av.emit = function (name, arg) {
@@ -426,7 +435,7 @@ function createApp(opts) {
   // reported every 500 ms through oncurrentplaytime.
   const AV_TICK_MS = 500;
   addTimer(function () {
-    if (av.state !== 'PLAYING' || av.suspended || av.stalled) return;
+    if (av.state !== 'PLAYING' || av.suspended || av.stalled || av.paused) return;
     av.currentTime += AV_TICK_MS;
     if (av.listener && av.listener.oncurrentplaytime) av.listener.oncurrentplaytime(av.currentTime);
   }, AV_TICK_MS, true, 'av-clock');
@@ -434,6 +443,7 @@ function createApp(opts) {
 
   // ----- the vm context -----
   const index = readIndex();
+  const netListeners = [];
   const document = createDocument(index.bodyHtml);
   const sandbox = {
     console: { log() {}, warn() {}, error() {}, info() {} },
@@ -451,19 +461,39 @@ function createApp(opts) {
     location: { reload() { log('reload', {}); } },
     webapis: {
       avplay,
-      network: { addNetworkStateChangeListener() {}, NetworkState: { GATEWAY_CONNECTED: 4, GATEWAY_DISCONNECTED: 5 } }
+      network: { addNetworkStateChangeListener(fn) { netListeners.push(fn); }, NetworkState: { GATEWAY_CONNECTED: 4, GATEWAY_DISCONNECTED: 5 } },
+      productinfo: { getVersion: () => 'T-KTMDEUC-1250.4', getFirmware: () => 'T-KTMDEUC-1250.4', getModel: () => 'UE50MU7000', getRealModel: () => 'UE50MU7000' },
+      tvinfo: { getVersion: () => '3.0', isTvsPicSizeResized: () => false }
     },
     tizen: {
-      tvinputdevice: { getSupportedKeys: () => [], registerKey() {} },
-      application: { getCurrentApplication: () => ({ exit() { log('exit', {}); } }) }
+      tvinputdevice: { getSupportedKeys: () => [{ name: 'ColorF0Red' }, { name: 'MediaPlayPause' }, { name: 'ChannelUp' }], registerKey() {} },
+      application: { getCurrentApplication: () => ({ exit() { log('exit', {}); } }) },
+      systeminfo: { getCapability: () => '3.0', getPropertyValue(name, ok) { if (ok) ok({}); } }
     },
     _winListeners: {},
     addEventListener(type, fn) { (sandbox._winListeners[type] || (sandbox._winListeners[type] = [])).push(fn); }
   };
   sandbox.window = sandbox;
+  // The real TV throws WebAPIException objects (not Error instances), e.g. { code: 18, name:
+  // 'SecurityError' } for a privilege the package lacks. Each listed path throws one on every call.
+  const thrown = [];
+  for (const p of o.platformThrows) {
+    const parts = p.split('.'), name = parts.pop();
+    const owner = parts.reduce((x, k) => x && x[k], sandbox);
+    if (!owner || typeof owner[name] !== 'function') throw new Error('platformThrows: no such call ' + p);
+    owner[name] = function () {
+      thrown.push(p);
+      log('platform-throw', { path: p });
+      throw { code: 18, name: 'SecurityError', message: 'The application does not have the privilege to call this method.' };
+    };
+  }
   vm.createContext(sandbox);
   const ctxJSON = vm.runInContext('JSON', sandbox);
   const jsonParses = [];
+  if (o.random) {
+    const ctxMath = vm.runInContext('Math', sandbox);
+    sandbox.Math = Object.assign(Object.create(ctxMath), { random: o.random });
+  }
   sandbox.JSON = {
     parse(text, reviver) { jsonParses.push({ length: text == null ? 0 : String(text).length, text, at: clock.now }); return ctxJSON.parse(text, reviver); },
     stringify: ctxJSON.stringify
@@ -480,7 +510,7 @@ function createApp(opts) {
   }
 
   const app = {
-    ctx: sandbox, clock, events, errors, tasks, net, av, document, jsonParses,
+    ctx: sandbox, clock, events, errors, tasks, net, av, document, jsonParses, thrown,
     storage: { raw: store, used, reads, writes: () => events.filter((e) => e.type === 'storage-write') },
     seq: () => seq,
     advance, advanceUntil, runTask, log,
@@ -499,6 +529,28 @@ function createApp(opts) {
     text(id) { const el = document.getElementById(id); return el ? el.textContent : null; },
     visible(id) { const el = document.getElementById(id); return !!el && !/(^|\s)hidden(\s|$)/.test(el.className); },
     // Visible rows of a virtualised list column: their text, top to bottom.
+    // Visible rows with their classes and cell texts: [{ text, classes: [..], cells: [num, logo, title, sub] }].
+    rowsDetailed(containerId) {
+      const el = document.getElementById(containerId);
+      return el ? el.children.filter((r) => r.style.visibility !== 'hidden')
+        .map((r) => ({ text: r.textContent, classes: r.className.split(/\s+/).filter(Boolean),
+          cells: r.children.map((c) => c.textContent) })) : [];
+    },
+    // Text of the highlighted row of a list column ('focus' or 'sel'), or null.
+    cursorRow(containerId) {
+      const hit = app.rowsDetailed(containerId).find((r) => r.classes.indexOf('focus') >= 0 || r.classes.indexOf('sel') >= 0);
+      return hit ? hit.text : null;
+    },
+    // Types into a text field the way the on-screen keyboard does (value, then the input event).
+    type(id, text) {
+      const el = document.getElementById(id);
+      runTask('type ' + id, function () { el.value = text; if (el.oninput) el.oninput({}); });
+    },
+    // The TV's network listener: 'GATEWAY_CONNECTED' | 'GATEWAY_DISCONNECTED'.
+    network(state) {
+      const v = sandbox.webapis.network.NetworkState[state];
+      runTask('network ' + state, function () { netListeners.forEach((fn) => fn(v)); });
+    },
     rows(containerId) {
       const el = document.getElementById(containerId);
       return el ? el.children.filter((r) => r.style.visibility !== 'hidden').map((r) => r.textContent) : [];

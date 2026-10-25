@@ -12,7 +12,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const vm = require('node:vm');
-const { execFileSync } = require('node:child_process');
+const { spawnSync } = require('node:child_process');
 const { ROOT } = require('./harness');
 
 function substitutionCommand() {
@@ -28,23 +28,32 @@ function substitutionCommand() {
   return cmd;
 }
 
-// Runs the substitution on a fresh copy of js/config.js and returns the resulting CONFIG.
-function buildConfig(env) {
+// Runs the substitution on a fresh copy of js/config.js (optionally edited by `transform`) in a
+// temporary directory. Returns { status, text } — the exit status and the resulting config.js.
+function runSubstitution(env, transform) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kinozal-build-'));
   try {
     fs.mkdirSync(path.join(dir, '.buildResult', 'js'), { recursive: true });
-    fs.copyFileSync(path.join(ROOT, 'js', 'config.js'), path.join(dir, '.buildResult', 'js', 'config.js'));
+    const original = fs.readFileSync(path.join(ROOT, 'js', 'config.js'), 'utf8');
+    fs.writeFileSync(path.join(dir, '.buildResult', 'js', 'config.js'), transform ? transform(original) : original);
     const script = 'set -eu\ncd "$1"\n' + substitutionCommand() + '\n';
-    execFileSync('/bin/zsh', ['-c', script, 'zsh', dir], {
-      env: Object.assign({ PATH: process.env.PATH, HOME: dir, BUILD: 'abc1234 25.10.2026' }, env), stdio: 'pipe'
+    const res = spawnSync('/bin/zsh', ['-c', script, 'zsh', dir], {
+      env: Object.assign({ PATH: path.dirname(process.execPath) + ':' + process.env.PATH, HOME: dir, BUILD: 'abc1234 25.10.2026' }, env),
+      encoding: 'utf8'
     });
-    const text = fs.readFileSync(path.join(dir, '.buildResult', 'js', 'config.js'), 'utf8');
-    const sandbox = {};
-    vm.runInNewContext(text + '\nthis.CONFIG = CONFIG;', sandbox);
-    return sandbox.CONFIG;
+    return { status: res.status, stderr: res.stderr, text: fs.readFileSync(path.join(dir, '.buildResult', 'js', 'config.js'), 'utf8') };
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+}
+
+// The resulting CONFIG of a successful substitution.
+function buildConfig(env) {
+  const res = runSubstitution(env);
+  assert.equal(res.status, 0, 'the substitution failed: ' + res.stderr);
+  const sandbox = {};
+  vm.runInNewContext(res.text + '\nthis.CONFIG = CONFIG;', sandbox);
+  return sandbox.CONFIG;
 }
 
 const FAKE_KEY = 'FAKEKEY0001';
@@ -65,4 +74,16 @@ test('build.sh (pin): a plain key and URL are written into config.js', () => {
   const config = buildConfig({ OTT_KEY: FAKE_KEY, PLAYLIST_URL: 'http://playlist.example.test/list.m3u' });
   assert.equal(config.OTT_KEY, FAKE_KEY);
   assert.equal(config.PLAYLIST_URL, 'http://playlist.example.test/list.m3u');
+});
+
+// verify/mad_react…md N7: a value that was given but whose placeholder was not replaced (here the
+// placeholder's quoting changed) must fail the build, not ship a config that silently opens setup.
+test('build.sh: a given PLAYLIST_URL is either written or the build fails — never a success with the placeholder left', () => {
+  const requote = (text) => text.replace("'__PLAYLIST_URL__'", '"__PLAYLIST_URL__"');
+  assert.notEqual(requote(fs.readFileSync(path.join(ROOT, 'js', 'config.js'), 'utf8')), fs.readFileSync(path.join(ROOT, 'js', 'config.js'), 'utf8'),
+    'config.js has no \'__PLAYLIST_URL__\' placeholder to requote');
+  const url = 'http://playlist.example.test/list.m3u';
+  const res = runSubstitution({ OTT_KEY: FAKE_KEY, PLAYLIST_URL: url }, requote);
+  if (res.status !== 0) return;                        // failing loudly is acceptable
+  assert.ok(res.text.indexOf(url) >= 0 && res.text.indexOf('__PLAYLIST_URL__') < 0, 'the build succeeded and left the placeholder in config.js');
 });

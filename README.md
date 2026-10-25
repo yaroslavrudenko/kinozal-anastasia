@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/icon.png" width="160" alt="Кинозал Анастасии icon: a white daisy with the name Настя">
+  <img src="docs/icon.png" width="160" alt="Настин кинозал icon: a white daisy with the name Настя">
 </p>
 
-<h1 align="center">Кинозал Анастасии</h1>
+<h1 align="center">Настин кинозал</h1>
 
 <p align="center">
   <b>Your old Samsung TV deserves a cinema that never freezes.</b><br>
@@ -31,13 +31,13 @@
 
 That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus throw JavaScript errors, channels freeze, and nothing gets updated any more.
 
-**Кинозал Анастасии fixes that in one install.** It is a player written for the web engine your TV actually has, and it plays through the TV's own hardware decoder. Everything you open is fast, and every stream heals itself.
+**Настин кинозал (Nastin Kinozal) fixes that in one install.** It is a player written for the web engine your TV actually has, and it plays through the TV's own hardware decoder. Everything you open is fast, and every stream heals itself.
 
-**[⬇ Install it on your TV](#-install) · [⭐ Star the repo](https://github.com/yaroslavrudenko/kinozal-anastasia) · [💬 Tell us your TV model](https://github.com/yaroslavrudenko/kinozal-anastasia/issues)**
+**[⬇ Install it on your TV](#-install) · [⭐ Star the repo](https://github.com/yaroslavrudenko/nastin-kinozal) · [💬 Tell us your TV model](https://github.com/yaroslavrudenko/nastin-kinozal/issues)**
 
 ---
 
-> **This is a player, not a TV service.** Кинозал Анастасии shows no channels by itself. You need **your own paid IPTV subscription**: it was built for [OTT Club](https://www.ottclub.tv) and has first-class support for it, and it also plays **any provider's M3U playlist** ([see below](#-use-it-with-any-iptv-provider)). No channels, keys or playlists are included in this repository.
+> **This is a player, not a TV service.** Настин кинозал shows no channels by itself. You need **your own paid IPTV subscription**: it was built for [OTT Club](https://www.ottclub.tv) and has first-class support for it, and it also plays **any provider's M3U playlist** ([see below](#-use-it-with-any-iptv-provider)). No channels, keys or playlists are included in this repository.
 
 ## Why you'll love it
 
@@ -112,7 +112,7 @@ Samsung TVs from 2017 and 2018 still have good panels, but their software has fa
 - **Samsung no longer updates these TVs.** The firmware is signed and locked, so the web engine cannot be upgraded. The only fix inside the TV is an app written for the engine the TV actually has.
 - **The goal: a player that is fast, reliable and complete on old hardware.** It keeps every feature that matters to a viewer: all channels split into groups, a programme guide, a 7-day archive with rewind, sound tracks and picture modes. The app should never hang. A stalled stream reconnects by itself, and the interface stays responsive with a thousand channels.
 
-The app is named after the person it was made for: a cinema at home, one that simply works.
+The app is named after the person it was made for: «Настин кинозал» means "Nastya's cinema", a cinema at home, one that simply works.
 
 ## Design principles
 
@@ -135,6 +135,17 @@ The app is named after the person it was made for: a cinema at home, one that si
 | Full channel re-check | 389 channels in ~9 s, in the background |
 
 Open performance issues and every performance change, with before/after numbers: **[docs/PERFORMANCE.md](docs/PERFORMANCE.md)**.
+
+## ⚡ Performance
+
+In 2026 six independent reviewers went through the whole player. The 230 findings were then fixed over five reviewed iterations, and 131 behaviour tests now guard the fixes. Measured on a desktop (harness and headless Chrome); TV measurements are still to come:
+
+- **Zapping:** requests per 10 quick presses 20 → 3; a single press opens the channel after 0 ms instead of 350 ms.
+- **Startup:** the channel list is parsed once instead of twice, with 0 storage writes before the first frame (was 2). The offline copy shrank from 500 KB to 44 KB. No long tasks over 50 ms (was 66–74 ms at 6× CPU).
+- **Quiet when idle or failing:** 0 requests during a 10-minute pause (was 200). A failing guide makes 5 requests in 10 minutes instead of 12 007.
+- **Memory:** full guides kept after 100 channels 100 → 24, with no descriptions stored.
+
+The full before → after table and what is still to verify on the TV: **[docs/PERFORMANCE.md](docs/PERFORMANCE.md#summary-of-the-2026-performance-work)**.
 
 ## 📡 Use it with any IPTV provider
 
@@ -193,5 +204,5 @@ The daisy icon appears in your TV's apps.
 
 <p align="center">
   <b>Made with love for Настя: a cinema at home, one that simply works.</b><br>
-  If it brought your old TV back to life, <a href="https://github.com/yaroslavrudenko/kinozal-anastasia">give it a ⭐</a>.
+  If it brought your old TV back to life, <a href="https://github.com/yaroslavrudenko/nastin-kinozal">give it a ⭐</a>.
 </p>

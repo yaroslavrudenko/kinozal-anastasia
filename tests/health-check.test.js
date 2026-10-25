@@ -8,7 +8,9 @@ const assert = require('node:assert/strict');
 const { KEYS } = require('./harness');
 const f = require('./fixtures');
 
-const REFRESH_MS = 60000;           // list refresh brought forward from 6 h so it overlaps a slow check
+// List refresh brought forward from 6 h so it overlaps a slow check. 120 s: after the plan's deferred
+// sweep start (first frame + 20 s steady + 60 s quiet), so the refresh really meets a running sweep.
+const REFRESH_MS = 120000;
 
 // 200 channels whose stream probes never answer (each times out): the check takes minutes.
 function slowCheckApp() {
@@ -16,9 +18,19 @@ function slowCheckApp() {
 }
 const listRequests = (app) => app.net.requests((r) => f.isList(r.url));
 
+// Decision FP-2026-10-25 (NC-2): the window starts after the key press has been handled (a sweep
+// aborted synchronously by the key is not "in flight during the zap"), and the press happens while a
+// sweep is really running — the plan defers the sweep until playback is settled.
+function sweepRunning(app) {
+  const playing = f.streamIdOf(f.lastOpenUrl(app));
+  return app.net.requests((r) => f.isStream(r.url) && r.endedAt === null && f.streamIdOf(r.url) !== playing).length > 0;
+}
+
 test('P-D: a list refresh aborts the superseded health check\'s requests still in flight', () => {
   const app = slowCheckApp();
-  app.advanceUntil(() => listRequests(app).length >= 2, REFRESH_MS + 5000, 100);
+  let runningAtRefresh = false;
+  app.advanceUntil(() => { if (listRequests(app).length < 2) runningAtRefresh = sweepRunning(app); return listRequests(app).length >= 2; }, REFRESH_MS + 5000, 100);
+  assert.ok(runningAtRefresh, 'no health check was running when the list refreshed');
   const refreshAt = listRequests(app)[1].sentAt;
   app.advance(1000);
   const leftOver = app.net.requests((r) => f.isStream(r.url) && r.sentAt < refreshAt && (r.endedAt === null || r.endedAt > refreshAt) && !r.aborted);
@@ -34,15 +46,16 @@ test('P-D: across a list refresh, at most 4 health-check requests are ever in fl
 
 test('P-D: no health-check request is in flight while a zapped channel is starting (target 0, baseline up to 4)', () => {
   const app = slowCheckApp();
-  app.advance(20000);                                   // the check started at +15 s
-  const keySeq = app.seq();
+  assert.ok(app.advanceUntil(() => sweepRunning(app), 300000, 100), 'the health check never started');
   app.press(KEYS.RIGHT, 0);
-  app.advanceUntil(() => app.av.calledAfter('play', keySeq).length > 0, 10000, 10);
-  const playSeq = app.av.calledAfter('play', keySeq)[0].seq;
+  const afterKeySeq = app.seq();                        // after the synchronous handling of the key
+  app.advanceUntil(() => app.av.calledAfter('play', afterKeySeq).length > 0, 10000, 10);
+  const play = app.av.calledAfter('play', afterKeySeq)[0];
+  assert.ok(play, 'the zapped channel never started');
   const tuned = f.streamIdOf(f.lastOpenUrl(app));
   const others = (r) => f.isStream(r.url) && f.streamIdOf(r.url) !== tuned;
-  const max = app.net.maxInflight(others, keySeq, playSeq);
-  assert.equal(max, 0, 'health-check requests in flight between the key press and play(): ' + max);
+  const max = app.net.maxInflight(others, afterKeySeq, play.seq);
+  assert.equal(max, 0, 'health-check requests in flight between the handled key press and play(): ' + max);
 });
 
 test('correctness: a generic HLS master with only BANDWIDTH is not hidden as "removed by the provider"', () => {
