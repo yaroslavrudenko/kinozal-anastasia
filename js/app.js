@@ -28,8 +28,7 @@
     closeGuide();
     s.about = true;
     var build = CONFIG.BUILD.indexOf('__') === 0 ? 'локальная' : CONFIG.BUILD;
-    var model = '', ua = navigator.userAgent;
-    try { model = webapis.productinfo.getRealModel(); } catch (e) {}
+    var model = s.tvModel || '', ua = navigator.userAgent;
     var tizen = (/Tizen\s*([\d.]+)/.exec(ua) || [])[1];
     var chromium = (/Chrome\/([\d]+)/.exec(ua) || [])[1];
     var alive = 0, dead = 0;
@@ -90,6 +89,10 @@
       if (document.hidden) Player.suspend(); else Player.resume();
     });
     watchNetwork();
+    // The TV's own local API names the model (no extra privilege needed); used on «О программе».
+    if (window.webapis) Util.get('http://127.0.0.1:8001/api/v2/', 5000, function (t) {
+      try { var d = JSON.parse(t).device; s.tvModel = 'Samsung ' + d.modelName + (d.networkType ? ' · сеть ' + (d.networkType === 'wireless' ? 'Wi‑Fi' : 'кабель') : ''); } catch (e) {}
+    }, function () {});
     if (OttClub.enabled() || playlistUrl()) startSources(); else showSetup();
   }
 
