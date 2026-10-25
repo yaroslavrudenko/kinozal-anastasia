@@ -454,7 +454,7 @@
 
   function move(d) {
     if (s.focus === 'groups') {
-      s.groupIdx = clamp(s.groupIdx + d, groups.length); s.chCursor = 0;
+      s.groupIdx = clamp(s.groupIdx + d, groups.length); s.chCursor = 0; s.dayOffset = 0;
     } else if (s.focus === 'channels') {
       s.chCursor = clamp(s.chCursor + d, groups[s.groupIdx].items.length);
       s.dayOffset = 0;
