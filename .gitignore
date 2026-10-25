@@ -1,0 +1,7 @@
+.buildResult/
+*.wgt
+.sign/
+.DS_Store
+# local build settings (playlist URL, certificate profile)
+build.local.*
+.claude/

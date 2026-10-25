@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, height=1080">
+<title>Кинозал Анастасия</title>
+<link rel="stylesheet" href="css/app.css">
+<script src="$WEBAPIS/webapis/webapis.js"></script>
+</head>
+<body>
+<object id="av-player" type="application/avplayer"></object>
+<video id="html-player" autoplay></video>
+
+<div id="spinner" class="spinner hidden"><div class="ring"></div></div>
+
+<div id="banner" class="banner hidden">
+  <div class="banner-num" id="b-num"></div>
+  <img class="banner-logo" id="b-logo" alt="">
+  <div class="banner-main">
+    <div class="banner-title" id="b-title"></div>
+    <div class="banner-now" id="b-now"></div>
+    <div class="banner-bar"><div id="b-progress"></div></div>
+    <div class="banner-next" id="b-next"></div>
+  </div>
+  <div class="banner-clock" id="b-clock"></div>
+</div>
+
+<div id="numentry" class="numentry hidden"></div>
+
+<div id="guide" class="guide hidden">
+  <div class="groups" id="groups"></div>
+  <div class="channels" id="channels"></div>
+  <div class="details">
+    <div class="d-title" id="d-title"></div>
+    <div class="d-list" id="d-list"></div>
+  </div>
+  <div class="hint">OK — смотреть · ◀ ▶ — колонки · CH+/CH− — день архива · Жёлтая — избранное · Назад — закрыть</div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<div id="fatal" class="fatal hidden"></div>
+
+<script src="js/config.js"></script>
+<script src="js/util.js"></script>
+<script src="js/m3u.js"></script>
+<script src="js/epg.js"></script>
+<script src="js/catchup.js"></script>
+<script src="js/player.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
