@@ -65,7 +65,7 @@ var UI = (function () {
       r.n.textContent = ch.num;
       setLogo(r, ch.logo);
       r.t.textContent = (favs[ch.url] ? '★ ' : '') + ch.name + (chIdx === playingIdx ? '  ▶' : '');
-      r.s.textContent = now ? now.title : '';
+      r.s.textContent = ch.dead ? 'отключён провайдером' : (now ? now.title : '');
     });
   }
 

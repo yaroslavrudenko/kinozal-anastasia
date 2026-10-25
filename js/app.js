@@ -2,7 +2,7 @@
 (function () {
   var K = {
     LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, ENTER: 13, BACK: 10009, BACK_DESKTOP: 8,
-    CH_UP: 427, CH_DOWN: 428, RED: 403, GREEN: 404, YELLOW: 405, BLUE: 406,
+    CH_UP: 427, CH_DOWN: 428, PG_UP: 33, PG_DOWN: 34, RED: 403, GREEN: 404, YELLOW: 405, BLUE: 406,
     PLAY_PAUSE: 10252, PLAY: 415, PAUSE: 19, STOP: 413, REWIND: 412, FF: 417, INFO: 457, CH_LIST: 10073,
     PREV_CH: 10190
   };
@@ -89,7 +89,16 @@
     }
   }
 
+  // Blue in the guide: enter a different key. The current one stays until a new one passes the check.
+  function changeKey() {
+    Util.$('key-input').value = '';
+    Util.$('setup-err').textContent = 'Сейчас используется сохранённый ключ. Введите новый или нажмите «Назад».';
+    s.changingKey = true;
+    showSetup();
+  }
+
   function finishSetup() {
+    if (s.changingKey) { s.changingKey = false; window.location.reload(); return; }
     s.setup = false;
     Util.$('key-input').blur();
     Util.show(Util.$('setup'), false);
@@ -120,15 +129,56 @@
     var parsed = parseSource(text);
     if (!parsed) return;
     all = parsed.channels;
-    groups = parsed.groups;
-    rebuildFavGroup();
+    // Until this launch's check finishes, hide what the previous check found removed.
+    var deadBefore = Util.store('deadUrls') || {};
+    for (var d = 0; d < all.length; d++) if (deadBefore[all[d].url]) all[d].dead = true;
+    rebuildGroups();
     UI.fatal('');
+    healthCheck();
     var wanted = {};
     for (var i = 0; i < all.length; i++) if (all[i].id) wanted[all[i].id] = true;
     EPG.load(CONFIG.EPG_URL || parsed.epgUrl, wanted, function () { if (s.guideOpen) renderGuide(); });
     var idx = indexOfUrl(playingUrl);
     if (firstLoad) tune(idx >= 0 ? idx : 0);
     else s.playing = idx;
+  }
+
+  function rebuildGroups() {
+    groups = M3U.groupsOf(all, function (c) { return !c.dead; });
+    rebuildFavGroup();
+    s.groupIdx = clamp(s.groupIdx, groups.length);
+    if (groups[s.groupIdx]) s.chCursor = clamp(s.chCursor, groups[s.groupIdx].items.length);
+  }
+
+  // Every launch (and every list refresh) re-checks every channel, 6 at a time, ~0.1 s each:
+  // channels the provider removed disappear, channels it restored come back. Nothing stale survives.
+  function healthCheck() {
+    var list = all, next = 0, active = 0, dead = {}, removed = 0;
+    function pump() {
+      while (active < 6 && next < list.length) check(list[next++]);
+      if (active === 0 && next >= list.length) finish();
+    }
+    function check(ch) {
+      active++;
+      Util.get(ch.url, 8000, function (text) {
+        ch.dead = isDeadPlaylist(text);
+        if (ch.dead) { dead[ch.url] = true; removed++; }
+        active--; pump();
+      }, function () { active--; pump(); });   // a network error is not proof of removal: keep the channel
+    }
+    function finish() {
+      if (list !== all) return;                // a newer list arrived meanwhile; its own check wins
+      Util.store('deadUrls', dead);
+      rebuildGroups();
+      if (s.guideOpen) renderGuide();
+      if (removed) UI.toast('Проверено каналов: ' + list.length + ', отключены провайдером: ' + removed, 3500);
+    }
+    pump();
+  }
+
+  function isDeadPlaylist(text) {
+    return text.indexOf('/system/') >= 0 ||
+      (text.indexOf('#EXT-X-STREAM-INF') >= 0 && text.indexOf('RESOLUTION=') < 0 && text.indexOf('avc1') < 0 && text.indexOf('hvc1') < 0);
   }
 
   function rebuildFavGroup() {
@@ -144,8 +194,20 @@
   }
 
   // ---------- playback ----------
-  function tune(idx) {
+  // dir: +1/-1 when zapping (a dead channel is skipped in that direction), 0 for a direct pick.
+  function tune(idx, dir) {
     if (idx < 0 || idx >= all.length) return;
+    var ch = all[idx];
+    if (ch.dead) {
+      if (dir) { tune(nextFrom(idx, dir), dir); return; }
+      UI.toast('Канал «' + ch.name + '» отключён провайдером');
+      return;
+    }
+    checkAlive(ch, function () {
+      if (all[s.playing] !== ch) return;
+      UI.toast('Канал «' + ch.name + '» отключён провайдером', 3500);
+      if (dir) tune(nextFrom(idx, dir), dir);
+    });
     if (s.playing !== idx) s.previous = s.playing;
     s.playing = idx;
     s.archiveStart = 0; s.pausedAt = 0;
@@ -153,6 +215,14 @@
     Player.play(all[idx].url);
     s.playStartedAt = Date.now();
     showBanner();
+  }
+
+  // A removed channel still answers, but with the provider's "/system/" placeholder clip or an
+  // audio-only stub. One 0.1 s request runs alongside playback start, so a live channel loses nothing.
+  function checkAlive(ch, onDead) {
+    Util.get(ch.url, 8000, function (text) {
+      if (isDeadPlaylist(text)) { ch.dead = true; rebuildGroups(); onDead(); }
+    }, function () {});
   }
 
   function playArchive(fromMs) {
@@ -284,8 +354,8 @@
     switch (k) {
       case K.UP: move(-1); break;
       case K.DOWN: move(1); break;
-      case K.CH_UP: if (s.focus === 'programs') day(1); else move(-CONFIG.VISIBLE_ROWS); break;
-      case K.CH_DOWN: if (s.focus === 'programs') day(-1); else move(CONFIG.VISIBLE_ROWS); break;
+      case K.CH_UP: case K.PG_UP: if (s.focus === 'programs') day(1); else move(-CONFIG.VISIBLE_ROWS); break;
+      case K.CH_DOWN: case K.PG_DOWN: if (s.focus === 'programs') day(-1); else move(CONFIG.VISIBLE_ROWS); break;
       case K.LEFT:
         s.focus = s.focus === 'programs' ? 'channels' : 'groups'; break;
       case K.RIGHT:
@@ -297,6 +367,7 @@
         if (s.focus === 'channels') { closeGuide(); tune(g.items[s.chCursor]); return; }
         playProgram(); return;
       case K.YELLOW: toggleFav(); break;
+      case K.BLUE: closeGuide(); changeKey(); return;
       case K.BACK: case K.BACK_DESKTOP: case K.CH_LIST: closeGuide(); return;
       default: return;
     }
@@ -355,14 +426,19 @@
     if (s.setup) {
       // 13 = Enter, 65376 = "Done" on the Tizen on-screen keyboard
       if (k === 13 || k === 65376) { e.preventDefault(); submitSetup(); }
+      if ((k === K.BACK || k === 27) && s.changingKey) {
+        s.changingKey = false; s.setup = false;
+        Util.$('key-input').blur();
+        Util.show(Util.$('setup'), false);
+      }
       return;
     }
     if (s.guideOpen) { guideKey(k); e.preventDefault(); return; }
     if (k >= 48 && k <= 57) { digit(k - 48); return; }
     var g = groups[0];
     switch (k) {
-      case K.UP: case K.CH_UP: tune(next(1)); break;
-      case K.DOWN: case K.CH_DOWN: tune(next(-1)); break;
+      case K.UP: case K.CH_UP: tune(next(1), 1); break;
+      case K.DOWN: case K.CH_DOWN: tune(next(-1), -1); break;
       case K.ENTER: case K.CH_LIST: openGuide(); break;
       case K.INFO: showBanner(); break;
       case K.LEFT: seek(-30000); break;
@@ -387,11 +463,18 @@
     if (g) e.preventDefault();
   }
 
-  function next(d) {
-    // Channel up/down walks the group the viewer last browsed, so favourites zap only favourites.
-    var items = groups[s.groupIdx] && groups[s.groupIdx].items.indexOf(s.playing) >= 0 ? groups[s.groupIdx].items : groups[0].items;
-    var at = items.indexOf(s.playing);
-    return items[(at + d + items.length) % items.length];
+  function next(d) { return nextFrom(s.playing, d); }
+
+  // Channel up/down walks the group the viewer last browsed, so favourites zap only favourites.
+  // Known-dead channels are stepped over; the loop is bounded by the group size.
+  function nextFrom(from, d) {
+    var items = groups[s.groupIdx] && groups[s.groupIdx].items.indexOf(from) >= 0 ? groups[s.groupIdx].items : groups[0].items;
+    var at = items.indexOf(from);
+    for (var i = 1; i <= items.length; i++) {
+      var cand = items[(at + d * i + items.length * i) % items.length];
+      if (!all[cand].dead) return cand;
+    }
+    return from;
   }
 
   var audioIdx = 0;

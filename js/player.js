@@ -64,16 +64,18 @@ var Player = (function () {
     video.ontimeupdate = function () { if (my === gen) { bufferingSince = 0; lastTimeAt = Date.now(); } };
     video.onerror = function () { if (my === gen) fail('video error'); };
     if (hls) { hls.destroy(); hls = null; }
-    if (video.canPlayType('application/vnd.apple.mpegurl')) { video.src = url; video.play(); return; }
+    // Desktop Chrome reports native HLS ("maybe") but rejects MPEG-TS segments, so prefer hls.js on MSE.
+    if (!window.MediaSource) { video.src = url; safePlay(); return; }
     withHlsJs(function () {
       if (my !== gen) return;
       hls = new window.Hls({ lowLatencyMode: false, maxBufferLength: 20 });
       hls.on(window.Hls.Events.ERROR, function (_, d) { if (my === gen && d.fatal) fail(d.details); });
       hls.loadSource(url);
       hls.attachMedia(video);
-      video.play();
+      safePlay();
     });
   }
+  function safePlay() { var p = video.play(); if (p && p['catch']) p['catch'](function () {}); }
   function withHlsJs(cb) {
     if (window.Hls) { cb(); return; }
     var sc = document.createElement('script');

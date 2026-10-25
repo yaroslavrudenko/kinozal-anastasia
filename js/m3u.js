@@ -53,15 +53,17 @@ var M3U = (function () {
     return out;
   }
 
-  function groupsOf(channels) {
+  // keep(channel) -> false hides a channel from every group (e.g. removed by the provider).
+  function groupsOf(channels, keep) {
     var order = [], map = {};
     for (var i = 0; i < channels.length; i++) {
+      if (keep && !keep(channels[i])) continue;
       var g = channels[i].group;
       if (!map[g]) { map[g] = []; order.push(g); }
       map[g].push(i);
     }
     var all = [];
-    for (var k = 0; k < channels.length; k++) all.push(k);
+    for (var k = 0; k < channels.length; k++) if (!keep || keep(channels[k])) all.push(k);
     var groups = [{ name: 'Все каналы', items: all }];
     for (var j = 0; j < order.length; j++) groups.push({ name: order[j], items: map[order[j]] });
     return groups;
