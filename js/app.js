@@ -1,6 +1,7 @@
 // Boot, wiring of the modules' hooks, and the remote-control keys while watching.
 (function () {
   var lastBack = 0, guideNoticeShown = false;
+  var BAD_KEY = 'Неверный или просроченный ключ — откройте настройки (синяя кнопка)';
 
   // Optional platform setup: a throw is recorded and boot carries on (a TV refusing one of these calls
   // must never leave the screen black).
@@ -11,7 +12,9 @@
     UI.init();
     Overlay.onBeforeOpen(function () { NumEntry.cancel(); Zap.cancel(); });
     Player.init({
-      onBuffering: function (on) { UI.spinner(on); if (on) Playback.quiet(); },
+      // The state line on the banner while there is no picture (not over a zap burst's preview).
+      onBuffering: function (on) { UI.spinner(on); if (!on) Banner.resumed(); else { Playback.quiet(); if (!Zap.choosing()) Banner.connecting(); } },
+      onLoading: function (pct) { if (!Zap.choosing()) Banner.loading(pct); },
       // The picture is up: the banner with this stream's technical line, at once.
       onFirstFrame: function () {
         UI.spinner(false);
@@ -20,7 +23,7 @@
       },
       onStable: Playback.onStable,
       // The first three retries (≈3.5 s) are silent: a channel switch or a short hiccup is not "no signal".
-      onError: function (n, delay) { if (n >= 4) UI.toast('Нет сигнала, переподключаюсь… (' + n + ')', delay + 500); },
+      onError: function (n, delay) { if (n >= 4) UI.toast('Нет сигнала, переподключаюсь… (' + n + ')', delay + 500); if (!Zap.choosing()) Banner.retrying(n, delay); },
       onEnded: Playback.onEnded,
       onMutedStart: function () { UI.toast('Звук включится после любого нажатия или клика', 6000); },
       retryTarget: Playback.retryTarget
@@ -32,7 +35,7 @@
       Channels.rebuild();
       Overlay.refresh();
       if (removed) UI.toast('Проверено каналов: ' + checked + ', отключены провайдером: ' + removed, 3500);
-    } });
+    }, onBadKey: function () { Banner.setState(BAD_KEY); UI.toast(BAD_KEY, 10000); } });
     EPG.setHooks({
       onGuide: function () { Banner.onGuide(null); Overlay.refresh(); },
       onXmltvFailed: function () { if (!guideNoticeShown) UI.toast('Программа передач недоступна, повторю позже', 5000); guideNoticeShown = true; }
@@ -49,7 +52,7 @@
       UI.toast(window.webapis ? '◀ ▶ — каналы · ▲ — архив · ▼ — программа · OK — меню и поиск' : '← → каналы · ↑ архив · ↓ программа · Enter — меню и поиск', 7000);
     });
     optional('network', Playback.watchNetwork);
-    Util.idle(function () { optional('keys', Keys.register); });   // not needed for the first key press
+    optional('keys', Keys.register);   // right away: CH± and digits pressed in the first seconds must work
   }
 
   // The list loads and the saved channel starts (in its own task right after this one), or setup opens.

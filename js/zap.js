@@ -55,6 +55,7 @@ var Zap = (function () {
       if (sel !== Playback.selection()) return;
       Channels.rebuild();
       removedToast(c, 3500);
+      Banner.setState('Канал отключён провайдером');
       if (dir) step(dir);
     });
   }

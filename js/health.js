@@ -3,14 +3,23 @@
 // The check waits until playback is settled, pauses while the viewer zaps, and a newer list cancels it.
 // An M3U playlist is not swept; its landing probe trusts only the explicit "/system/" placeholder, so a
 // valid master from another provider is never hidden.
-//   hooks: { onSwept(checked, removed) }
+//   hooks: { onSwept(checked, removed), onBadKey() }
 var Health = (function () {
   var verdicts = null;         // key -> [dead 0|1, checkedAt]
   var hooks = {}, token = 0, queue = [], active = [], ready = false, sweepMode = '';
-  var probeReq = null, removedInRun = 0, checkedInRun = 0;
+  var probeReq = null, removedInRun = 0, checkedInRun = 0, keyReported = false;
 
   function setHooks(h) { hooks = h; }
   function all() { if (verdicts === null) { verdicts = Util.load('healthVerdicts') || {}; } return verdicts; }
+
+  // A wrong or expired key: every stream answers with the "no key" clip. Nothing is marked removed; the
+  // check stops and the viewer is told once per list (hooks.onBadKey).
+  function badKey(text) {
+    if (OttClub.classify(text) !== 'nokey') return false;
+    if (!keyReported && hooks.onBadKey) hooks.onBadKey();
+    keyReported = true;
+    return true;
+  }
 
   // Is this answer a removed channel, in this source?
   function isDead(text, mode) {
@@ -31,6 +40,7 @@ var Health = (function () {
     cancel();
     sweepMode = mode;
     queue = [];
+    keyReported = false;
     if (mode !== 'ott') return;
     for (var i = 0; i < list.length; i++) if (!fresh(list[i].key)) queue.push(list[i]);
     removedInRun = 0; checkedInRun = 0;
@@ -63,6 +73,7 @@ var Health = (function () {
       if (my !== token) return;
       active.splice(active.indexOf(item), 1);
       checkedInRun++;
+      if (!err && badKey(text)) { cancel(); queue = []; return; }
       // A network error is not proof of removal: the channel keeps its last verdict.
       if (!err) {
         var dead = isDead(text, sweepMode);
@@ -88,7 +99,7 @@ var Health = (function () {
     if (fresh(ch.key)) return;
     probeReq = Net.get({ url: ch.url, timeoutMs: CONFIG.PROBE_TIMEOUT_MS, maxBytes: CONFIG.PROBE_MAX_BYTES }, function (err, text) {
       probeReq = null;
-      if (err) return;
+      if (err || badKey(text)) return;
       var dead = isDead(text, mode);
       record(ch.key, dead);
       if (dead) { ch.dead = true; onRemoved(); }

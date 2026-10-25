@@ -1,7 +1,17 @@
 // The channel banner: name, number, what is on, progress and (once the picture is up) the stream's
-// technical line. preview() shows a channel being zapped to before it plays.
+// technical line. preview() shows a channel being zapped to before it plays. From the moment a stream
+// opens until its picture is up (and again during a stall) it stays with a state line, so a black screen
+// always says what is happening: «Подключение…», «Загрузка видео… N%», «Нет сигнала — повтор…».
 var Banner = (function () {
   var techTimer = null, tech = '', techUntil = 0, techSel = -1;   // the latest landing's technical line, its window, its selection
+  var state = '';              // the state line; while set the banner does not hide
+
+  function setState(text) { state = text; if (Overlay.isNone()) show(false); }
+  function connecting() { setState('Подключение…'); }
+  function loading(pct) { setState('Загрузка видео…' + (pct >= 0 ? ' ' + Math.round(pct) + '%' : '')); }
+  function retrying(n, delayMs) { setState('Нет сигнала — повтор через ' + Math.max(1, Math.round(delayMs / 1000)) + ' с (попытка ' + n + ')'); }
+  // Playback is back after a stall: the line goes and the banner hides as usual.
+  function resumed() { if (!state) return; state = ''; if (UI.bannerShown() && Overlay.isNone()) show(false); }
 
   // fetchGuide: also make sure the full guide is loaded (INFO, the first frame); off while zapping.
   // Inside a landing's tech window every redraw keeps that line («…» or the value) and the banner stays
@@ -12,8 +22,9 @@ var Banner = (function () {
     if (fetchGuide) EPG.ensure(c.id, onGuide);
     if (techSel !== Playback.selection()) techUntil = 0;   // a newer choice (zap, archive, pause) ends the window
     var t = Playback.position(), archive = Playback.mode() !== 'live', left = techUntil - Date.now();
-    UI.banner(model(c, { t: t, extra: archive ? 'Архив · ' + Util.hhmm(new Date(t)) : '', tech: left > 0 ? tech : Player.streamInfo(false) }),
-      Math.max(CONFIG.BANNER_MS, left));
+    var m = model(c, { t: t, extra: archive ? 'Архив · ' + Util.hhmm(new Date(t)) : '', tech: state ? '' : left > 0 ? tech : Player.streamInfo(false) });
+    m.state = state;
+    UI.banner(m, state ? UI.STICKY : Math.max(CONFIG.BANNER_MS, left));
   }
 
   // A channel (live or archive) shows its first frame: the banner at once with this stream's technical
@@ -22,6 +33,7 @@ var Banner = (function () {
   function onFirstFrame() {
     clearTimeout(techTimer);
     techUntil = 0;
+    state = '';
     if (!Overlay.isNone()) return;
     var sel = techSel = Playback.selection();
     tech = Player.streamInfo(false) || '…';
@@ -52,5 +64,6 @@ var Banner = (function () {
     };
   }
 
-  return { show: show, preview: preview, onGuide: onGuide, onFirstFrame: onFirstFrame };
+  return { show: show, preview: preview, onGuide: onGuide, onFirstFrame: onFirstFrame, setState: setState, connecting: connecting,
+    loading: loading, retrying: retrying, resumed: resumed };
 }());

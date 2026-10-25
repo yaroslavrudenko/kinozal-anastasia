@@ -1,14 +1,13 @@
 // Native Samsung AVPlay (hardware decoding) with a self-healing watchdog; an HTML <video> element off
 // the TV, for desktop checks. Every attempt has a generation: a callback of an older attempt does nothing.
-//   hooks: { onBuffering(on), onFirstFrame(), onStable(), onError(n, delayMs), onEnded(), onMutedStart(),
-//            retryTarget() -> { url, archive } | null (archive: a fresh URL at the position actually shown) }
+//   hooks: { onBuffering(on), onLoading(pct: -1 none), onFirstFrame(), onStable(), onError(n, delayMs), onEnded(),
+//            onMutedStart(), retryTarget() -> { url, archive } | null (archive: a fresh URL at the position shown) }
 var Player = (function () {
   var av = null, video = null, hooks = null;
   var gen = 0, url = null, archive = false;
   var lastTime = -1, lastTimeAt = 0, bufferingSince = 0, bufferStartAt = 0, mediaMs = 0;
   var firstFrame = false, streakFrom = 0, stable = false, info = '', bufferPct = -1;
-  var retries = 0, retryTimer = null, retryPending = false, restartOnPlay = false, paused = false, suspended = false;
-  var WATCHDOG_MS = 1000;
+  var retries = 0, retryTimer = null, retryPending = false, restartOnPlay = false, paused = false, suspended = false, WATCHDOG_MS = 1000;
 
   function init(h) {
     hooks = h;
@@ -85,12 +84,14 @@ var Player = (function () {
     streakFrom = 0; stable = false;      // stability has to be earned again after a rebuffer
     if (firstFrame) { bufferStartAt = Date.now(); Diag.count('rebuffer'); }
     hooks.onBuffering(true);
+    hooks.onLoading(-1);
   }
   // Only real progress (a higher percentage) restarts the buffering timeout.
   function bufferingProgress(pct) {
     if (!bufferingSince || !(+pct > bufferPct)) return;
     bufferPct = +pct;
     bufferingSince = Date.now();
+    hooks.onLoading(bufferPct);
   }
   function bufferingEnded() {
     if (bufferStartAt) Diag.count('rebufferDone', Date.now() - bufferStartAt);
@@ -144,12 +145,12 @@ var Player = (function () {
   function tick() {
     if (!url || paused || suspended || retryPending) return;
     var now = Date.now(), state;
-    // An unreadable state is counted and treated as unknown: the buffering timeout still applies.
+    // An unreadable state is counted as unknown (the buffering timeout still applies). Buffering is timed from
+    // its last progress. A player left IDLE/NONE while visible (released by the TV or another app) never plays again.
     if (av) { try { state = av.getState(); } catch (e) { state = ''; Diag.count('getStateFailed'); } } else state = video.paused ? 'PAUSED' : 'PLAYING';
-    var limit = archive ? CONFIG.ARCHIVE_BUFFER_TIMEOUT_MS : CONFIG.BUFFER_TIMEOUT_MS;
-    // Buffering is measured from its last progress: a slow but progressing rebuffer is left alone.
+    var limit = archive ? CONFIG.ARCHIVE_BUFFER_TIMEOUT_MS : CONFIG.BUFFER_TIMEOUT_MS, released = !!av && !document.hidden && (state === 'IDLE' || state === 'NONE');
     if (bufferingSince) { if (now - bufferingSince > limit) fail(gen, 'buffering timeout ' + Math.round((now - bufferingSince) / 1000) + ' s'); return; }
-    if (state === 'PLAYING' && now - lastTimeAt > CONFIG.STALL_TIMEOUT_MS) fail(gen, 'stalled');
+    if ((state === 'PLAYING' || released) && now - lastTimeAt > CONFIG.STALL_TIMEOUT_MS) fail(gen, released ? 'player released (' + state + ')' : 'stalled');
   }
 
   // ---- control ----
