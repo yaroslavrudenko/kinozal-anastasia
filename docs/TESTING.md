@@ -4,6 +4,23 @@ A build is accepted only when every scenario below passes **on the real TV** (UE
 
 Each result row records the date, build (commit), channel (name, list position, bitrate) and the measured value. A failed row blocks the release, and the previous working build goes back on the TV.
 
+## U0. The viewer's basic journey (run FIRST, in EVERY group)
+The owner's own words: "this is what must be tested from the very beginning". Run it in every group: Все каналы, Избранное, Израиль, Украина, and every provider group.
+1. Open the app.
+2. Open the menu and enter the group.
+3. Scroll through the group, all pages, and check how every channel looks: number, logo, name, nothing cut off.
+4. Check that the right-hand column shows **what is on air now** for every channel. An empty cell is a FAIL, unless the provider has no programme for that channel (verified with the API).
+5. Enter a channel. The banner must show:
+   - the channel (number, logo, name);
+   - the programme on air and its time range;
+   - the clock and the progress bar;
+   - **what comes next** («Далее» with its time);
+   - the tech line;
+   - while connecting, the state line.
+6. Repeat step 5 for 3 channels per group, including the last channel of the group.
+
+Record, per group: channels checked, empty "now" cells (must be 0), banner fields present, PASS/FAIL.
+
 ## Test matrix (mandatory before every release)
 
 Every cell is a test case. A cell passes only when it is checked on the TV and recorded in the results. «—» means the cell does not apply.
