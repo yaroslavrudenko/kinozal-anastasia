@@ -4,6 +4,40 @@ A build is accepted only when every scenario below passes **on the real TV** (UE
 
 Each result row records the date, build (commit), channel (name, list position, bitrate) and the measured value. A failed row blocks the release, and the previous working build goes back on the TV.
 
+## Test matrix (mandatory before every release)
+
+Every cell is a test case. A cell passes only when it is checked on the TV and recorded in the results. «—» means the cell does not apply.
+
+**Columns, the channel sets C1–C5:**
+- **C1 ALL:** every channel in «Все каналы», checked automatically via the inspector, page by page.
+- **C2:** the far high-bitrate «Кино» channels (top 4 by measured Мбит/с).
+- **C3:** the middle and second half of the list (~150, ~250, last).
+- **C4:** Israel and Ukraine HD.
+- **C5:** long names, and archives that cross midnight.
+
+| # | Feature / state | C1 ALL | C2 | C3 | C4 | C5 |
+|---|---|---|---|---|---|---|
+| M1 | Menu row shows **name, logo and "now on air" title + time** (no empty «now» cell) | ✔ count empty cells: must be 0, unless the provider has no programme (verify with the API) | ✔ | ✔ | ✔ | ✔ |
+| M2 | Menu: opens on the playing channel, playing marker, long names wrap, paging by visible rows, search | — | ✔ | ✔ | ✔ | ✔ |
+| M3 | Banner on open: name, programme + time, clock, state line until the first frame, tech line after it | — | ✔ | ✔ | ✔ | — |
+| M4 | ▼ programme panel: cursor on air, titles wrap, ◀▶ change the day, a past programme plays | — | ✔ | ✔ | ✔ | ✔ |
+| M5 | ▲ slider: scrub back and forward (position correct ±10 s); start of a recording; **7-day edge**; to live | — | ✔ | ✔ | — | ✔ |
+| M6 | Archive continuation into the next programme: position and clock correct, no jump | — | ✔ | — | — | ✔ |
+| M7 | Zap: single press first-frame time; burst of 10 → right channel, ≤3 requests; across groups | — | ✔ | ✔ | ✔ | — |
+| M8 | Pause: live 3 min and archive 1 min; resume in place; 0 requests while paused | — | ✔ | ✔ | — | — |
+| M9 | Life cycle: close / open / exit + open / Home → other app → back ×2, live **and** archive | — | ✔ | ✔ | ✔ | — |
+| M10 | Soak 10 min: 0 stalls, 0 reconnects | — | ✔ (2 channels) | — | ✔ | — |
+| M11 | Time passes: after 30 min and after 2 h of running, «now» (M1) and the banner are still current | ✔ | — | — | — | — |
+| M12 | Resource targets: 1 list parse, 0 writes before first frame, ≤24 guides kept, no background requests while zapping or paused | ✔ | — | — | — | — |
+
+**Process:**
+1. Install with the gate: a smoke check, then automatic rollback on any failure.
+2. Run C1 automatically (M1, M11, M12).
+3. Run C2–C5 by scenario.
+4. Fill a results table with one row per cell: channel, measured value, PASS/FAIL.
+5. Any FAIL: fix, then rerun the whole matrix, not only the failed cell.
+6. The owner gets the matrix table, not a summary.
+
 ## Channels to use (never only the default one)
 - Two channels from the middle and two from the second half of «Все каналы» (positions ~150, ~250, last).
 - The three or four movie channels in «Кино» with the highest bitrate and resolution, read from the tech line.
