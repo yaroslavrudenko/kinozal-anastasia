@@ -107,7 +107,6 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
   background: #101724; color: #fff; outline: none; margin-bottom: 24px; }
 .search-input:focus { border-color: #8cc2ff; }
 .search-hint { left: 360px; bottom: 50px; }
-.ver { position: absolute; right: 60px; top: 18px; font-size: 22px; color: #5d6a7e; }
 .banner-tech { font-size: 22px; margin-top: 6px; color: #4da3ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .banner { height: auto; min-height: 190px; padding-top: 18px; padding-bottom: 18px; }
 /* Overlays always above the video layer (hardware video can be composited on top otherwise). */
@@ -115,3 +114,15 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 .guide, .search, .setup { z-index: 20; }
 .banner, .scrub, .prog, .numentry { z-index: 15; }
 .toast, .fatal, .spinner { z-index: 30; }
+
+/* «О программе» */
+.about { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 20; padding: 70px 260px;
+  background: #06090f; text-align: center; }
+.about-icon { width: 150px; height: 150px; border-radius: 30px; }
+.about-title { font-size: 60px; font-weight: 700; color: #4da3ff; margin: 18px 0 14px; }
+.about-dedication { font-size: 32px; line-height: 46px; color: #eef1f6; font-style: italic; margin-bottom: 38px; }
+.about-table { text-align: left; border-top: 1px solid rgba(255,255,255,.12); }
+.about-row { display: -webkit-flex; display: flex; padding: 12px 10px; font-size: 26px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.about-k { -webkit-flex: 0 0 300px; flex: 0 0 300px; color: #8d99ad; }
+.about-v { -webkit-flex: 1; flex: 1; color: #e4efff; }
+.about-hint { position: absolute; left: 0; right: 0; bottom: 40px; font-size: 24px; color: #8d99ad; }

@@ -74,7 +74,7 @@ var UI = (function () {
       r.n.textContent = '';
       setLogo(r, '');
       r.t.textContent = g.name;
-      r.s.textContent = g.search ? '' : g.items.length;
+      r.s.textContent = g.search || g.about ? '' : g.items.length;
     });
   }
 

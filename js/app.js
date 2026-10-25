@@ -23,9 +23,34 @@
   };
 
   // ---------- boot ----------
-  function versionText() {
-    return 'Кинозал Анастасия v' + CONFIG.VERSION + (CONFIG.BUILD.indexOf('__') === 0 ? '' : ' · сборка ' + CONFIG.BUILD);
+  // ---------- «О программе» (last row of the channel menu) ----------
+  function openAbout() {
+    closeGuide();
+    s.about = true;
+    var build = CONFIG.BUILD.indexOf('__') === 0 ? 'локальная' : CONFIG.BUILD;
+    var model = '', ua = navigator.userAgent;
+    try { model = webapis.productinfo.getRealModel(); } catch (e) {}
+    var tizen = (/Tizen\s*([\d.]+)/.exec(ua) || [])[1];
+    var chromium = (/Chrome\/([\d]+)/.exec(ua) || [])[1];
+    var alive = 0, dead = 0;
+    for (var i = 0; i < all.length; i++) if (all[i].dead) dead++; else alive++;
+    var rows = [
+      ['Версия', CONFIG.VERSION],
+      ['Сборка', build],
+      ['Телевизор', (model || 'Samsung') + (tizen ? ' · Tizen ' + tizen : '') + (chromium ? ' · веб-движок Chromium ' + chromium : '')],
+      ['Плеер', window.webapis ? 'аппаратный Samsung AVPlay' : 'браузер (hls.js)'],
+      ['Источник каналов', OttClub.enabled() ? 'OTT Club (' + CONFIG.OTT_SERVER + ')' : 'M3U-плейлист'],
+      ['Каналы', alive + ' доступно' + (dead ? ', ' + dead + ' отключены провайдером' : '') + ' · групп: ' + (groups.length - 2)],
+      ['Архив', '7 дней · перемотка ползунком (▲)'],
+      ['Сейчас', (all[s.playing] ? all[s.playing].name + ' · ' : '') + (Player.videoInfo() || 'нет данных о потоке')],
+      ['Буфер', 'старт ' + 5 + ' с · после подгрузки 10 с · переподключение через ' + CONFIG.BUFFER_TIMEOUT_MS / 1000 + ' с (архив ' + CONFIG.ARCHIVE_BUFFER_TIMEOUT_MS / 1000 + ' с)']
+    ];
+    var html = '';
+    for (var r = 0; r < rows.length; r++) html += '<div class="about-row"><span class="about-k">' + Util.esc(rows[r][0]) + '</span><span class="about-v">' + Util.esc(rows[r][1]) + '</span></div>';
+    Util.$('about-table').innerHTML = html;
+    Util.show(Util.$('about'), true);
   }
+  function closeAbout() { s.about = false; Util.show(Util.$('about'), false); openGuide(); }
 
   // Desktop check only: fit the 1920×1080 TV layout into the browser window.
   function fitDesktop() {
@@ -60,7 +85,6 @@
       onKey(e);
     });
     document.addEventListener('click', onClick);
-    Util.$('ver').textContent = versionText();
     UI.toast(window.webapis ? '◀ ▶ — каналы · ▲ — архив · ▼ — программа · OK — меню и поиск' : '← → каналы · ↑ архив · ↓ программа · Enter — меню и поиск', 7000);
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) Player.suspend(); else Player.resume();
@@ -174,6 +198,7 @@
     addPinnedGroups();
     rebuildFavGroup();
     groups.unshift({ name: '🔍 Поиск', items: [], search: true });
+    groups.push({ name: 'ℹ О программе', items: [], about: true });
     s.groupIdx = clamp(s.groupIdx, groups.length);
     if (groups[s.groupIdx]) s.chCursor = clamp(s.chCursor, groups[s.groupIdx].items.length);
   }
@@ -437,10 +462,12 @@
       case K.LEFT: s.focus = 'groups'; break;
       case K.RIGHT:
         if (s.focus === 'groups' && g.search) { openSearch(); return; }
+        if (s.focus === 'groups' && g.about) { openAbout(); return; }
         s.focus = 'channels';
         break;
       case K.ENTER:
         if (s.focus === 'groups' && g.search) { openSearch(); return; }
+        if (s.focus === 'groups' && g.about) { openAbout(); return; }
         if (s.focus === 'groups') { s.focus = 'channels'; s.chCursor = 0; break; }
         closeGuide(); tune(g.items[s.chCursor]); return;
       case K.YELLOW: case K.F: case K.PLAY_PAUSE: toggleFav(); break;
@@ -590,6 +617,7 @@
       }
       return;
     }
+    if (s.about) { if (k === K.BACK || k === K.BACK_DESKTOP || k === K.ENTER || k === 27) { e.preventDefault(); closeAbout(); } return; }
     if (s.search) { searchKey(k, e); return; }
     if (s.panel) { panelKey(k); e.preventDefault(); return; }
     if (s.scrub) { scrubKey(k); e.preventDefault(); return; }
