@@ -67,5 +67,5 @@ var M3U = (function () {
     return groups;
   }
 
-  return { parse: parse };
+  return { parse: parse, groupsOf: groupsOf };
 }());

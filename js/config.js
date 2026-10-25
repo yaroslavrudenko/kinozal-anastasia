@@ -1,5 +1,8 @@
-// Build-time settings. PLAYLIST_URL is set by the build script from the owner's OTT Club playlist.
+// Build-time settings, filled by build.sh from build.local.env (never committed).
+// OTT_KEY set -> channels come from the OTT Club API; otherwise PLAYLIST_URL (any M3U) is used.
 var CONFIG = {
+  OTT_SERVER: 'myott.top',
+  OTT_KEY: '__OTT_KEY__',
   PLAYLIST_URL: '__PLAYLIST_URL__',
   EPG_URL: '',                 // empty = use url-tvg from the playlist header
   PLAYLIST_REFRESH_MS: 6 * 3600 * 1000,

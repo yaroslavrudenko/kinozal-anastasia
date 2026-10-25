@@ -9,6 +9,10 @@ var Catchup = (function () {
     var dur = Math.floor((durationMs || (Date.now() - startMs)) / 1000);
     var type = (ch.catchup || '').toLowerCase();
 
+    if (type === 'ottclub') {
+      return ch.url + (ch.url.indexOf('?') < 0 ? '?' : '&') + 'archive=' + start + '&archive_end=' + (start + dur);
+    }
+
     if (type === 'flussonic' || type === 'fs' || (!type && !ch.catchupSource && /\/(index|video|mpegts|mono)\.m3u8/.test(ch.url))) {
       return ch.url.replace(/\/(index|video|mono)(\.m3u8)/, '/$1-' + start + '-' + dur + '$2')
                    .replace(/\/mpegts/, '/timeshift_abs-' + start + '.ts');

@@ -86,5 +86,23 @@ var EPG = (function () {
     return out;
   }
 
-  return { load: load, upcoming: upcoming, at: at, day: day, isReady: function () { return ready; } };
+  // Per-channel sources (OTT Club): `full` marks a complete 7-day guide, otherwise a now-only seed.
+  var complete = {}, pending = {}, loader = null;
+  function put(id, list, full) {
+    if (full) { byId[id] = list; complete[id] = Date.now(); }
+    else if (!complete[id]) byId[id] = list;
+    ready = true;
+  }
+  function setLoader(fn) { loader = fn; }
+  // Fetch a channel's full guide once per hour at most; `done` fires when fresh data arrived.
+  function ensure(id, done) {
+    if (!loader || !id || pending[id] || (complete[id] && Date.now() - complete[id] < 3600000)) return;
+    pending[id] = true;
+    loader(id, function () { delete pending[id]; if (done) done(); });
+  }
+
+  return {
+    load: load, upcoming: upcoming, at: at, day: day, put: put, setLoader: setLoader, ensure: ensure,
+    isReady: function () { return ready; }
+  };
 }());

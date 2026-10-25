@@ -38,16 +38,23 @@
       if (document.hidden) Player.suspend(); else Player.resume();
     });
     watchNetwork();
+    if (OttClub.enabled()) EPG.setLoader(OttClub.guide);
     var cached = Util.store('playlistText');
     if (cached) apply(cached);
     loadPlaylist(!cached);
     setInterval(function () { loadPlaylist(false); }, CONFIG.PLAYLIST_REFRESH_MS);
   }
 
+  // Two sources: the OTT Club API (when a subscriber key is built in) or any M3U playlist.
+  function parseSource(text) {
+    if (OttClub.enabled()) return OttClub.parse(text);
+    return text.indexOf('#EXTINF') >= 0 ? M3U.parse(text) : null;
+  }
+
   function loadPlaylist(blocking) {
     if (blocking) UI.spinner(true);
-    Util.get(CONFIG.PLAYLIST_URL, 20000, function (text) {
-      if (text.indexOf('#EXTINF') < 0) { if (blocking) UI.fatal('Плейлист пуст или недоступен.'); return; }
+    Util.get(OttClub.enabled() ? OttClub.sourceUrl() : CONFIG.PLAYLIST_URL, 20000, function (text) {
+      if (!parseSource(text)) { if (blocking) UI.fatal('Список каналов пуст или недоступен.'); return; }
       try { localStorage.setItem('playlistText', JSON.stringify(text)); } catch (e) {}
       apply(text);
     }, function (err) {
@@ -58,7 +65,8 @@
   function apply(text) {
     var firstLoad = !all.length;
     var playingUrl = s.playing >= 0 ? all[s.playing].url : Util.store('lastUrl');
-    var parsed = M3U.parse(text);
+    var parsed = parseSource(text);
+    if (!parsed) return;
     all = parsed.channels;
     groups = parsed.groups;
     rebuildFavGroup();
@@ -150,6 +158,7 @@
   function showBanner() {
     var ch = all[s.playing];
     if (!ch) return;
+    EPG.ensure(ch.id, function () { if (all[s.playing] === ch && !s.guideOpen) showBanner(); });
     var t = position();
     var cur = EPG.at(ch.id, t), next = cur ? EPG.at(ch.id, cur.stop + 1000) : null;
     var line1 = cur ? Util.hhmm(new Date(cur.start)) + '–' + Util.hhmm(new Date(cur.stop)) + '  ' + cur.title : '';
@@ -197,6 +206,7 @@
     UI.groups(groups, s.groupIdx, s.focus === 'groups');
     UI.channels(g.items, s.chCursor, s.focus === 'channels', all, s.playing, favs);
     var ch = cursorChannel();
+    if (ch) EPG.ensure(ch.id, function () { if (s.guideOpen && cursorChannel() === ch) renderGuide(); });
     var list = dayPrograms();
     if (s.focus !== 'programs') s.progCursor = currentProgIndex(list);
     var dayName = s.dayOffset === 0 ? 'Сегодня' : s.dayOffset === -1 ? 'Вчера' : dateName(s.dayOffset);
