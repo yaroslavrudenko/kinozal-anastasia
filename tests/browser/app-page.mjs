@@ -43,6 +43,7 @@ export async function openApp(opts) {
     headless: 'new', userDataDir: profile, args: ['--window-size=1920,1080'] });
   const page = await browser.newPage();
   await page.setViewport({ width: 1920, height: 1080 });
+  const listHits = [];                                      // when each channel-list request was answered (ms)
   await page.setRequestInterception(true);
   page.on('request', (req) => {
     const url = req.url();
@@ -52,7 +53,7 @@ export async function openApp(opts) {
       const file = path.join(ROOT, rel);
       done = !file.startsWith(ROOT) || !fs.existsSync(file) || !fs.statSync(file).isFile() ? req.respond({ status: 404, body: '' })
         : req.respond({ status: 200, contentType: MIME[path.extname(file)] || 'application/octet-stream', body: fs.readFileSync(file) });
-    } else if (f.isList(url)) done = req.respond({ status: 200, contentType: 'application/json', headers: JSON_HEADERS, body: JSON.stringify(opts.data) });
+    } else if (f.isList(url)) { listHits.push(Date.now()); done = req.respond({ status: 200, contentType: 'application/json', headers: JSON_HEADERS, body: JSON.stringify(opts.data) }); }
     else if (f.isGuide(url)) done = req.respond({ status: 200, contentType: 'application/json', headers: JSON_HEADERS, body: opts.guide(f.guideIdOf(url)) });
     else done = req.abort();
     Promise.resolve(done).catch(() => {});
@@ -72,7 +73,7 @@ export async function openApp(opts) {
   async function press(...codes) { for (const c of codes) { await key(c); await settle(); } }
   async function closeAll() { for (let i = 0; i < 4; i++) await press(K.BACK); }
   async function close() { await browser.close(); fs.rmSync(profile, { recursive: true, force: true }); }
-  return { browser, page, key, settle, press, closeAll, close };
+  return { browser, page, key, settle, press, closeAll, close, listHits };
 }
 
 // The provider list: CHANNELS channels whose "now" lines are long (and the first few names long too).

@@ -2,6 +2,8 @@
 
 A build is accepted only when every scenario below passes **on the real TV** (UE50MU7000). Desktop tests and code reviews are not acceptance.
 
+This file is the complete use-case catalogue: U0 and the test matrix first, then every screen, key, data state and playback state, the correctness of what the viewer sees, and a traceability table from every change to the cases that verify it. The automatic cases run with `tests/tv/run.mjs` (see «How every use case is verified»).
+
 Each result row records the date, build (commit), channel (name, list position, bitrate) and the measured value. A failed row blocks the release, and the previous working build goes back on the TV.
 
 ## U0. The viewer's basic journey (run FIRST, in EVERY group)
@@ -55,12 +57,216 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 5. Any FAIL: fix, then rerun the whole matrix, not only the failed cell.
 6. The owner gets the matrix table, not a summary.
 
+## How every use case is verified
+
+- **AUTO-TV `<case>`**: the TV runner `tests/tv/run.mjs` executes it against the installed app through the Tizen inspector (`tests/tv/launch.sh`, then `node tests/tv/run.mjs`). It writes one results table per run to `tests/tv/results/`; copy that table under «Results» below. The same runner with `--dry` runs the app from the repository in headless Chrome. That validates the steps and the data checks, but it has no picture, so playback checks report DRY-SKIP.
+- **MANUAL**: a person at the TV, by eye, using the steps given. Record the outcome as a row under «Results».
+- **HARNESS `<file>`**: a desktop unit test in `tests/` (`tests/run.sh`, `--browser` for layout). It pins the mechanism. It is **not** acceptance; the TV row is still required.
+- **Priority:** P0 is the viewer's basic journey (a FAIL blocks the release). P1 is an important feature or recovery path. P2 is an edge case or a resource target.
+- **Channel sets:** C1 is every channel, C2 the far high-bitrate «Кино» channels, C3 the middle and second half of the list, C4 Israel and Ukraine HD, C5 long names and midnight archives (definitions above).
+
+## Use-case catalogue
+
+### A. Start, key and channel sources
+| ID | Steps | Expected result | Set | Verified | P |
+|---|---|---|---|---|---|
+| A1 | Fresh install (no key), open the app | Setup screen: field focused, OK submits, the on-screen keyboard's «Done» submits | — | MANUAL | P0 |
+| A2 | Setup: enter a valid key, OK | «Проверяю ключ…», then the list loads and a channel plays within 10 s | C3 | MANUAL | P0 |
+| A3 | Setup: enter a wrong key | «Ключ не подошёл…», the setup stays open, nothing plays | — | MANUAL + HARNESS setup-and-key | P1 |
+| A4 | Setup: paste an M3U link | The M3U list loads (groups from the playlist), a channel plays | — | MANUAL | P2 |
+| A5 | Open with a saved last channel | That channel starts before the list arrives; then the list appears | C3 | MANUAL (owner's cycle, L11) | P0 |
+| A6 | Open with the list server down and an offline copy saved | «Сервер не ответил — показан последний список…», all channels listed, a channel plays; when the network returns, «now» lines fill in | C1 | MANUAL (unplug the router) + HARNESS list-load, refresh-now | P1 |
+| A7 | Open with the server down and no copy | Error text with «Повтор через N с»; the list appears by itself when the server returns | — | MANUAL + HARNESS list-load | P1 |
+| A8 | The key expires (provider «no key» clip) | A clear bad-key message, not "every channel removed" | — | MANUAL | P1 |
+| A9 | BLUE in the menu: change the key; BACK cancels | Old key kept on BACK; a new valid key reloads the app | — | MANUAL | P2 |
+| A10 | The list refreshes (6 h, or «now» refresh) while watching | Playing channel continues; order and groups unchanged; no flicker | C1 | AUTO-TV M11 + HARNESS refresh-now | P1 |
+
+### B. Channel menu and groups
+| ID | Steps | Expected result | Set | Verified | P |
+|---|---|---|---|---|---|
+| B1 | OK while watching | The menu opens on the playing channel, which is highlighted and marked as playing | C3, C4 | AUTO-TV M2 | P0 |
+| B2 | Walk every group with ◀ and ▲▼ | Group order: Поиск · Все каналы · Избранное · Израиль · Украина · provider groups · О программе; each shows its count | C1 | AUTO-TV U0 + MANUAL look | P0 |
+| B3 | Every group, every page | Every row: number, logo, full name (wrapped, never cut), «now» = the programme on air per the API | C1 | **AUTO-TV U0** | P0 |
+| B4 | CH+ / CH− (page) through a group with wrapped rows | Every channel completely visible on some page; the last page stays put; page-up mirrors | C1 | AUTO-TV U0 (paging walk) + HARNESS paging, page-end | P0 |
+| B5 | A channel name or «now» taller than the screen | ▼ / ▲ scroll inside it until every line was seen, then move on; reopening starts at its top | C5 | MANUAL + HARNESS tall-row, reopen | P2 |
+| B6 | Hebrew names (Israel group) | Right-to-left text readable, numbers and times not mirrored | C4 | MANUAL | P1 |
+| B7 | A group that becomes empty (all removed / favourites cleared) | The group disappears; the cursor lands on an existing row | — | MANUAL + HARNESS menu | P2 |
+| B8 | The list shrinks while the menu is open | A highlighted channel exists; OK tunes it | — | HARNESS menu | P2 |
+| B9 | OK on a channel | The menu closes; the channel plays (U0 landing) | C1 sample | AUTO-TV U0.landing | P0 |
+| B10 | Mouse click (desktop preview only) | A row click tunes; a group click switches | — | MANUAL (desktop) | P2 |
+
+### S. Search
+| ID | Steps | Expected result | Set | Verified | P |
+|---|---|---|---|---|---|
+| S1 | Menu → «Поиск» → type part of a name | Matching channels with their «now»; OK / ▼ enters the list; OK tunes | C3 | MANUAL + HARNESS menu | P1 |
+| S2 | Type a channel number | That channel is found | — | MANUAL | P1 |
+| S3 | A query matching more than 60 | The last row says «Показаны первые 60 из N — уточните запрос» | — | MANUAL | P2 |
+| S4 | The playing channel in the results | Marked as playing | — | HARNESS menu | P2 |
+| S5 | BACK from the list → field → menu | Each BACK goes one level up | — | MANUAL | P1 |
+
+### F. Favourites
+| ID | Steps | Expected result | Set | Verified | P |
+|---|---|---|---|---|---|
+| F1 | YELLOW while watching | Toast «Добавлено в избранное»; «★ Избранное» appears; ◀▶ keeps zapping in the group browsed before | C3 | MANUAL + HARNESS menu (zap group) | P1 |
+| F2 | YELLOW / ⏯ on a menu row | ★ toggles on that row; the cursor stays on it | — | MANUAL | P1 |
+| F3 | Favourites after a key change | Still marked (kept by channel, not by stream URL) | — | MANUAL | P2 |
+
+### P. Programme panel (▼)
+| ID | Steps | Expected result | Set | Verified | P |
+|---|---|---|---|---|---|
+| P1 | ▼ while watching | Cursor on the programme on air («в эфире»), = the API's programme; titles wrap | C2, C3, C4 | AUTO-TV M4 | P0 |
+| P2 | ▼ before the channel's guide has arrived | «Программа загружается…» then the cursor moves to the programme on air (an ▲▼ that could not move does not stop it) | — | HARNESS panel | P1 |
+| P3 | ◀ ▶ (CH±) | Days: Вчера / Сегодня / Завтра / weekday dates, back to 7 days, forward 1 | C2 | AUTO-TV M4 (one day) + MANUAL (all days) | P1 |
+| P4 | OK on a past programme | It plays from its start; banner «Архив · HH:MM» with that title | C2, C3 | AUTO-TV M4, C2 | P0 |
+| P5 | OK on a future programme | Toast «Передача ещё не началась» | — | MANUAL | P2 |
+| P6 | Guide unavailable | «Программа передач недоступна, повторю позже», retried later | — | MANUAL + HARNESS guide | P2 |
+| P7 | The day across a DST change | 23/25-hour days listed midnight to midnight | — | HARNESS epg-day | P2 |
+| P8 | ▼ after midnight while a programme that started yesterday is on air | «Сегодня» shows that programme (or the panel opens on it) with «в эфире»; the cursor is not on a future programme | C5 | AUTO-TV M4 (run after midnight) + MANUAL | P0 |
+
+### R. Archive slider (▲, ⏪ ⏩)
+| ID | Steps | Expected result | Set | Verified | P |
+|---|---|---|---|---|---|
+| R1 | ▲, ◀ ×6, OK | Plays 3 min back; the position equals the knob time ±10 s | C2, C3 | AUTO-TV M5 | P0 |
+| R2 | ▲ then ▲ / ▼ | Previous / next programme on the knob; OK plays it | C2 | MANUAL | P1 |
+| R3 | Hold ◀ to the start of the archive (7-day edge) | The knob stops at the first moment the provider still serves; OK plays (D1) | C2 | AUTO-TV M5 (7-day-edge) | P1 |
+| R4 | Hold ▶ to the live edge | «прямой эфир»; OK goes live | C2 | AUTO-TV M5 (to-live) | P1 |
+| R5 | Title and «−N мин от эфира» | Title wraps; delta correct | C5 | MANUAL + HARNESS layout | P2 |
+
+### Z. Zapping and choosing channels
+| ID | Steps | Expected result | Set | Verified | P |
+|---|---|---|---|---|---|
+| Z1 | Single ◀▶ / CH± | First frame ≤ 3 s; banner with the new channel | C2, C3 | AUTO-TV M7 | P0 |
+| Z2 | Burst of 10 quick presses | Lands on the 10th channel; ≤ 3 app requests | C2, C3 | AUTO-TV M7 (burst) | P1 |
+| Z3 | Across a group boundary / past the end | Wraps inside the browsed group | C3 | MANUAL | P1 |
+| Z4 | A channel found removed while zapping | Message, moves on in the same direction | — | MANUAL + HARNESS health | P2 |
+| Z5 | PREV CH | Returns to the previous channel (even after a list refresh) | — | MANUAL + HARNESS refresh | P1 |
+| Z6 | Digits 1-2-3 | Number shown; after 1.8 s channel 123; an unknown number «Нет канала N» | — | MANUAL | P1 |
+| Z7 | Zap then quickly ▼ / ▲ / OK / Home / ⏯ | The latest choice wins (no reopen under an overlay, no stream in the background) | — | HARNESS races | P1 |
+
+### N. Banner
+| ID | Steps | Expected result | Set | Verified | P |
+|---|---|---|---|---|---|
+| N1 | Every landing (zap, menu, number, boot, return) | Number, logo, name; programme with its time range; progress; clock; «Далее HH:MM …» | C1 sample | AUTO-TV U0.banner-fields, U0.next | P0 |
+| N2 | Until the first frame | State line: «Подключение…» / «Загрузка видео… N%» / «Нет сигнала — повтор через N с (попытка K)» / «Канал отключён провайдером»; never hides early | C2 | MANUAL + HARNESS connect-banner | P0 |
+| N3 | After the first frame | Tech line (resolution · codec · fps · Мбит/с · sound) for TECH_LINE_MS, then hides | C2, C4 | AUTO-TV U0.tech-line | P0 |
+| N4 | Banner "now" vs the menu row and the API | The same programme | C1 sample | **AUTO-TV U0.banner==row** | P0 |
+| N5 | INFO | The banner with current data | — | MANUAL | P1 |
+| N6 | In the archive | «Архив · HH:MM» and the archive programme | C2 | AUTO-TV M4 | P1 |
+
+### L. Playback states and life cycle
+| ID | Steps | Expected result | Set | Verified | P |
+|---|---|---|---|---|---|
+| L1 | Watch live 10 min | 0 stalls, 0 reconnects, media time +60 s/min | C2 (2), C4 | AUTO-TV M10 | P1 |
+| L2 | ⏯ live 3 min, ⏯ | Stays paused, 0 requests; resumes at the paused moment (archive) | C2 | AUTO-TV M8 (60 s) + MANUAL 3 min | P0 |
+| L3 | ⏯ in the archive 1 min, ⏯ | Resumes in place ±5 s | C2 | AUTO-TV M8 (pause from live) + MANUAL (pause inside an archive film) | P1 |
+| L4 | Pause while buffering | Stays paused; resume plays | C2 | MANUAL | P2 |
+| L5 | A stall / rebuffer | State banner during it; reconnects after the timeout; position kept in the archive | C2 | MANUAL + HARNESS player, connect-banner | P1 |
+| L6 | A stream failing repeatedly | Retries with growing delays (up to 15 s), «Нет сигнала…» line | — | MANUAL + HARNESS player, backoff | P1 |
+| L7 | End of an archive recording | Continues into the next programme, position correct (D2) | C2, C5 | AUTO-TV M6 | P1 |
+| L8 | Archive programme across midnight | Plays across 00:00 | C5 | MANUAL (not yet in the runner) | P1 |
+| L9 | Home → another app → back (live) | Same channel PLAYING within 10 s | C2, C3, C4 | AUTO-TV M9 (OTHER_APP=…) | P0 |
+| L10 | The same during an archive film | Resumes at the same point | C2 | AUTO-TV M9 | P0 |
+| L11 | Close / open / exit + open | Plays the last channel within 10 s | C3 | MANUAL (owner's cycle) | P0 |
+| L12 | Network lost / back | «Нет сети» / «Сеть восстановлена»; reconnects; archive keeps its position | C2 | MANUAL (unplug) + HARNESS player | P1 |
+| L13 | Running for 2 h | «now» lines and the banner still current | C1 | AUTO-TV M11 | P0 |
+| L14 | STOP / BACK in the archive | Back to live; double BACK on live exits | — | MANUAL | P1 |
+| L15 | A TV platform call fails (error 18) | The app still starts and zaps | — | HARNESS platform-throws; TV boot itself | P0 |
+
+### O. Other screens and keys
+| ID | Steps | Expected result | Set | Verified | P |
+|---|---|---|---|---|---|
+| O1 | Menu → «О программе» | «Настин кинозал», version = config.xml, build, TV model, sources, buffer values | — | MANUAL + HARNESS config | P1 |
+| O2 | «О программе» → OK on the adult switch | Group «Для взрослых» shown / hidden everywhere (menu, search, numbers, zap) | — | MANUAL + HARNESS menu (eligibility) | P1 |
+| O3 | RED | Next audio track (toast with language), «одна дорожка» when there is one | C4 | MANUAL | P2 |
+| O4 | GREEN | Picture mode cycles Авто / Во весь экран / С полями, remembered | — | MANUAL | P2 |
+| O5 | BLUE while watching | Toast with the stream's tech line | — | MANUAL | P2 |
+| O6 | Every key in every state (table below) | Does what the table says; nothing else | — | MANUAL | P1 |
+
+**Key map (O6): each cell is a check.**
+| Key | Watching | Menu | Panel ▼ | Slider ▲ | Search list | О программе | Setup |
+|---|---|---|---|---|---|---|---|
+| ◀ ▶ / CH± | zap | ◀ groups, ▶ channels · CH± page | day | scrub / page | — / page | — | — |
+| ▲ ▼ | ▲ slider, ▼ panel | move | move | prev/next programme | move | — | — |
+| OK | menu | tune / open group | play | play from knob | tune | toggle adult | submit |
+| BACK | archive → live; twice → exit | close | close | close | to field, to menu | close | cancel (key change) |
+| ⏯ / ⏸ / ▶ | pause / resume | favourite | — | — | — | — | — |
+| ⏹ | to live | — | — | — | — | — | — |
+| ⏪ ⏩ | slider with a step | — | — | step ≥ 5 min | — | — | — |
+| INFO | banner | — | — | — | — | — | — |
+| RED / GREEN / BLUE / YELLOW | audio / picture / tech / favourite | — / — / key / favourite | — | — | — | — | — |
+| PREV CH | previous channel | — | — | — | — | — | — |
+| Digits | channel number | — | — | — | — | — | — |
+
+### D. Correctness of displayed data
+| ID | Steps | Expected result | Set | Verified | P |
+|---|---|---|---|---|---|
+| D1 | Every menu row's «now» | = the programme the API says is on air at that moment (an ended programme never shown longer than ~10 s) | C1 | **AUTO-TV U0.rows, M11** | P0 |
+| D2 | Banner on landing | = the menu row = the API | C1 sample | **AUTO-TV U0.banner==row** | P0 |
+| D3 | «Далее» | = the next programme in the guide, with its start time | C1 sample | AUTO-TV U0.next | P0 |
+| D4 | Times and dates | Local time; the panel's day names; the slider's HH:MM:SS; the clock | — | AUTO-TV (clock) + MANUAL | P1 |
+| D5 | A channel without a programme in the API | Empty «now» is allowed (counted separately) | C1 | AUTO-TV U0.rows («no API programme») | P1 |
+| D6 | Archive position | The banner's «Архив · HH:MM» = the moment actually shown | C2 | AUTO-TV M5, M6, M9 | P1 |
+| D7 | Long names, Hebrew | Full text present, wrapped | C4, C5 | AUTO-TV U0 (text equality) + HARNESS layout | P1 |
+
+### X. Resource targets
+| ID | Steps | Expected result | Set | Verified | P |
+|---|---|---|---|---|---|
+| X1 | Launch | One list parse; nothing written before the first frame | — | MANUAL (inspector, early script) + HARNESS list-load | P2 |
+| X2 | Zapping / pause | No background requests | — | AUTO-TV M7 (burst count), M8 (pause count) | P2 |
+| X3 | Guide on 30 channels | ≤ 24 guides kept, no descriptions | — | HARNESS guide | P2 |
+| X4 | «now» refresh | One request per refresh, ≥ 60 s apart, ≥ 5 min without an ended programme | — | HARNESS refresh-now | P2 |
+
+### Counts
+86 use cases plus the key map (O6, 11 keys × 7 states): **P0 26 · P1 38 · P2 22**. Verification: **28 fully AUTO-TV**, 6 AUTO-TV with a MANUAL part, 52 MANUAL or HARNESS only (a person at the TV is needed for acceptance). Of the 26 P0 cases, 20 have AUTO-TV coverage; the other P0 cases (A1, A2, A5, N2, L11, L15) are MANUAL on the TV.
+
+## Traceability: change → use cases that verify it
+| Change (docs/PERFORMANCE.md change log / owner request) | Use cases |
+|---|---|
+| P-A zap: leading-edge open, guide after the first frame, abort passed channels | Z1, Z2, X2 |
+| P-B list parsed once, offline copy after the first frame | A6, X1 |
+| P-C XMLTV linear scanner | A4 (M3U with url-tvg), HARNESS xmltv |
+| P-D health check only behind steady playback | Z4, X2, L2 |
+| P-E / P-H archive position from the media clock; retry / Home reopen at the position | L3, L5, L10, L12, D6 |
+| P-F a pending zap never overrides a later choice | Z7 |
+| P-G watchdog quiet while paused; buffering timeout from the last progress | L2, L4, L5 |
+| P-I guide cache 24, no descriptions | X3 |
+| P-J player backoff, reset after 20 s of advancing playback | L6 |
+| P-K no fixed delay on a single press | Z1 |
+| P-L adaptive bitrate / renditions recorded | N3, L1 |
+| P-M no storage writes on the key path | X2 |
+| P-N rows wrap, one layout read, paging by visible rows, tall rows scroll, page end stable | B3, B4, B5, D7 |
+| P-O guide failure cool-down; «недоступна» text | P6 |
+| P-P saved channel opens at boot | A5, L11 |
+| P-Q key read once | A2 |
+| P-R setup single check | A2, A3 |
+| P-S M3U parse sliced | A4 |
+| P-T tech line on every landing | N3 |
+| P-U no `av.restore()` | L9, L10 |
+| P-V bounded next-channel walk | Z4 |
+| P-W native pause < 2 min in place, ≥ 2 min reopen | L2, L3 |
+| P-X rebuffer counters | L1, L5 |
+| P-Y hls.js loader, binary-search guide | P1, N1 |
+| List / guide retry backoff, spread at the cap | A7, P6, L6 |
+| Owner: «Настин кинозал» name | O1 |
+| Owner: menu opens on the playing channel + playing marker | B1 |
+| Owner: everything fits, nothing cut | B3, B5, R5, D7 |
+| Owner: connection banner until the first frame | N2, L5 |
+| Owner: tech line on landing | N3 |
+| Owner: «now» current and correct (refresh, accuracy) | D1, D2, A10, L13 |
+| Owner: U0 basic journey in every group | B2, B3, B9, N1, N4, D1–D3 |
+| TV crash: platform call throws error 18 | L15 |
+| D1 (7-day edge never starts) | R3 |
+| D2 (continuation jumps ~50 s) | L7 |
+| D4 (dry run 2026-10-26: ▼ after midnight has no programme on air) | P8 |
+
 ## Channels to use (never only the default one)
 - Two channels from the middle and two from the second half of «Все каналы» (positions ~150, ~250, last).
 - The three or four movie channels in «Кино» with the highest bitrate and resolution, read from the tech line.
 - One Israeli and one Ukrainian HD channel.
 - A channel with a very long name.
 - A channel whose archive programme crosses midnight.
+
+## Earlier scenario lists (2026-10-25, kept; every item is now a use case above)
 
 ## 1. Life cycle (owner's cycle)
 Run it once from a second-half channel and once from the heaviest movie channel.
@@ -70,13 +276,13 @@ Run it once from a second-half channel and once from the heaviest movie channel.
 4. Home → another app (OTT Club or YouTube) → wait 20 s → Home → our app: it plays within 10 s. Do this twice.
 5. The same, while an archive film is playing on a movie channel: it resumes at the same point.
 
-## 2. Zapping
+### 2. Zapping
 - A single CH± or ◀▶ press: first frame time on 10 different channels.
 - A burst of 10 quick presses lands on the right channel, with at most 3 app requests.
 - Crossing group boundaries works.
 - Zapping into a channel the provider removed shows a message and moves on.
 
-## 3. Archive (movie channels)
+### 3. Archive (movie channels)
 - From the ▼ panel, open a film from yesterday and from 3 or more days ago. It plays, with the right title in the banner.
 - Switching between programmes in the panel and the ▲ slider: each one plays.
 - Inside a film, scrub −30 min and +20 min several times. Playback starts at the chosen moment; the expected and actual position match within 10 s.
@@ -85,12 +291,12 @@ Run it once from a second-half channel and once from the heaviest movie channel.
 - The end of a recording continues into the next piece.
 - A programme crossing midnight plays.
 
-## 4. Pause and stability
+### 4. Pause and stability
 - Live pause for 3 min stays paused, with no network requests and no reopen.
 - Pause during buffering on the heaviest channel works.
 - Watch two movie channels for 10 min each: 0 stalls and 0 reconnects (from the failure log).
 
-## 5. Screens
+### 5. Screens
 - Menu: opening it lands on the playing channel, which is marked. Long names wrap. CH± pages by the rows that are visible, so no channel is skipped.
 - Search finds channels.
 - ▼ panel: the cursor is on the programme on air, titles wrap, and ◀▶ change the day.
@@ -98,7 +304,7 @@ Run it once from a second-half channel and once from the heaviest movie channel.
 - Banner: on every landing it shows channel, programme, time and the tech line (resolution · codec · fps · Мбит/с · sound) for about 5 s.
 - «О программе» shows «Настин кинозал», the version and the device. The adult-channels switch works.
 
-## 6. Resource limits (optimisation targets)
+### 6. Resource limits (optimisation targets)
 - The channel list is parsed once per load.
 - Nothing is written to storage before the first frame.
 - After opening the guide on 30 channels, at most 24 guides are kept, with no descriptions.
@@ -216,3 +422,235 @@ Full list: `masters.json`.
 Logs in this folder: masters.json, scan-kino.log, a1-burst*.log, a2-single.log, a3-reload*.log, a3-cold.log, s2-*.log, s3-*.log, s4-*.log, s1-archive-return.log, soak-megahit.log.
 
 **Defects opened by this run:** D1 (scrub to the 7-day edge → black, retries a moment the provider no longer serves), D2 (archive continuation: player clock starts ~50 s in, position runs ~50 s ahead). Both MEDIUM, to fix next.
+
+### 2026-10-26 01:30–01:55 — DRY runs of the TV runner (desktop, headless Chrome, main checkout code, real provider list and guides, no picture)
+
+Not acceptance: it validates the runner and the data checks. Playback rows are DRY-SKIP and must be run on the TV.
+
+**Found:**
+- **D4 (MEDIUM, viewer-visible): after midnight the ▼ panel's «Сегодня» has no programme on air when that programme started before 00:00.** The cursor lands on a future programme. Run 2: 1+1 Україна, Астана ТВ, Armenia Premium 1 (the same on 4ever Music by hand). Use case P8.
+- U0 found no empty and no wrong «now» cell: 11 groups, 372/372 channels each time. Channels without a programme in the API are counted as «no API programme».
+
+#### Run 1 — 2026-10-26 01:42 local (file `tests/tv/results/2026-10-25-23-42-dry.md`, named in UTC) — DRY (desktop, headless Chrome, no picture) · cases U0,M2,M4,M5,M7,M8,M9,M6,C2,M10,M11
+
+PASS 87 · FAIL 0 · DRY-SKIP 114 · NOT-RUN 1
+
+| Case | Channel / group | Measured | Result |
+|---|---|---|---|
+| U0.rows | Все каналы | 372/372 rows seen · empty 0 · not on air 0 · no API programme 28 | PASS |
+| U0.banner-fields | Все каналы · 1 Channel 9 (Израиль) | num «1» · title «Channel 9 (Израиль)» · now «01:25⁠–⁠02:15 Т/с "Свидетели", 82 с. "Долгая память".» · next «Далее 02:15 "День".» · clock «01:42» · shown true | PASS |
+| U0.banner==row | Все каналы · 1 Channel 9 (Израиль) | menu «Т/с "Свидетели", 82 с. "Долгая память".» · banner «01:25⁠–⁠02:15 Т/с "Свидетели", 82 с. "Долгая память".» · API on air «Т/с "Свидетели", 82 с. "Долгая память".» | PASS |
+| U0.next | Все каналы · 1 Channel 9 (Израиль) | guide next «"День".» · banner «Далее 02:15 "День".» | PASS |
+| U0.first-frame | Все каналы · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Все каналы · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Все каналы · 186 Кинохит | num «186» · title «Кинохит» · now «00:00⁠–⁠02:20 Х/ф "Долина теней".» · next «» · clock «01:42» · shown true | PASS |
+| U0.banner==row | Все каналы · 186 Кинохит | menu «Х/ф "Долина теней".» · banner «00:00⁠–⁠02:20 Х/ф "Долина теней".» · API on air «Х/ф "Долина теней".» | PASS |
+| U0.next | Все каналы · 186 Кинохит | guide next «Х/ф "Большой солдат".» · banner «» | DRY-SKIP |
+| U0.first-frame | Все каналы · 186 Кинохит | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Все каналы · 186 Кинохит | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Все каналы · 372 Жара | num «372» · title «Жара» · now «00:30⁠–⁠03:40 Музыкальный блок» · next «» · clock «01:42» · shown true | PASS |
+| U0.banner==row | Все каналы · 372 Жара | menu «Музыкальный блок» · banner «00:30⁠–⁠03:40 Музыкальный блок» · API on air «Музыкальный блок» | PASS |
+| U0.next | Все каналы · 372 Жара | guide next «Мегамикс» · banner «» | DRY-SKIP |
+| U0.first-frame | Все каналы · 372 Жара | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Все каналы · 372 Жара | no picture in dry mode | DRY-SKIP |
+| U0.rows | Израиль | 18/18 rows seen · empty 0 · not on air 0 · no API programme 1 | PASS |
+| U0.banner-fields | Израиль · 1 Channel 9 (Израиль) | num «1» · title «Channel 9 (Израиль)» · now «01:25⁠–⁠02:15 Т/с "Свидетели", 82 с. "Долгая память".» · next «Далее 02:15 "День".» · clock «01:42» · shown true | PASS |
+| U0.banner==row | Израиль · 1 Channel 9 (Израиль) | menu «Т/с "Свидетели", 82 с. "Долгая память".» · banner «01:25⁠–⁠02:15 Т/с "Свидетели", 82 с. "Долгая память".» · API on air «Т/с "Свидетели", 82 с. "Долгая память".» | PASS |
+| U0.next | Израиль · 1 Channel 9 (Израиль) | guide next «"День".» · banner «Далее 02:15 "День".» | PASS |
+| U0.first-frame | Израиль · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Израиль · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Израиль · 9 HOP! (Израиль) | num «9» · title «HOP! (Израиль)» · now «00:00⁠–⁠02:00 רדיו ללה» · next «» · clock «01:42» · shown true | PASS |
+| U0.banner==row | Израиль · 9 HOP! (Израиль) | menu «רדיו ללה» · banner «00:00⁠–⁠02:00 רדיו ללה» · API on air «רדיו ללה» | PASS |
+| U0.next | Израиль · 9 HOP! (Израиль) | guide next «רדיו ללה» · banner «» | DRY-SKIP |
+| U0.first-frame | Израиль · 9 HOP! (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Израиль · 9 HOP! (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Израиль · 18 HOT HBO (Израиль) | num «18» · title «HOT HBO (Израиль)» · now «00:58⁠–⁠01:54 כנופיית הווסטיז» · next «» · clock «01:43» · shown true | PASS |
+| U0.banner==row | Израиль · 18 HOT HBO (Израиль) | menu «כנופיית הווסטיז» · banner «00:58⁠–⁠01:54 כנופיית הווסטיז» · API on air «כנופיית הווסטיז» | PASS |
+| U0.next | Израиль · 18 HOT HBO (Израиль) | guide next «לודוויג» · banner «» | DRY-SKIP |
+| U0.first-frame | Израиль · 18 HOT HBO (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Израиль · 18 HOT HBO (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.rows | Украина | 91/91 rows seen · empty 0 · not on air 0 · no API programme 9 | PASS |
+| U0.banner-fields | Украина · 19 Інтер | num «19» · title «Інтер» · now «01:00⁠–⁠02:00 "Єдині новини". Телемарафон.» · next «» · clock «01:43» · shown true | PASS |
+| U0.banner==row | Украина · 19 Інтер | menu «"Єдині новини". Телемарафон.» · banner «01:00⁠–⁠02:00 "Єдині новини". Телемарафон.» · API on air «"Єдині новини". Телемарафон.» | PASS |
+| U0.next | Украина · 19 Інтер | guide next «"Єдині новини". Телемарафон.» · banner «» | DRY-SKIP |
+| U0.first-frame | Украина · 19 Інтер | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Украина · 19 Інтер | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Украина · 255 Setanta Sports UA | num «255» · title «Setanta Sports UA» · now «01:00⁠–⁠03:00 Футбол. Чемпионат Англии. Премьер-лига. Челси » · next «» · clock «01:43» · shown true | PASS |
+| U0.banner==row | Украина · 255 Setanta Sports UA | menu «Футбол. Чемпионат Англии. Премьер-лига. Челси - Тоттенхэм Хо» · banner «01:00⁠–⁠03:00 Футбол. Чемпионат Англии. Премьер-лига. Челси » · API on air «Футбол. Чемпионат Англии. Премьер-лига. Челси - Тоттенхэм Хотспур.» | PASS |
+| U0.next | Украина · 255 Setanta Sports UA | guide next «Футбол. Чемпионат Англии. Премьер-лига. Астон Вилла - Манчестер Сити.» · banner «» | DRY-SKIP |
+| U0.first-frame | Украина · 255 Setanta Sports UA | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Украина · 255 Setanta Sports UA | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Украина · 366 Viva Latino | num «366» · title «Viva Latino» · now «21:00⁠–⁠05:00 Кліпи.» · next «» · clock «01:43» · shown true | PASS |
+| U0.banner==row | Украина · 366 Viva Latino | menu «Кліпи.» · banner «21:00⁠–⁠05:00 Кліпи.» · API on air «Кліпи.» | PASS |
+| U0.next | Украина · 366 Viva Latino | guide next «Кліпи.» · banner «» | DRY-SKIP |
+| U0.first-frame | Украина · 366 Viva Latino | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Украина · 366 Viva Latino | no picture in dry mode | DRY-SKIP |
+| U0.rows | Национальные | 62/62 rows seen · empty 0 · not on air 0 · no API programme 7 | PASS |
+| U0.banner-fields | Национальные · 1 Channel 9 (Израиль) | num «1» · title «Channel 9 (Израиль)» · now «01:25⁠–⁠02:15 Т/с "Свидетели", 82 с. "Долгая память".» · next «Далее 02:15 "День".» · clock «01:43» · shown true | PASS |
+| U0.banner==row | Национальные · 1 Channel 9 (Израиль) | menu «Т/с "Свидетели", 82 с. "Долгая память".» · banner «01:25⁠–⁠02:15 Т/с "Свидетели", 82 с. "Долгая память".» · API on air «Т/с "Свидетели", 82 с. "Долгая память".» | PASS |
+| U0.next | Национальные · 1 Channel 9 (Израиль) | guide next «"День".» · banner «Далее 02:15 "День".» | PASS |
+| U0.first-frame | Национальные · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Национальные · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Национальные · 31 Астана ТВ (Казахстан) | num «31» · title «Астана ТВ (Казахстан)» · now «20:10⁠–⁠02:30 Жажда мести» · next «» · clock «01:43» · shown true | PASS |
+| U0.banner==row | Национальные · 31 Астана ТВ (Казахстан) | menu «Жажда мести» · banner «20:10⁠–⁠02:30 Жажда мести» · API on air «Жажда мести» | PASS |
+| U0.next | Национальные · 31 Астана ТВ (Казахстан) | guide next «—» · banner «» | DRY-SKIP |
+| U0.first-frame | Национальные · 31 Астана ТВ (Казахстан) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Национальные · 31 Астана ТВ (Казахстан) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Национальные · 62 Армія TV | num «62» · title «Армія TV» · now «00:00⁠–⁠01:44 Д/ф "12. Земля Героїв".» · next «» · clock «01:43» · shown true | PASS |
+| U0.banner==row | Национальные · 62 Армія TV | menu «Д/ф "12. Земля Героїв".» · banner «00:00⁠–⁠01:44 Д/ф "12. Земля Героїв".» · API on air «—» | PASS |
+| U0.next | Национальные · 62 Армія TV | guide next «"Відтягуйтесь, я прикрию!": подвиг воїна "Золотаря", який з важким пораненням відбивався від рою FPV \|\| Ukrainian Witness.» · banner «» | DRY-SKIP |
+| U0.first-frame | Национальные · 62 Армія TV | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Национальные · 62 Армія TV | no picture in dry mode | DRY-SKIP |
+| U0.rows | Новостные | 11/11 rows seen · empty 0 · not on air 0 · no API programme 0 | PASS |
+| U0.banner-fields | Новостные · 63 Deutsche Welle | num «63» · title «Deutsche Welle» · now «01:30⁠–⁠02:00 REV. Mad for Mercedes: South Africans" love fo» · next «» · clock «01:44» · shown true | PASS |
+| U0.banner==row | Новостные · 63 Deutsche Welle | menu «REV. Mad for Mercedes: South Africans" love for old Benz mod» · banner «01:30⁠–⁠02:00 REV. Mad for Mercedes: South Africans" love fo» · API on air «REV. Mad for Mercedes: South Africans" love for old Benz models.» | PASS |
+| U0.next | Новостные · 63 Deutsche Welle | guide next «DW News.» · banner «» | DRY-SKIP |
+| U0.first-frame | Новостные · 63 Deutsche Welle | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Новостные · 63 Deutsche Welle | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Новостные · 68 FreeДОМ | num «68» · title «FreeДОМ» · now «01:30⁠–⁠04:00 Марафон "FreeДОМ" UA.» · next «» · clock «01:44» · shown true | PASS |
+| U0.banner==row | Новостные · 68 FreeДОМ | menu «Марафон "FreeДОМ" UA.» · banner «01:30⁠–⁠04:00 Марафон "FreeДОМ" UA.» · API on air «Марафон "FreeДОМ" UA.» | PASS |
+| U0.next | Новостные · 68 FreeДОМ | guide next «Д/ф "Сімейний альбом".» · banner «» | DRY-SKIP |
+| U0.first-frame | Новостные · 68 FreeДОМ | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Новостные · 68 FreeДОМ | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Новостные · 73 Новини Live | num «73» · title «Новини Live» · now «01:00⁠–⁠02:00 Нет данных» · next «» · clock «01:44» · shown true | PASS |
+| U0.banner==row | Новостные · 73 Новини Live | menu «Нет данных» · banner «01:00⁠–⁠02:00 Нет данных» · API on air «Нет данных» | PASS |
+| U0.next | Новостные · 73 Новини Live | guide next «—» · banner «» | DRY-SKIP |
+| U0.first-frame | Новостные · 73 Новини Live | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Новостные · 73 Новини Live | no picture in dry mode | DRY-SKIP |
+| U0.rows | Познавательные | 64/64 rows seen · empty 0 · not on air 0 · no API programme 7 | PASS |
+| U0.banner-fields | Познавательные · 74 National Geographic | num «74» · title «National Geographic» · now «01:05⁠–⁠01:45 д/с Расследования авиакатастроф (Совместные ме» · next «» · clock «01:44» · shown true | PASS |
+| U0.banner==row | Познавательные · 74 National Geographic | menu «д/с Расследования авиакатастроф (Совместные меры)» · banner «01:05⁠–⁠01:45 д/с Расследования авиакатастроф (Совместные ме» · API on air «д/с Расследования авиакатастроф (Совместные меры)» | PASS |
+| U0.next | Познавательные · 74 National Geographic | guide next «д/с Расследования авиакатастроф (Хаос в кабине)» · banner «» | DRY-SKIP |
+| U0.first-frame | Познавательные · 74 National Geographic | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Познавательные · 74 National Geographic | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Познавательные · 105 Discovery | num «105» · title «Discovery» · now «01:30⁠–⁠02:00 Пограничная служба: Испания 9. 2» · next «» · clock «01:44» · shown true | PASS |
+| U0.banner==row | Познавательные · 105 Discovery | menu «Пограничная служба: Испания 9. 2» · banner «01:30⁠–⁠02:00 Пограничная служба: Испания 9. 2» · API on air «Пограничная служба: Испания 9. 2» | PASS |
+| U0.next | Познавательные · 105 Discovery | guide next «Золотая лихорадка, 15 с-н 23 с. Последний танец» · banner «» | DRY-SKIP |
+| U0.first-frame | Познавательные · 105 Discovery | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Познавательные · 105 Discovery | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Познавательные · 137 ЗооСвіт | num «137» · title «ЗооСвіт» · now «01:25⁠–⁠01:55 Дикі тварини. Маленькі, але смертельні хижаки.» · next «» · clock «01:44» · shown true | PASS |
+| U0.banner==row | Познавательные · 137 ЗооСвіт | menu «Дикі тварини. Маленькі, але смертельні хижаки.» · banner «01:25⁠–⁠01:55 Дикі тварини. Маленькі, але смертельні хижаки.» · API on air «Дикі тварини. Маленькі, але смертельні хижаки.» | PASS |
+| U0.next | Познавательные · 137 ЗооСвіт | guide next «Дикі тварини у зоопарку Сан-Дієго. Пармський валлабі, американський ворон, огляд горили.» · banner «» | DRY-SKIP |
+| U0.first-frame | Познавательные · 137 ЗооСвіт | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Познавательные · 137 ЗооСвіт | no picture in dry mode | DRY-SKIP |
+| U0.rows | Кино | 95/95 rows seen · empty 0 · not on air 0 · no API programme 4 | PASS |
+| U0.banner-fields | Кино · 138 KinoKazka | num «138» · title «KinoKazka» · now «01:15⁠–⁠02:55 х/ф Стражи времени» · next «» · clock «01:44» · shown true | PASS |
+| U0.banner==row | Кино · 138 KinoKazka | menu «х/ф Стражи времени» · banner «01:15⁠–⁠02:55 х/ф Стражи времени» · API on air «х/ф Стражи времени» | PASS |
+| U0.next | Кино · 138 KinoKazka | guide next «м/ф Норм и Несокрушимые: Семейные каникулы» · banner «» | DRY-SKIP |
+| U0.first-frame | Кино · 138 KinoKazka | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Кино · 138 KinoKazka | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Кино · 185 Cineman MiniSeries | num «185» · title «Cineman MiniSeries» · now «01:19⁠–⁠01:46 Нормальные люди 1 сезон 7 серия» · next «» · clock «01:45» · shown true | PASS |
+| U0.banner==row | Кино · 185 Cineman MiniSeries | menu «Нормальные люди 1 сезон 7 серия» · banner «01:19⁠–⁠01:46 Нормальные люди 1 сезон 7 серия» · API on air «Нормальные люди 1 сезон 7 серия» | PASS |
+| U0.next | Кино · 185 Cineman MiniSeries | guide next «Нормальные люди 1 сезон 8 серия» · banner «» | DRY-SKIP |
+| U0.first-frame | Кино · 185 Cineman MiniSeries | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Кино · 185 Cineman MiniSeries | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Кино · 232 BCU | num «232» · title «BCU» · now «01:00⁠–⁠02:00 Нет данных» · next «» · clock «01:45» · shown true | PASS |
+| U0.banner==row | Кино · 232 BCU | menu «Нет данных» · banner «01:00⁠–⁠02:00 Нет данных» · API on air «Нет данных» | PASS |
+| U0.next | Кино · 232 BCU | guide next «—» · banner «» | DRY-SKIP |
+| U0.first-frame | Кино · 232 BCU | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Кино · 232 BCU | no picture in dry mode | DRY-SKIP |
+| U0.rows | Детские | 22/22 rows seen · empty 0 · not on air 0 · no API programme 6 | PASS |
+| U0.banner-fields | Детские · 233 Nick Jr | num «233» · title «Nick Jr» · now «» · next «» · clock «01:45» · shown true | DRY-SKIP |
+| U0.banner==row | Детские · 233 Nick Jr | menu «» · banner «» · API on air «—» | PASS |
+| U0.next | Детские · 233 Nick Jr | guide next «М/с "Щенячий патруль", 10 сезон, 19 с. "Щенки спасают слоновий курорт / Щенки спасают подводного Отиса".» · banner «» | DRY-SKIP |
+| U0.first-frame | Детские · 233 Nick Jr | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Детские · 233 Nick Jr | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Детские · 243 В гостях у сказки | num «243» · title «В гостях у сказки» · now «» · next «» · clock «01:45» · shown true | DRY-SKIP |
+| U0.banner==row | Детские · 243 В гостях у сказки | menu «» · banner «» · API on air «—» | PASS |
+| U0.next | Детские · 243 В гостях у сказки | guide next «М/с "Смешарики", 149 с. "Слишком фигурное катание: часть 1".» · banner «» | DRY-SKIP |
+| U0.first-frame | Детские · 243 В гостях у сказки | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Детские · 243 В гостях у сказки | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Детские · 254 Nickelodeon | num «254» · title «Nickelodeon» · now «01:33⁠–⁠01:55 Лучш и Лучшик» · next «» · clock «01:45» · shown true | PASS |
+| U0.banner==row | Детские · 254 Nickelodeon | menu «Лучш и Лучшик» · banner «01:33⁠–⁠01:55 Лучш и Лучшик» · API on air «Лучш и Лучшик» | PASS |
+| U0.next | Детские · 254 Nickelodeon | guide next «Лучш и Лучшик» · banner «» | DRY-SKIP |
+| U0.first-frame | Детские · 254 Nickelodeon | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Детские · 254 Nickelodeon | no picture in dry mode | DRY-SKIP |
+| U0.rows | Спорт | 41/41 rows seen · empty 0 · not on air 0 · no API programme 3 | PASS |
+| U0.banner-fields | Спорт · 255 Setanta Sports UA | num «255» · title «Setanta Sports UA» · now «01:00⁠–⁠03:00 Футбол. Чемпионат Англии. Премьер-лига. Челси » · next «» · clock «01:45» · shown true | PASS |
+| U0.banner==row | Спорт · 255 Setanta Sports UA | menu «Футбол. Чемпионат Англии. Премьер-лига. Челси - Тоттенхэм Хо» · banner «01:00⁠–⁠03:00 Футбол. Чемпионат Англии. Премьер-лига. Челси » · API on air «Футбол. Чемпионат Англии. Премьер-лига. Челси - Тоттенхэм Хотспур.» | PASS |
+| U0.next | Спорт · 255 Setanta Sports UA | guide next «Футбол. Чемпионат Англии. Премьер-лига. Астон Вилла - Манчестер Сити.» · banner «» | DRY-SKIP |
+| U0.first-frame | Спорт · 255 Setanta Sports UA | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Спорт · 255 Setanta Sports UA | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Спорт · 275 KHL ТВ | num «275» · title «KHL ТВ» · now «01:30⁠–⁠03:50 ФОНБЕТ Чемпионат КХЛ. "Спартак" - "Шанхайские » · next «» · clock «01:45» · shown true | PASS |
+| U0.banner==row | Спорт · 275 KHL ТВ | menu «ФОНБЕТ Чемпионат КХЛ. "Спартак" - "Шанхайские Драконы" (Кита» · banner «01:30⁠–⁠03:50 ФОНБЕТ Чемпионат КХЛ. "Спартак" - "Шанхайские » · API on air «ФОНБЕТ Чемпионат КХЛ. "Спартак" - "Шанхайские Драконы" (Китай).» | PASS |
+| U0.next | Спорт · 275 KHL ТВ | guide next «"Всё, кроме хоккея".» · banner «» | DRY-SKIP |
+| U0.first-frame | Спорт · 275 KHL ТВ | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Спорт · 275 KHL ТВ | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Спорт · 295 ОККО Прайм Спорт | num «295» · title «ОККО Прайм Спорт» · now «22:55⁠–⁠02:40 Футбол. Чемпионат Франции» · next «» · clock «01:46» · shown true | PASS |
+| U0.banner==row | Спорт · 295 ОККО Прайм Спорт | menu «Футбол. Чемпионат Франции» · banner «22:55⁠–⁠02:40 Футбол. Чемпионат Франции» · API on air «Футбол. Чемпионат Франции» | PASS |
+| U0.next | Спорт · 295 ОККО Прайм Спорт | guide next «Тревел-шоу. Сезон 1. Серия 10. Чек-лист: Мюнхен. Октоберфест. Матч Германия – Сербия» · banner «» | DRY-SKIP |
+| U0.first-frame | Спорт · 295 ОККО Прайм Спорт | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Спорт · 295 ОККО Прайм Спорт | no picture in dry mode | DRY-SKIP |
+| U0.rows | Развлекательные | 52/52 rows seen · empty 0 · not on air 0 · no API programme 10 | PASS |
+| U0.banner-fields | Развлекательные · 296 Fashion ONE | num «296» · title «Fashion ONE» · now «» · next «» · clock «01:46» · shown true | DRY-SKIP |
+| U0.banner==row | Развлекательные · 296 Fashion ONE | menu «» · banner «» · API on air «—» | PASS |
+| U0.next | Развлекательные · 296 Fashion ONE | guide next «Модные Показы. IRINA VALERY. Осень-Зима22-23. Неделя моды в Санкт-Петербурге (12+)» · banner «» | DRY-SKIP |
+| U0.first-frame | Развлекательные · 296 Fashion ONE | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Развлекательные · 296 Fashion ONE | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Развлекательные · 321 Панянка-селянка+ | num «321» · title «Панянка-селянка+» · now «01:00⁠–⁠02:00 Програма відсутня» · next «» · clock «01:46» · shown true | PASS |
+| U0.banner==row | Развлекательные · 321 Панянка-селянка+ | menu «Програма відсутня» · banner «01:00⁠–⁠02:00 Програма відсутня» · API on air «Програма відсутня» | PASS |
+| U0.next | Развлекательные · 321 Панянка-селянка+ | guide next «Програма відсутня» · banner «» | DRY-SKIP |
+| U0.first-frame | Развлекательные · 321 Панянка-селянка+ | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Развлекательные · 321 Панянка-селянка+ | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Развлекательные · 347 Ми - Україна | num «347» · title «Ми - Україна» · now «01:00⁠–⁠02:00 "Єдині новини". Телемарафон.» · next «» · clock «01:46» · shown true | PASS |
+| U0.banner==row | Развлекательные · 347 Ми - Україна | menu «"Єдині новини". Телемарафон.» · banner «01:00⁠–⁠02:00 "Єдині новини". Телемарафон.» · API on air «"Єдині новини". Телемарафон.» | PASS |
+| U0.next | Развлекательные · 347 Ми - Україна | guide next «"Єдині новини". Телемарафон.» · banner «» | DRY-SKIP |
+| U0.first-frame | Развлекательные · 347 Ми - Україна | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Развлекательные · 347 Ми - Україна | no picture in dry mode | DRY-SKIP |
+| U0.rows | Музыкальные | 25/25 rows seen · empty 0 · not on air 0 · no API programme 0 | PASS |
+| U0.banner-fields | Музыкальные · 348 Stingray iConcerts | num «348» · title «Stingray iConcerts» · now «01:00⁠–⁠03:11 Duane Allman: Song Of The South. 2013.» · next «» · clock «01:46» · shown true | PASS |
+| U0.banner==row | Музыкальные · 348 Stingray iConcerts | menu «Duane Allman: Song Of The South. 2013.» · banner «01:00⁠–⁠03:11 Duane Allman: Song Of The South. 2013.» · API on air «Duane Allman: Song Of The South. 2013.» | PASS |
+| U0.next | Музыкальные · 348 Stingray iConcerts | guide next «Charlie Puth: Live in London. 2015.» · banner «» | DRY-SKIP |
+| U0.first-frame | Музыкальные · 348 Stingray iConcerts | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Музыкальные · 348 Stingray iConcerts | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Музыкальные · 360 4ever Music | num «360» · title «4ever Music» · now «21:00⁠–⁠05:00 Хіти минулих років.» · next «» · clock «01:46» · shown true | PASS |
+| U0.banner==row | Музыкальные · 360 4ever Music | menu «Хіти минулих років.» · banner «21:00⁠–⁠05:00 Хіти минулих років.» · API on air «Хіти минулих років.» | PASS |
+| U0.next | Музыкальные · 360 4ever Music | guide next «Хіти минулих років.» · banner «» | DRY-SKIP |
+| U0.first-frame | Музыкальные · 360 4ever Music | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Музыкальные · 360 4ever Music | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Музыкальные · 372 Жара | num «372» · title «Жара» · now «00:30⁠–⁠03:40 Музыкальный блок» · next «» · clock «01:46» · shown true | PASS |
+| U0.banner==row | Музыкальные · 372 Жара | menu «Музыкальный блок» · banner «00:30⁠–⁠03:40 Музыкальный блок» · API on air «Музыкальный блок» | PASS |
+| U0.next | Музыкальные · 372 Жара | guide next «Мегамикс» · banner «» | DRY-SKIP |
+| U0.first-frame | Музыкальные · 372 Жара | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Музыкальные · 372 Жара | no picture in dry mode | DRY-SKIP |
+| M2.open-on-playing | 372 Жара | cursor on 372 Жара  ▶ · playing marker true | PASS |
+| M4.cursor-on-air | 372 Жара | 00:30 «Музыкальный блок» в эфире · API «Музыкальный блок» | PASS |
+| M4.day-back | 372 Жара | Жара — Вчера | PASS |
+| M4.past-plays | 372 Жара | «Жара 13» → mode archive · banner «Жара · Архив · 00:00» · dry | PASS |
+| M5.scrub-back | 372 Жара | knob 01:44:05 · position 01:44:05 · dry | PASS |
+| M5.7-day-edge (D1) | 372 Жара | knob 02:49:05 · mode archive · no picture in dry mode | DRY-SKIP |
+| M5.to-live | 372 Жара | knob прямой эфир · mode live | PASS |
+| M7.single | 348 Stingray iConcerts | no picture in dry mode | DRY-SKIP |
+| M7.single | 349 Stingray CMusic | no picture in dry mode | DRY-SKIP |
+| M7.single | 350 М1 | no picture in dry mode | DRY-SKIP |
+| M7.burst | from 350 М1 | landed 360 4ever Music (expected 360 4ever Music) · 2 app requests | PASS |
+| M8.paused | 360 4ever Music | mode paused · 0 requests in 10 s | PASS |
+| M8.resume-in-place | 360 4ever Music | paused at 01:51:22 · resumed at 01:51:22 (archive) | DRY-SKIP |
+| M9.live | 360 4ever Music · simulated hide | live → live · position 01:51:35 → 01:51:40 · dry | PASS |
+| M9.archive | 360 4ever Music · simulated hide | archive → archive · position 01:48:40 → 01:48:40 · dry | PASS |
+| M6.continuation (D2) | — | no picture in dry mode | DRY-SKIP |
+| C2.archive-1d | 197 Viju+ Megahit | «From Paris with Love» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-3d | 197 Viju+ Megahit | «Бременские музыканты (6+)» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-1d | 215 Кинокомедия | «х/ф Игра киллера» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-3d | 215 Кинокомедия | «х/ф Козёл отпущения» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-1d | 194 sci-fi | «Х/ф "Поезд в пусан".» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-3d | 194 sci-fi | «Т/с "Хемлок Гроув", 3 сезон, 4 с.» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-1d | 228 Kinoliving | «х/ф Все ненавидят Йохана» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-3d | 228 Kinoliving | «т/с Пайрэт Бэй ┊ 5» · mode archive · no picture in dry mode | DRY-SKIP |
+| M10.soak | — | no picture in dry mode | DRY-SKIP |
+| M11 | — | skipped (--m11-min 0) | NOT-RUN |
+| app-errors | — | failure log lines: 40 | INFO |
+
+#### Run 2 — 2026-10-26 01:53 local (file `tests/tv/results/2026-10-25-23-53-dry.md`) — DRY (desktop, headless Chrome, no picture) · cases M4
+
+PASS 3 · FAIL 3 · DRY-SKIP 0 · NOT-RUN 0
+
+| Case | Channel / group | Measured | Result |
+|---|---|---|---|
+| M4.cursor-on-air | 1 Channel 9 (Израиль) | 01:25 «Т/с "Свидетели", 82 с. "Долгая память".» в эфире · API «Т/с "Свидетели", 82 с. "Долгая память".» | PASS |
+| M4.day-back | 1 Channel 9 (Израиль) | Channel 9 (Израиль) — Вчера | PASS |
+| M4.past-plays | 1 Channel 9 (Израиль) | «Т/с "Свидетели", 82 с. "Долгая память".» → mode archive · banner «Channel 9 (Израиль) · Архив · 01:25» · dry | PASS |
+| M4.after-midnight (P8) | 22 1+1 Україна | on air «"Світ навиворіт".» (started before 00:00) · panel «1+1 Україна — Сегодня» cursor 05:30 «"Життя відомих людей".»  | FAIL |
+| M4.after-midnight (P8) | 31 Астана ТВ (Казахстан) | on air «Жажда мести» (started before 00:00) · panel «Астана ТВ (Казахстан) — Сегодня» cursor 02:30 «Кулфи»  | FAIL |
+| M4.after-midnight (P8) | 52 Armenia Premium 1 | on air «Հ/Ս "Գոյամարտ ս189-ս192"» (started before 00:00) · panel «Armenia Premium 1 — Сегодня» cursor 02:05 «Օպերատիվ ժամ»  | FAIL |
+| app-errors | — | failure log lines: 21 | INFO |

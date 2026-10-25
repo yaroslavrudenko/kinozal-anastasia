@@ -124,14 +124,15 @@ test('layout passes: one ▼ in the menu costs at most 2 layouts, with many long
   await cdp.send('Performance.enable');
   const layouts = async () => (await cdp.send('Performance.getMetrics')).metrics.find((m) => m.name === 'LayoutCount').value;
   const frame = () => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
-  const per = [];
+  const per = [], refreshed = [];
   for (let i = 0; i < 25; i++) {
     await frame();
-    const before = await layouts();
+    const before = await layouts(), hits = app.listHits.length;
     await key(K.DOWN);
     await frame();
     per.push((await layouts()) - before);
+    if (app.listHits.length > hits) refreshed.push(i);     // a channel-list ("now" lines) answer landed in this press
   }
   await closeAll();
-  assert.ok(Math.max(...per) <= 2, 'layouts per ▼: ' + per.join(','));
+  assert.ok(Math.max(...per) <= 2, 'layouts per ▼: ' + per.join(',') + (refreshed.length ? ' · list answers during presses #' + refreshed.join(',') : ' · no list answer during the presses'));
 });
