@@ -1,4 +1,113 @@
-# Performance tracking
+# Performance tracking — «Настин кинозал» (Nastin Kinozal)
+
+## Summary of the 2026 performance work
+
+### How it started
+
+On 2026-10-25 six independent reviewers read the whole code of v1.7.0 (HEAD `20c4c6e`): two frontend/JavaScript code reviewers, two performance specialists, a general code reviewer and Codex as an external reviewer. Together they reported **230 findings**. All six verdicts were **REJECT**; none of the findings was critical. Performance came first. Every ◀ ▶ press downloaded a 205 KB guide. The channel list was parsed twice and written to storage before the first frame. A failed guide request was retried in a tight loop. A background health check of every channel competed with playback. The details are in [section 3](#3-baseline--2026-10-25-review) and the [backlog](#4-performance-backlog).
+
+### How it was done
+
+- **A fix plan that disposed of every finding.** Each of the 230 findings got a status: **115 FIX**, **112 MERGED** into a primary that the same work fixes, and **3 OPEN-NO-CLEAN-FIX** because of provider or platform limits. No finding was dropped.
+- **One implementer, one batch.** The 724-line `app.js` was split into small single-purpose modules. A single transport module now owns every request, and every request can be aborted.
+- **Three independent reviewers after every iteration:** the native frontend code reviewer, Codex (external, read-only) and the performance analyst. None of them wrote code. The performance analyst re-ran the measurements with scripts of its own rather than trusting the implementer's numbers.
+- **Five fix iterations.** Verdicts per review round:
+
+  | Round | Native reviewer | Codex (external) | Performance analyst |
+  |---|---|---|---|
+  | 1 | REJECT | REJECT | REJECT |
+  | 2 | REJECT | APPROVE | APPROVE |
+  | 3 | APPROVE | REJECT (wrapped rows still clipped) | APPROVE |
+  | 4 | REJECT (one LOW item, R4-1) | APPROVE | APPROVE |
+  | 5 | REJECT (R5-1, LOW) | REJECT (page-up overlap, tech line, panel cursor) | APPROVE |
+  | 6 | APPROVE | APPROVE | — |
+
+- **A behaviour test suite grown from 0 to 131 tests**, all passing (`tests/run.sh`, iteration 5). It includes headless-browser layout tests for wrapping, paging and the tall-row case. Every pin is mutation-proven: the guard is removed, the test turns red, the guard is restored, the test turns green.
+
+### Before → after (measured numbers)
+
+Labels: **harness** = `node tools/perf-measure.js` and the session scripts, run on a desktop against the simulated network, with "before" taken from the old tree. **measured desktop** = headless Chrome on a Mac with the CPU throttled 6×. **estimate** = not measured. **Nothing in this table has been measured on the TV yet** (see [Still to verify on the TV](#still-to-verify-on-the-tv)).
+
+| What | Before | After | Label |
+|---|---|---|---|
+| Guide + stream requests per 10-press zap burst | 20 | 3 (1 of them aborted); desktop Chrome app requests 20 → 2 | harness · measured desktop |
+| Single press → channel open | 350 ms fixed delay | 0 ms | harness (TV first frame: TV-2) |
+| Channel-list parses per load | 2 | 1 | harness |
+| Storage writes before the first frame | 2 | 0 (offline copy 500 022 → 44 380 chars, ≈ 500 KB → 44 KB) | harness |
+| Requests during a 10-minute pause | 200 | 0 | harness |
+| Failed-guide requests in 10 minutes | 12 007 | 5 (maximum over 50+ seeded runs) | harness |
+| List requests while the list server is down for 30 minutes | 179 | 10 | harness |
+| Malformed XMLTV, 8 000 unclosed tags | 307 ms | ≈ 5 ms; linear (32 000 tags: 6.6 ms) | harness |
+| Full guides kept after visiting 100 channels | 100 (7 680 000 description chars) | 24 (0 description chars) | harness |
+| Health-check requests on a relaunch 1 hour later | 201 | 0 | harness |
+| Startup long tasks over 50 ms, CPU 6× | 1–2 per run, 66–74 ms | none in 10 of 10 runs | measured desktop |
+| Menu cursor move, key → frame median, CPU 6× | 15–17 ms | 10–13 ms | measured desktop |
+
+Every row has a matching row with its exact command in the [change log](#6-change-log).
+
+One cost did not change. Opening the menu is still a single long task: 57–74 ms on the real list and 127–133 ms on a worst-case list of 60 long names, at 6× CPU. The baseline measured the same (56–72 / 119–141 ms), so this work did not cause it. It is recorded for the next batch (N-5).
+
+### On the TV — 2026-10-25 / 2026-10-26
+
+What happened when the work met the real TV (UE50MU7000), in order:
+
+1. **2026-10-25 ~23:45 — the first deploy failed.** The desktop-verified build showed a black screen. On this TV `webapis.network.addNetworkStateChangeListener` throws error 18. v1.7.0 had wrapped that call in try/catch; the refactor had dropped the wrapper, so boot stopped before the channel list loaded. The build was rolled back at once.
+2. **A second black screen, already present in v1.7.0.** Home → another app → back to our app left the screen black for minutes. The other app takes the TV's player, so ours is left IDLE, and `restore()` silently did nothing. Fixed in `e0c8758`: anything but PLAYING is reopened, and the watchdog fails an IDLE/NONE player.
+3. **The fixed overhaul passed the owner's cycle on the TV.** This is main `0375363` / `a856e77`. Each step reads the AVPlay state and the advancing media time through the Tizen inspector.
+
+   | Step | Result |
+   |---|---|
+   | close → open | PLAYING, time advancing |
+   | exit → open again | PLAYING, time advancing |
+   | Home → OTT Club (20 s) → back, ×2 | PLAYING within 6–11 s, time advancing |
+   | failure log | empty |
+
+4. **2026-10-26, testing on heavy channels and archives** (partial run; the full table is still to come):
+   - **Viju+ Megahit** (1920×1080 · H.264 · 10.9 Mbit/s · stereo): 5+ minutes live, PLAYING throughout, 60 s of video per minute, no new failures.
+   - An archive film («Now You See Me») resumed in place after a return from another app.
+   - Two failure-log entries appeared during the pause tests. They are not explained yet.
+
+Lessons now written into [docs/TESTING.md](TESTING.md):
+- No build is accepted until it plays on the TV.
+- Every deploy has a smoke check with automatic rollback.
+- Testing uses far, high-bitrate movie channels, not the default channel.
+
+### What the viewer notices
+
+- **Instant zapping.** A single press opens the channel at once. In a burst of presses only the channel you stop on loads its guide, and the channels you skipped past are cancelled.
+- **Pause stays paused.** Neither the watchdog nor the background check nor a pending zap overrides a pause. A pause shorter than 2 minutes resumes in place.
+- **The archive resumes in place.** A reconnect or a return from Home reopens the recording at the position on screen, not at its start. The position follows the player's clock, so time spent buffering is not counted as watched.
+- **No truncated text.** Channel names and programme titles wrap instead of being cut off. A row taller than the screen can be scrolled through line by line.
+- **The playing channel is highlighted** in the menu.
+- **A stream tech line on every channel open:** resolution, codec, bitrate and sound appear with the banner for 5 seconds. It never shows the previous channel's values.
+- **Paging never skips channels.** CH± / PG± turn the page by the rows that were completely visible, so every channel appears fully on some page.
+- **A new name:** the app is now called «Настин кинозал» (Nastin Kinozal).
+- **No black screen after another app:** returning from Home / another app reopens the channel (verified on the TV).
+- **Coming next, on branch `perf-fixes`, not yet verified on the TV:**
+  - a status banner from channel open to the first frame («Подключение…», «Загрузка видео… N%», «Нет сигнала — повтор через N с (попытка K)», «Канал отключён провайдером»);
+  - a clear message for a wrong or expired key instead of hiding every channel;
+  - media keys that work from the first seconds.
+
+### Still to verify on the TV
+
+These checks need one build deployed to the TV, which the owner has to permit:
+
+- **TV-1:** the tightened CSP still lets webapis.js, AVPlay, logos and requests work (blocks the release).
+- **TV-2:** zap timing on the device, and the cost of the synchronous AVPlay `stop` / `close` / `open` calls.
+- **TV-3:** native pause at 30 s, 3 min and 30 min; whether the provider serves an open-ended archive near live (PE-10 residual).
+- **TV-4:** the number of video renditions per channel (P-L).
+- **TV-5:** HTTPS for the API and the streams (S01).
+- **TV-6:** the watchdog during a pause, and the Home round trip (P-G, P-E).
+- **TV-7:** whether `sdb shell 0 rm` is allowed (cleanup of the stage directory).
+- **TV-8:** startup long tasks and launch-to-first-frame (P-B, P-P).
+- **TV-9:** a 3 × 10 min soak with the rebuffer counters, so that "never stalls" is measured on the device (P-X).
+- **TV-10:** wrapped rows fit; the paint cost of the slider and the banner.
+
+**Accepted residuals (OPEN-NO-CLEAN-FIX):**
+
+- **S01:** the provider serves the subscriber key and the streams over plain HTTP. The scheme is one constant and flips once TV-5 passes.
+- **PE-23:** AVPlay has no asynchronous `stop` / `close` / `open`. The work reduced how often these calls happen; TV-2 will measure what they cost.
+- **PE-27:** the provider's channel list is 444 KB and uncompressed. The app cannot change that, but it no longer stores the unused descriptions.
 
 ## 1. Purpose
 
