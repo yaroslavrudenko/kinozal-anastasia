@@ -2,7 +2,7 @@
 (function () {
   var K = {
     LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, ENTER: 13, BACK: 10009, BACK_DESKTOP: 8,
-    CH_UP: 427, CH_DOWN: 428, PG_UP: 33, PG_DOWN: 34, RED: 403, GREEN: 404, YELLOW: 405, BLUE: 406,
+    CH_UP: 427, CH_DOWN: 428, PG_UP: 33, PG_DOWN: 34, F: 70, RED: 403, GREEN: 404, YELLOW: 405, BLUE: 406,
     PLAY_PAUSE: 10252, PLAY: 415, PAUSE: 19, STOP: 413, REWIND: 412, FF: 417, INFO: 457, CH_LIST: 10073,
     PREV_CH: 10190
   };
@@ -366,7 +366,7 @@
         if (s.focus === 'groups') { s.focus = 'channels'; s.chCursor = 0; break; }
         if (s.focus === 'channels') { closeGuide(); tune(g.items[s.chCursor]); return; }
         playProgram(); return;
-      case K.YELLOW: toggleFav(); break;
+      case K.YELLOW: case K.F: toggleFav(); break;
       case K.BLUE: closeGuide(); changeKey(); return;
       case K.BACK: case K.BACK_DESKTOP: case K.CH_LIST: closeGuide(); return;
       default: return;

@@ -33,7 +33,8 @@ var UI = (function () {
     var start = Math.max(0, windowStart(cursor, list.length, poolRows.length));
     for (var i = 0; i < poolRows.length; i++) {
       var r = poolRows[i], idx = start + i;
-      if (idx >= list.length) { r.el.style.visibility = 'hidden'; continue; }
+      // The logo sets its own visibility, which would override the hidden row, so clear it too.
+      if (idx >= list.length) { r.el.style.visibility = 'hidden'; setLogo(r, ''); continue; }
       r.el.style.visibility = 'visible';
       r.el.className = r.el.className.split(' ')[0] + (idx === cursor ? (active ? ' focus' : ' sel') : '');
       fill(r, list[idx], idx);

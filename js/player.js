@@ -36,8 +36,8 @@ var Player = (function () {
       av.setDisplayMethod(displayModes[displayIdx]);
       // Start adaptive streams at the best quality the bandwidth allows.
       try { av.setStreamingProperty('ADAPTIVE_INFO', 'STARTBITRATE=HIGHEST|SKIPBITRATE=LOWEST'); } catch (e) {}
-      try { av.setBufferingParam('PLAYER_BUFFER_FOR_PLAY', 'PLAYER_BUFFER_SIZE_IN_SECOND', 3); } catch (e) {}
-      try { av.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', 6); } catch (e) {}
+      try { av.setBufferingParam('PLAYER_BUFFER_FOR_PLAY', 'PLAYER_BUFFER_SIZE_IN_SECOND', 5); } catch (e) {}
+      try { av.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', 10); } catch (e) {}
       av.setListener({
         onbufferingstart: function () { if (my === gen) { bufferingSince = Date.now(); hooks.onBuffering(true); } },
         onbufferingcomplete: function () { if (my === gen) { bufferingSince = 0; hooks.onBuffering(false); } },
@@ -68,7 +68,7 @@ var Player = (function () {
     if (!window.MediaSource) { video.src = url; safePlay(); return; }
     withHlsJs(function () {
       if (my !== gen) return;
-      hls = new window.Hls({ lowLatencyMode: false, maxBufferLength: 20 });
+      hls = new window.Hls({ lowLatencyMode: false, maxBufferLength: 30, liveSyncDurationCount: 4 });
       hls.on(window.Hls.Events.ERROR, function (_, d) { if (my === gen && d.fatal) fail(d.details); });
       hls.loadSource(url);
       hls.attachMedia(video);
