@@ -27,13 +27,7 @@ var Player = (function () {
     var my = ++gen;
     lastTime = -1; lastTimeAt = Date.now(); bufferingSince = Date.now();
     hooks.onBuffering(true);
-    if (!av) {
-      video.src = url;
-      video.onplaying = function () { if (my === gen) ok(); };
-      video.onerror = function () { if (my === gen) fail('video error'); };
-      video.play();
-      return;
-    }
+    if (!av) { startHtml(my); return; }
     try { av.stop(); } catch (e) {}
     try { av.close(); } catch (e) {}
     try {
@@ -62,6 +56,32 @@ var Player = (function () {
     }
   }
 
+  // Off the TV (desktop check): native HLS where the browser has it, otherwise hls.js loaded on demand.
+  var hls = null;
+  function startHtml(my) {
+    video.onplaying = function () { if (my === gen) ok(); };
+    video.onwaiting = function () { if (my === gen) { bufferingSince = Date.now(); hooks.onBuffering(true); } };
+    video.ontimeupdate = function () { if (my === gen) { bufferingSince = 0; lastTimeAt = Date.now(); } };
+    video.onerror = function () { if (my === gen) fail('video error'); };
+    if (hls) { hls.destroy(); hls = null; }
+    if (video.canPlayType('application/vnd.apple.mpegurl')) { video.src = url; video.play(); return; }
+    withHlsJs(function () {
+      if (my !== gen) return;
+      hls = new window.Hls({ lowLatencyMode: false, maxBufferLength: 20 });
+      hls.on(window.Hls.Events.ERROR, function (_, d) { if (my === gen && d.fatal) fail(d.details); });
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      video.play();
+    });
+  }
+  function withHlsJs(cb) {
+    if (window.Hls) { cb(); return; }
+    var sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js';
+    sc.onload = cb;
+    document.head.appendChild(sc);
+  }
+
   function ok() {
     retries = 0; bufferingSince = 0; lastTimeAt = Date.now();
     hooks.onBuffering(false);
@@ -78,9 +98,9 @@ var Player = (function () {
   }
 
   function tick() {
-    if (!url || !av) return;
+    if (!url) return;
     var now = Date.now(), state;
-    try { state = av.getState(); } catch (e) { return; }
+    if (av) { try { state = av.getState(); } catch (e) { return; } } else state = video.paused ? 'PAUSED' : 'PLAYING';
     if (bufferingSince && now - bufferingSince > CONFIG.BUFFER_TIMEOUT_MS) { fail('buffering timeout'); return; }
     if (state === 'PLAYING' && !bufferingSince && now - lastTimeAt > CONFIG.STALL_TIMEOUT_MS) fail('stalled');
   }

@@ -5,7 +5,29 @@
 var OttClub = (function () {
   function base() { return 'http://' + CONFIG.OTT_SERVER; }
 
-  function enabled() { return !!CONFIG.OTT_KEY && CONFIG.OTT_KEY.indexOf('__') !== 0; }
+  // The key is entered once on the setup screen (or built in) and kept on the device.
+  function key() {
+    var k = Util.store('ottKey');
+    if (k) return k;
+    return CONFIG.OTT_KEY && CONFIG.OTT_KEY.indexOf('__') !== 0 ? CONFIG.OTT_KEY : '';
+  }
+  function enabled() { return !!key(); }
+
+  // Accepts a bare key or any OTT Club link that carries it (/stream/<key>/, ?key=, ottkey=, /playlist/<key>/).
+  function extractKey(text) {
+    var t = String(text).replace(/^\s+|\s+$/g, '');
+    var m = /\/stream\/([A-Za-z0-9]+)\//.exec(t) || /[?&](?:ott)?key=([A-Za-z0-9]+)/.exec(t) ||
+            /\/(?:playlist|ottplayer|m3u)\/([A-Za-z0-9]{6,})/.exec(t) || /^([A-Za-z0-9]{6,})$/.exec(t);
+    return m ? m[1] : '';
+  }
+
+  // A wrong key still gets a playlist, but its segments point at the provider's "no key" clip.
+  function checkKey(k, done) {
+    Util.get(base() + '/stream/' + k + '/136.m3u8', 15000, function (text) {
+      done(text.indexOf('#EXTM3U') >= 0 && text.indexOf('NOTKEY') < 0 && text.indexOf('/system/') < 0);
+    }, function () { done(false); });
+  }
+  function saveKey(k) { Util.store('ottKey', k); }
   function sourceUrl() { return base() + '/api/channel_now'; }
 
   // Text of /api/channel_now -> { channels, groups, epgUrl }; null when the text is not a channel list.
@@ -31,7 +53,7 @@ var OttClub = (function () {
         name: c.channel_name,
         logo: c.img ? base() + '/images/' + c.img : '',
         group: c.category ? c.category.name : 'Без группы',
-        url: base() + '/stream/' + CONFIG.OTT_KEY + '/' + c.ch_id + '.m3u8',
+        url: base() + '/stream/' + key() + '/' + c.ch_id + '.m3u8',
         catchup: c.rec === '1' ? 'ottclub' : '',
         catchupSource: '',
         catchupDays: c.rec === '1' ? 7 : 0
@@ -57,5 +79,8 @@ var OttClub = (function () {
     }, function () { done(); });
   }
 
-  return { enabled: enabled, sourceUrl: sourceUrl, parse: parse, guide: guide };
+  return {
+    enabled: enabled, extractKey: extractKey, checkKey: checkKey, saveKey: saveKey,
+    sourceUrl: sourceUrl, parse: parse, guide: guide
+  };
 }());

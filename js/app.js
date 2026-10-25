@@ -23,7 +23,17 @@
   };
 
   // ---------- boot ----------
+  // Desktop check only: fit the 1920×1080 TV layout into the browser window.
+  function fitDesktop() {
+    if (window.webapis) return;
+    var k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    document.body.style.transformOrigin = '0 0';
+    document.body.style.transform = 'scale(' + k + ')';
+  }
+
   function boot() {
+    fitDesktop();
+    window.addEventListener('resize', fitDesktop);
     UI.init();
     registerKeys();
     Player.setHooks({
@@ -38,11 +48,53 @@
       if (document.hidden) Player.suspend(); else Player.resume();
     });
     watchNetwork();
+    if (OttClub.enabled() || playlistUrl()) startSources(); else showSetup();
+  }
+
+  function startSources() {
     if (OttClub.enabled()) EPG.setLoader(OttClub.guide);
     var cached = Util.store('playlistText');
     if (cached) apply(cached);
     loadPlaylist(!cached);
     setInterval(function () { loadPlaylist(false); }, CONFIG.PLAYLIST_REFRESH_MS);
+  }
+
+  function playlistUrl() {
+    return Util.store('playlistUrl') || (CONFIG.PLAYLIST_URL.indexOf('__') !== 0 ? CONFIG.PLAYLIST_URL : '');
+  }
+
+  // ---------- first run: key or playlist link ----------
+  function showSetup() {
+    s.setup = true;
+    Util.show(Util.$('setup'), true);
+    setTimeout(function () { Util.$('key-input').focus(); }, 300);
+  }
+
+  function submitSetup() {
+    var text = Util.$('key-input').value;
+    var err = Util.$('setup-err');
+    var key = OttClub.extractKey(text);
+    if (key) {
+      err.textContent = 'Проверяю ключ…';
+      OttClub.checkKey(key, function (ok) {
+        if (!ok) { err.textContent = 'Ключ не подошёл. Проверьте и вставьте ещё раз.'; return; }
+        OttClub.saveKey(key);
+        finishSetup();
+      });
+    } else if (/^https?:\/\//.test(text)) {
+      Util.store('playlistUrl', text.replace(/^\s+|\s+$/g, ''));
+      finishSetup();
+    } else {
+      err.textContent = 'Это не похоже на ключ или ссылку.';
+    }
+  }
+
+  function finishSetup() {
+    s.setup = false;
+    Util.$('key-input').blur();
+    Util.show(Util.$('setup'), false);
+    try { localStorage.removeItem('playlistText'); } catch (e) {}
+    startSources();
   }
 
   // Two sources: the OTT Club API (when a subscriber key is built in) or any M3U playlist.
@@ -53,7 +105,7 @@
 
   function loadPlaylist(blocking) {
     if (blocking) UI.spinner(true);
-    Util.get(OttClub.enabled() ? OttClub.sourceUrl() : CONFIG.PLAYLIST_URL, 20000, function (text) {
+    Util.get(OttClub.enabled() ? OttClub.sourceUrl() : playlistUrl(), 20000, function (text) {
       if (!parseSource(text)) { if (blocking) UI.fatal('Список каналов пуст или недоступен.'); return; }
       try { localStorage.setItem('playlistText', JSON.stringify(text)); } catch (e) {}
       apply(text);
@@ -300,6 +352,11 @@
   // ---------- live keys ----------
   function onKey(e) {
     var k = e.keyCode;
+    if (s.setup) {
+      // 13 = Enter, 65376 = "Done" on the Tizen on-screen keyboard
+      if (k === 13 || k === 65376) { e.preventDefault(); submitSetup(); }
+      return;
+    }
     if (s.guideOpen) { guideKey(k); e.preventDefault(); return; }
     if (k >= 48 && k <= 57) { digit(k - 48); return; }
     var g = groups[0];
