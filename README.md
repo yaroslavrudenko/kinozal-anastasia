@@ -2,6 +2,23 @@
 
 A fast IPTV player for Samsung Tizen TVs, built for an OTT Club playlist and tested against a 2017 UE50MU7000 (Tizen 3.0, Chromium 47 web engine).
 
+## Why this project exists
+
+Samsung TVs from 2017 and 2018 still have good panels, but their software has fallen behind.
+
+- **The official OTT Club app on these TVs is stuck at version 1.0.6.** It is a 56 KB shell that downloads its menu from the provider's server. The Android app moves on (2.6x in 2026), but the code it sends to the TV now uses JavaScript that the TV's 2015-era web engine cannot run. The result is JavaScript errors in the menus, frozen screens, and channels that hang without recovering.
+- **Samsung no longer updates these TVs.** The firmware is signed and locked, so the web engine cannot be upgraded. The only fix inside the TV is an app written for the engine the TV actually has.
+- **The goal: a player that is fast, reliable and complete on old hardware.** It keeps every feature that matters to a viewer: all channels split into groups, a programme guide, a 7-day archive with rewind and fast-forward, sound tracks and picture modes. The app should never hang. A stalled stream reconnects by itself, and the interface stays responsive with a thousand channels.
+
+The app is named after the person it was made for: a cinema at home, one that simply works.
+
+## Design principles
+
+- **Native playback first.** Video is decoded by the TV's hardware player (AVPlay), not in JavaScript.
+- **Never block the UI.** Lists are virtualised and the programme guide is parsed in 12 ms slices.
+- **Assume the network fails.** Every stall, error or network drop leads to an automatic reconnect with backoff.
+- **Write for the oldest engine.** The code is plain ES5, checked with `acorn --ecma5`, and needs no build step.
+
 ## Features
 
 - Full channel list from an M3U playlist, split into groups, plus "All channels" and a favourites group (yellow button).
