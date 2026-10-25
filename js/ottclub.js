@@ -40,9 +40,16 @@ var OttClub = (function () {
 
   function build(data) {
     var ids = Object.keys(data);
-    // Group order follows the provider's category numbering; channel order inside a group is the provider's.
+    var pos = {};
+    for (var p = 0; p < ids.length; p++) pos[ids[p]] = p;
+    // Same order as the official app: group rank, then the provider's sequence, then server order.
+    function groupRank(id) {
+      var r = data[id].category ? ORDER.GROUPS.indexOf(data[id].category.name) : -1;
+      return r < 0 ? ORDER.GROUPS.length : r;
+    }
+    function seq(id) { return ORDER.SEQ[id] || 100000; }
     ids.sort(function (a, b) {
-      return (+data[a].category['class'] - +data[b].category['class']) || 0;
+      return (groupRank(a) - groupRank(b)) || (seq(a) - seq(b)) || (pos[a] - pos[b]);
     });
     var channels = [];
     for (var i = 0; i < ids.length; i++) {

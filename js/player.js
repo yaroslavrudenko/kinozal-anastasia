@@ -75,7 +75,19 @@ var Player = (function () {
       safePlay();
     });
   }
-  function safePlay() { var p = video.play(); if (p && p['catch']) p['catch'](function () {}); }
+  // Browsers refuse to start video with sound before the first click or key press.
+  // Start muted instead of waiting forever, and unmute on the viewer's first input.
+  function safePlay() {
+    var p = video.play();
+    if (!p || !p['catch']) return;
+    p['catch'](function (e) {
+      if (!e || e.name !== 'NotAllowedError') return;
+      video.muted = true;
+      video.play();
+      hooks.onMutedStart();
+    });
+  }
+  function unmute() { if (video.muted) { video.muted = false; return true; } return false; }
   function withHlsJs(cb) {
     if (window.Hls) { cb(); return; }
     var sc = document.createElement('script');
@@ -153,7 +165,7 @@ var Player = (function () {
   }
 
   return {
-    setHooks: setHooks, play: play, reconnect: reconnect, suspend: suspend, resume: resume,
+    setHooks: setHooks, play: play, unmute: unmute, reconnect: reconnect, suspend: suspend, resume: resume,
     audioTracks: audioTracks, selectAudio: selectAudio, videoInfo: videoInfo, cycleDisplay: cycleDisplay
   };
 }());

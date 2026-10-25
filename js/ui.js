@@ -37,6 +37,7 @@ var UI = (function () {
       if (idx >= list.length) { r.el.style.visibility = 'hidden'; setLogo(r, ''); continue; }
       r.el.style.visibility = 'visible';
       r.el.className = r.el.className.split(' ')[0] + (idx === cursor ? (active ? ' focus' : ' sel') : '');
+      r.el.setAttribute('data-i', idx);       // list index, for mouse clicks in the desktop preview
       fill(r, list[idx], idx);
     }
   }

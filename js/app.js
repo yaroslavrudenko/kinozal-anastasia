@@ -41,9 +41,15 @@
       onPlaying: function () { UI.spinner(false); },
       onError: function (reason, n, delay) {
         if (n >= 2) UI.toast('Нет сигнала, переподключаюсь… (' + n + ')', delay + 500);
-      }
+      },
+      onMutedStart: function () { UI.toast('Звук включится после любого нажатия или клика', 6000); }
     });
-    document.addEventListener('keydown', onKey);
+    document.addEventListener('keydown', function (e) {
+      if (Player.unmute()) UI.toast('Звук включён', 1200);
+      onKey(e);
+    });
+    document.addEventListener('click', onClick);
+    UI.toast(window.webapis ? 'OK — список каналов' : 'Enter или клик — список каналов', 6000);
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) Player.suspend(); else Player.resume();
     });
@@ -134,7 +140,9 @@
     for (var d = 0; d < all.length; d++) if (deadBefore[all[d].url]) all[d].dead = true;
     rebuildGroups();
     UI.fatal('');
-    healthCheck();
+    // Let the first channel take the whole bandwidth; check the rest 15 s later.
+    clearTimeout(s.healthTimer);
+    s.healthTimer = setTimeout(healthCheck, 15000);
     var wanted = {};
     for (var i = 0; i < all.length; i++) if (all[i].id) wanted[all[i].id] = true;
     EPG.load(CONFIG.EPG_URL || parsed.epgUrl, wanted, function () { if (s.guideOpen) renderGuide(); });
@@ -150,12 +158,12 @@
     if (groups[s.groupIdx]) s.chCursor = clamp(s.chCursor, groups[s.groupIdx].items.length);
   }
 
-  // Every launch (and every list refresh) re-checks every channel, 6 at a time, ~0.1 s each:
+  // Every launch (and every list refresh) re-checks every channel, 4 at a time, ~0.1 s each:
   // channels the provider removed disappear, channels it restored come back. Nothing stale survives.
   function healthCheck() {
     var list = all, next = 0, active = 0, dead = {}, removed = 0;
     function pump() {
-      while (active < 6 && next < list.length) check(list[next++]);
+      while (active < 4 && next < list.length) check(list[next++]);
       if (active === 0 && next >= list.length) finish();
     }
     function check(ch) {
@@ -418,6 +426,20 @@
     var at = groups[s.groupIdx].items.indexOf(indexOfUrl(keepUrl));
     s.chCursor = at >= 0 ? at : clamp(s.chCursor, groups[s.groupIdx].items.length);
     UI.toast(favs[keepUrl] ? 'Добавлено в избранное' : 'Убрано из избранного');
+  }
+
+  // ---------- mouse (desktop preview; the TV remote never produces clicks) ----------
+  function onClick(e) {
+    if (Player.unmute()) UI.toast('Звук включён', 1200);
+    if (s.setup) return;
+    if (!s.guideOpen) { openGuide(); return; }
+    var el = e.target;
+    while (el && el !== document.body && el.getAttribute && el.getAttribute('data-i') === null) el = el.parentNode;
+    if (!el || el === document.body || !el.getAttribute) return;
+    var i = +el.getAttribute('data-i'), col = el.parentNode.id;
+    if (col === 'groups') { s.focus = 'groups'; s.groupIdx = i; s.chCursor = 0; renderGuide(); return; }
+    if (col === 'channels') { s.focus = 'channels'; s.chCursor = i; guideKey(K.ENTER); return; }
+    if (col === 'd-list') { s.focus = 'programs'; s.progCursor = i; guideKey(K.ENTER); }
   }
 
   // ---------- live keys ----------
