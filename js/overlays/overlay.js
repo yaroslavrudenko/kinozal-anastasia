@@ -38,12 +38,14 @@ var Overlay = (function () {
     var wait = lastKeyAt + CONFIG.OVERLAY_QUIET_MS - Date.now();
     if (wait > 0) quietTimer = setTimeout(refreshQuiet, wait); else refresh();
   }
+  // Builds an overlay's screen ahead of time (at idle), if it can.
+  function prepare(name) { if (overlays[name].prepare) overlays[name].prepare(); }
   function onClick(target) {
     if (mode !== 'none' && overlays[mode].onClick) overlays[mode].onClick(target);
   }
 
   return {
-    register: register, onBeforeOpen: onBeforeOpen, open: open, close: close, onKey: onKey, onClick: onClick, refresh: refresh, refreshQuiet: refreshQuiet,
+    register: register, onBeforeOpen: onBeforeOpen, open: open, close: close, onKey: onKey, onClick: onClick, refresh: refresh, refreshQuiet: refreshQuiet, prepare: prepare,
     mode: function () { return mode; }, isNone: function () { return mode === 'none'; }
   };
 }());

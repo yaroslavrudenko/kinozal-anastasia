@@ -9,17 +9,25 @@
   function clamp(v, n) { return Math.max(0, Math.min(n - 1, v)); }
   function playingIdx() { var c = Playback.current(); return c ? Channels.indexOfKey(c.key) : -1; }
 
-  function open() {
+  // Group and cursor on the playing channel (its group if it is there, else «Все каналы»), fresh windows.
+  function place() {
     ListView.reset('groups');
     ListView.reset('channels');
     focus = 'channels';
     var playing = playingIdx(), at = group() ? group().items.indexOf(playing) : -1;
     if (at < 0) { Zap.setGroup(Channels.allIdx()); at = Math.max(0, group().items.indexOf(playing)); }
     cursor = at;
+  }
+  function open() {
+    place();
     UI.show('guide', true);
     render();
     NowLines.watch(visibleIds);
   }
+  // Once, at idle after the first picture, while hidden: the rows are built and laid out as the menu would
+  // open (the first layout of fonts and the ★ ▶ glyphs is paid here), so the first opening is a paint.
+  var prepared = false;
+  function prepare() { if (!prepared && Channels.count() && Overlay.isNone()) { prepared = true; place(); render(); } }
   function close() { NowLines.watch(null); UI.show('guide', false); }
 
   // The channel ids of the rows on screen (whose "now" lines must stay current).
@@ -104,5 +112,5 @@
     else if (col === 'channels') { focus = 'channels'; cursor = i; onKey(K.ENTER, { preventDefault: function () {} }); }
   }
 
-  Overlay.register('menu', { open: open, close: close, onKey: onKey, onClick: onClick, render: render });
+  Overlay.register('menu', { open: open, close: close, onKey: onKey, onClick: onClick, render: render, prepare: prepare });
 }());

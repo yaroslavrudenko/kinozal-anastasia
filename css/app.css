@@ -39,6 +39,8 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 /* guide: 13 rows of 70 px fill the 910 px column exactly */
 .guide { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: -webkit-flex; display: flex;
   padding: 60px 60px 110px; background: rgba(6,9,15,.97); }
+/* Hidden by visibility, not display: the menu stays laid out (prepared at idle), so opening it is a paint. */
+.guide.hidden { display: -webkit-flex !important; display: flex !important; visibility: hidden; }
 /* List columns: rows wrap, so a column hides (never cuts) the rows that do not fit (ui.js column). */
 .groups { position: relative; overflow: hidden; width: 380px; margin-right: 24px; }
 .channels { position: relative; overflow: hidden; -webkit-flex: 1; flex: 1; }

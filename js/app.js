@@ -17,7 +17,7 @@
       // The picture is up: the banner with this stream's technical line, at once.
       onFirstFrame: function () {
         UI.spinner(false); Playback.onFirstFrame();
-        Zap.onFirstFrame();
+        Zap.onFirstFrame(); Util.idle(function () { Overlay.prepare('menu'); });   // menu laid out ahead, hidden
         if (!Zap.choosing()) Banner.onFirstFrame();
       },
       onStable: Playback.onStable,
