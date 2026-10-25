@@ -38,6 +38,8 @@ var M3U = (function () {
         if (!pending.catchupSource) pending.catchupSource = header['catchup-source'] || '';
         if (!pending.catchupDays) pending.catchupDays = parseInt(header['catchup-days'] || '0', 10) || 0;
         pending.num = channels.length + 1;
+        var cc = Country.detect(pending);
+        pending.il = cc.il; pending.ua = cc.ua;
         channels.push(pending);
         pending = null;
         group = '';

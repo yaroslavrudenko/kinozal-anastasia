@@ -149,6 +149,8 @@ The app is named after the person it was made for: a cinema at home, one that si
 
 Without catch-up attributes, live TV, groups, favourites and search still work; only the archive is missing.
 
+**🇮🇱 Israel and 🇺🇦 Ukraine groups work with any provider.** A channel's country is recognised from a tag in the name (`(Израиль)`, `IL:`, `[UA]`, `… UA`), the playlist group (`Israel`, `Україна` …), the guide id (`tvg-id` ending in `.il` / `.ua`), Hebrew or Ukrainian text in the name or the show on air, and a list of well-known channel names (`js/country.js`). Israeli channels also open the list, with Channel 9 first.
+
 ## 🚀 Install
 
 **[docs/DEPLOY.md](docs/DEPLOY.md) is the full guide**, written from a real install. It covers Developer Mode, the Tizen CLI on Apple Silicon, the macOS local-network trap, Samsung certificates without the broken Certificate Manager, and the **device profile without which every install fails with `118`**.

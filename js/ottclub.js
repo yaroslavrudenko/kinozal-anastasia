@@ -52,9 +52,14 @@ var OttClub = (function () {
     function pinRank(id) {
       for (var p = 0; p < ORDER.PINNED.length; p++) {
         var pin = ORDER.PINNED[p];
-        if (pin.numbered && data[id].channel_name.indexOf(pin.match) >= 0) return p;
+        if (pin.numbered && countryOf(id)[pin.flag]) return p;
       }
       return ORDER.PINNED.length;
+    }
+    var countries = {};
+    function countryOf(id) {
+      var c = data[id];
+      return countries[id] || (countries[id] = Country.detect({ name: c.channel_name, group: c.category ? c.category.name : '', id: c.ch_id }, c.name));
     }
     function nameNumber(id) { var m = /\b(\d{1,3})\b/.exec(data[id].channel_name); return m ? +m[1] : 1000; }
     ids.sort(function (a, b) {
@@ -77,21 +82,12 @@ var OttClub = (function () {
         catchupSource: '',
         catchupDays: c.rec === '1' ? 7 : 0
       };
-      ch.ua = isUkrainian(c);
+      var cc = countryOf(ids[i]);
+      ch.il = cc.il; ch.ua = cc.ua;
       channels.push(ch);
       if (c.name && c.time) EPG.put(c.ch_id, [{ start: c.time * 1000, stop: c.time_to * 1000, title: c.name }], false);
     }
     return { channels: channels, groups: M3U.groupsOf(channels), epgUrl: '' };
-  }
-
-  // Ukrainian = a well-known Ukrainian name, or (no other country in the name) Ukrainian letters in the
-  // name or in what is on now, without Belarusian (ў) or Kazakh letters, which share "і".
-  function isUkrainian(c) {
-    var name = c.channel_name || '', text = name + ' ' + (c.name || '');
-    if (ORDER.UA_NAMES.indexOf(name) >= 0) return true;
-    if (/\((?!Украина)[^)]*\)/.test(name)) return false;
-    if (/[ўЎәғқңөұүһӘҒҚҢӨҰҮҺ]/.test(text)) return false;
-    return /[іїєґІЇЄҐ]/.test(text);
   }
 
   // Full 7-day guide of one channel, fetched only when the viewer looks at it.
