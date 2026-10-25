@@ -1,75 +1,95 @@
-// Extended M3U parser: #EXTM3U url-tvg, #EXTINF attributes, #EXTGRP.
+// Extended M3U parser (#EXTM3U url-tvg, #EXTINF attributes, #EXTGRP), sliced so a long playlist
+// never holds the main thread for more than CONFIG.SLICE_MS.
+//   M3U.parse(text, function done(result) {}) -> { cancel }
+//   result: { channels, epgUrl } or null when the text holds no playable channel.
 var M3U = (function () {
-  var ATTR = /([a-zA-Z0-9_-]+)="([^"]*)"/g;
-
-  function parse(text) {
+  function parse(text, done) {
+    var attrRe = /([a-zA-Z0-9_-]+)="([^"]*)"/g;      // local: overlapping parses never share a cursor
     var lines = text.split(/\r?\n/);
-    var channels = [];
-    var epgUrl = '';
-    var pending = null;
-    var group = '';
-    var header = {};
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i].replace(/^\s+|\s+$/g, '');
-      if (!line) continue;
-      if (line.indexOf('#EXTM3U') === 0) {
-        var h = attrs(line);
-        epgUrl = h['url-tvg'] || h['x-tvg-url'] || '';
-        header = h;
-      } else if (line.indexOf('#EXTINF') === 0) {
-        var a = attrs(line);
-        var comma = line.lastIndexOf(',');
-        pending = {
-          name: comma >= 0 ? line.substring(comma + 1) : 'Канал',
-          id: a['tvg-id'] || a['tvg-name'] || '',
-          logo: a['tvg-logo'] || '',
-          group: a['group-title'] || '',
-          catchup: a.catchup || a['catchup-type'] || '',
-          catchupSource: a['catchup-source'] || '',
-          catchupDays: parseInt(a['catchup-days'] || a['tvg-rec'] || a.timeshift || '0', 10) || 0
-        };
-      } else if (line.indexOf('#EXTGRP:') === 0) {
-        group = line.substring(8);
-      } else if (line.charAt(0) !== '#' && pending) {
-        pending.url = line;
-        if (!pending.group) pending.group = group || 'Без группы';
-        // Playlist-wide catch-up defaults apply to channels that declare none.
-        if (!pending.catchup) pending.catchup = header.catchup || header['catchup-type'] || '';
-        if (!pending.catchupSource) pending.catchupSource = header['catchup-source'] || '';
-        if (!pending.catchupDays) pending.catchupDays = parseInt(header['catchup-days'] || '0', 10) || 0;
-        pending.num = channels.length + 1;
-        var cc = Country.detect(pending);
-        pending.il = cc.il; pending.ua = cc.ua;
-        channels.push(pending);
+    var channels = [], keys = Util.dict();
+    var header = Util.dict(), epgUrl = '', pending = null, group = '';
+    var i = 0, cancelled = false, timer = null;
+
+    function attrs(line) {
+      var out = Util.dict(), m;
+      attrRe.lastIndex = 0;
+      while ((m = attrRe.exec(line)) !== null) out[m[1]] = m[2];
+      return out;
+    }
+
+    function line(l) {
+      if (!l) return;
+      if (l.indexOf('#EXTM3U') === 0) {
+        header = attrs(l);
+        epgUrl = header['url-tvg'] || header['x-tvg-url'] || '';
+      } else if (l.indexOf('#EXTINF') === 0) {
+        pending = entry(l, attrs(l));
+      } else if (l.indexOf('#EXTGRP:') === 0) {
+        group = l.substring(8);
+      } else if (l.charAt(0) !== '#' && pending) {
+        finish(pending, l);
         pending = null;
         group = '';
       }
     }
-    return { channels: channels, epgUrl: epgUrl, groups: groupsOf(channels) };
-  }
 
-  function attrs(line) {
-    var out = {}, m;
-    ATTR.lastIndex = 0;
-    while ((m = ATTR.exec(line)) !== null) out[m[1]] = m[2];
-    return out;
-  }
-
-  // keep(channel) -> false hides a channel from every group (e.g. removed by the provider).
-  function groupsOf(channels, keep) {
-    var order = [], map = {};
-    for (var i = 0; i < channels.length; i++) {
-      if (keep && !keep(channels[i])) continue;
-      var g = channels[i].group;
-      if (!map[g]) { map[g] = []; order.push(g); }
-      map[g].push(i);
+    function finish(ch, url) {
+      ch.url = url;
+      if (!ch.group) ch.group = group || 'Без группы';
+      // Playlist-wide catch-up defaults apply to channels that declare none.
+      if (!ch.catchup) ch.catchup = header.catchup || header['catchup-type'] || '';
+      if (!ch.catchupSource) ch.catchupSource = header['catchup-source'] || '';
+      if (!ch.catchupDays) ch.catchupDays = parseInt(header['catchup-days'] || '0', 10) || 0;
+      ch.num = channels.length + 1;
+      ch.key = uniqueKey('m3u:' + (ch.id || ch.nameLc) + '|' + ch.group);
+      var cc = Country.detect(ch);
+      ch.il = cc.il; ch.ua = cc.ua;
+      channels.push(ch);
     }
-    var all = [];
-    for (var k = 0; k < channels.length; k++) if (!keep || keep(channels[k])) all.push(k);
-    var groups = [{ name: 'Все каналы', items: all, all: true }];
-    for (var j = 0; j < order.length; j++) groups.push({ name: order[j], items: map[order[j]] });
-    return groups;
+
+    function uniqueKey(k) {
+      var key = k, n = 1;
+      while (keys[key]) key = k + '#' + (++n);
+      keys[key] = true;
+      return key;
+    }
+
+    function slice() {
+      timer = null;
+      if (cancelled) return;
+      var t0 = Date.now();
+      while (i < lines.length) {
+        line(lines[i++].trim());
+        if (Date.now() - t0 > CONFIG.SLICE_MS) { timer = setTimeout(slice, 0); return; }
+      }
+      lines = null;
+      done(channels.length ? { channels: channels, epgUrl: epgUrl } : null);
+    }
+
+    slice();
+    return { cancel: function () { cancelled = true; clearTimeout(timer); } };
   }
 
-  return { parse: parse, groupsOf: groupsOf };
+  // "#EXTINF:-1 tvg-id="x" group-title="a, b",Name, with commas" -> the name is everything after the
+  // first comma that is outside a quoted attribute value.
+  function entry(l, a) {
+    var name = 'Канал', quoted = false;
+    for (var c = 0; c < l.length; c++) {
+      var ch = l.charAt(c);
+      if (ch === '"') quoted = !quoted;
+      else if (ch === ',' && !quoted) { name = l.substring(c + 1).trim() || name; break; }
+    }
+    return {
+      name: name, nameLc: name.toLowerCase(),
+      id: a['tvg-id'] || a['tvg-name'] || '',
+      logo: a['tvg-logo'] || '',
+      group: a['group-title'] || '',
+      catchup: a.catchup || a['catchup-type'] || '',
+      catchupSource: a['catchup-source'] || '',
+      catchupDays: parseInt(a['catchup-days'] || a['tvg-rec'] || a.timeshift || '0', 10) || 0,
+      dead: false
+    };
+  }
+
+  return { parse: parse };
 }());

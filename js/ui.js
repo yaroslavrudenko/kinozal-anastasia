@@ -1,134 +1,90 @@
-// Rendering only. The channel list is virtualised: a fixed pool of rows is re-filled on scroll,
-// so a 1000-channel playlist costs the same as a 13-channel one.
+// Rendering only: view models in, DOM out. It reads no store. Banner, toast, spinner, number entry,
+// slider, «О программе» and the screens' visibility; the list columns are ListView.
 var UI = (function () {
-  var $ = Util.$;
-  var rows = [], groupRows = [], panelRows = [], searchRows = [];
-  var toastTimer = null, bannerTimer = null;
+  var STICKY = 0;              // toast(text, UI.STICKY): stays until the next toast
+  var el = {}, toastTimer = null, bannerTimer = null, scrubBarPx = 0;
+  var IDS = ['banner', 'b-num', 'b-logo', 'b-title', 'b-now', 'b-next', 'b-tech', 'b-progress', 'b-clock', 'toast',
+    'spinner', 'numentry', 'fatal', 'guide', 'prog', 'p-title', 'scrub', 's-title', 's-time', 's-start', 's-end',
+    's-delta', 's-played', 's-now', 's-knob', 'about', 'about-table', 'search', 'setup'];
 
-  function pool(container, n, cls) {
-    var out = [];
-    for (var i = 0; i < n; i++) {
-      var r = document.createElement('div');
-      r.className = cls;
-      r.innerHTML = '<span class="n"></span><img class="logo" alt=""><span class="t"></span><span class="s"></span>';
-      container.appendChild(r);
-      out.push({ el: r, n: r.children[0], logo: r.children[1], t: r.children[2], s: r.children[3], src: '' });
-    }
-    return out;
+  // Desktop check only: fit the 1920×1080 TV layout into the browser window.
+  function fitDesktop() {
+    if (window.webapis) return;
+    var k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    document.body.style.transformOrigin = '0 0';
+    document.body.style.transform = 'scale(' + k + ')';
   }
 
-  function init() {
-    rows = pool($('channels'), CONFIG.VISIBLE_ROWS, 'row');
-    groupRows = pool($('groups'), CONFIG.VISIBLE_ROWS, 'grow');
-    panelRows = pool($('p-list'), CONFIG.VISIBLE_ROWS - 3, 'prow');   // leaves room for the hint
-    searchRows = pool($('search-list'), 9, 'row');
-  }
+  function init() { for (var i = 0; i < IDS.length; i++) el[IDS[i]] = Util.$(IDS[i]); }
 
-  // Programme panel shown over the video (▼): same rows as the guide's programme column.
-  function panel(title, list, cursor, nowMs, archive) {
-    $('p-title').textContent = title;
-    fillPrograms(panelRows, list, cursor, true, nowMs, archive);
-  }
+  function show(id, on) { Util.show(el[id], on); }
 
-  function searchResults(list, cursor, active, all) {
-    renderList(searchRows, list, cursor, active, function (r, chIdx) {
-      var ch = all[chIdx];
-      var now = EPG.upcoming(ch.id, 1)[0];
-      r.n.textContent = ch.num;
-      setLogo(r, ch.logo);
-      r.t.textContent = ch.name;
-      r.s.textContent = ch.group + (now ? ' · ' + now.title : '');
-    });
-  }
-
-  function windowStart(cursor, total, visible) {
-    var s = cursor - Math.floor(visible / 2);
-    return Math.max(0, Math.min(s, total - visible));
-  }
-
-  // list: array of items; fill(row, item, index); cursor: highlighted index; active: column has focus
-  function renderList(poolRows, list, cursor, active, fill) {
-    var start = Math.max(0, windowStart(cursor, list.length, poolRows.length));
-    for (var i = 0; i < poolRows.length; i++) {
-      var r = poolRows[i], idx = start + i;
-      // The logo sets its own visibility, which would override the hidden row, so clear it too.
-      if (idx >= list.length) { r.el.style.visibility = 'hidden'; setLogo(r, ''); continue; }
-      r.el.style.visibility = 'visible';
-      r.el.className = r.el.className.split(' ')[0] + (idx === cursor ? (active ? ' focus' : ' sel') : '');
-      r.el.setAttribute('data-i', idx);       // list index, for mouse clicks in the desktop preview
-      fill(r, list[idx], idx);
-    }
-  }
-
-  function setLogo(r, src) {
-    if (r.src === src) return;
-    r.src = src;
-    r.logo.style.visibility = src ? 'visible' : 'hidden';
-    if (src) r.logo.src = src; else r.logo.removeAttribute('src');
-  }
-
-  function guide(show) { Util.show($('guide'), show); }
-
-  function groups(list, cursor, active) {
-    renderList(groupRows, list, cursor, active, function (r, g) {
-      r.n.textContent = '';
-      setLogo(r, '');
-      r.t.textContent = g.name;
-      r.s.textContent = g.search || g.about ? '' : g.items.length;
-    });
-  }
-
-  function channels(list, cursor, active, all, playingIdx, favs) {
-    renderList(rows, list, cursor, active, function (r, chIdx) {
-      var ch = all[chIdx];
-      var now = EPG.upcoming(ch.id, 1)[0];
-      r.n.textContent = ch.num;
-      setLogo(r, ch.logo);
-      r.t.textContent = (favs[ch.url] ? '★ ' : '') + ch.name + (chIdx === playingIdx ? '  ▶' : '');
-      r.s.textContent = ch.dead ? 'отключён провайдером' : (now ? now.title : '');
-    });
-  }
-
-  function fillPrograms(pool_, list, cursor, active, nowMs, archive) {
-    renderList(pool_, list, cursor, active, function (r, p) {
-      var past = p.stop <= nowMs, live = p.start <= nowMs && p.stop > nowMs;
-      r.n.textContent = Util.hhmm(new Date(p.start));
-      setLogo(r, '');
-      r.t.textContent = p.title;
-      r.s.textContent = live ? 'в эфире' : (past && archive ? '● архив' : '');
-      r.el.className += past ? ' past' : '';
-    });
-  }
-
-  function banner(ch, line1, line2, progress, extra, tech) {
-    $('b-num').textContent = ch.num;
-    $('b-logo').style.visibility = ch.logo ? 'visible' : 'hidden';
-    if (ch.logo) $('b-logo').src = ch.logo;
-    $('b-title').textContent = ch.name + (extra ? '   ·   ' + extra : '');
-    $('b-now').textContent = line1 || '';
-    $('b-next').textContent = line2 || '';
-    $('b-tech').textContent = tech || '';
-    $('b-progress').style.width = Math.max(0, Math.min(100, progress || 0)) + '%';
-    $('b-clock').textContent = Util.hhmm(new Date());
-    Util.show($('banner'), true);
+  // m: { num, logo, title, now, next, progress, tech }
+  // holdMs: how long it stays (default BANNER_MS).
+  function banner(m, holdMs) {
+    el['b-num'].textContent = m.num;
+    el['b-logo'].style.visibility = m.logo ? 'visible' : 'hidden';
+    if (m.logo) el['b-logo'].src = m.logo;
+    el['b-title'].textContent = m.title;
+    el['b-now'].textContent = m.now || '';
+    el['b-next'].textContent = m.next || '';
+    el['b-tech'].textContent = m.tech || '';
+    el['b-progress'].style.width = Math.max(0, Math.min(100, m.progress || 0)) + '%';
+    el['b-clock'].textContent = Util.hhmm(new Date());
+    show('banner', true);
     clearTimeout(bannerTimer);
-    bannerTimer = setTimeout(function () { Util.show($('banner'), false); }, CONFIG.BANNER_MS);
+    bannerTimer = setTimeout(hideBanner, holdMs || CONFIG.BANNER_MS);
   }
-  function hideBanner() { Util.show($('banner'), false); }
+  function bannerTech(text) { el['b-tech'].textContent = text; }
+  function hideBanner() { clearTimeout(bannerTimer); show('banner', false); }
+  function bannerShown() { return !/(^|\s)hidden(\s|$)/.test(el.banner.className); }
 
   function toast(text, ms) {
-    $('toast').textContent = text;
-    Util.show($('toast'), true);
+    el.toast.textContent = text;
+    show('toast', true);
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { Util.show($('toast'), false); }, ms || 2500);
+    if (ms !== STICKY) toastTimer = setTimeout(function () { show('toast', false); }, ms || CONFIG.TOAST_MS);
   }
 
-  function spinner(on) { Util.show($('spinner'), on); }
-  function numEntry(text) { $('numentry').textContent = text; Util.show($('numentry'), !!text); }
-  function fatal(text) { $('fatal').textContent = text; Util.show($('fatal'), !!text); }
+  function spinner(on) { show('spinner', on); }
+  function numEntry(text) { el.numentry.textContent = text; show('numentry', !!text); }
+  function fatal(text) { el.fatal.textContent = text; show('fatal', !!text); }
+  function panelTitle(text) { el['p-title'].textContent = text; }
+
+  // m: { title, time, start, end, delta, playedPct, nowPct (null = off the bar), knobPct }
+  function scrub(m) {
+    if (!scrubBarPx) scrubBarPx = el['s-played'].parentNode.offsetWidth || 0;
+    el['s-title'].textContent = m.title;
+    el['s-time'].textContent = m.time;
+    el['s-start'].textContent = m.start;
+    el['s-end'].textContent = m.end;
+    el['s-delta'].textContent = m.delta;
+    el['s-played'].style.width = m.playedPct + '%';
+    el['s-now'].style.display = m.nowPct === null ? 'none' : 'block';
+    if (m.nowPct !== null) moveX(el['s-now'], m.nowPct);
+    moveX(el['s-knob'], m.knobPct);
+  }
+  // Compositor-only movement (no layout): translateX in pixels of the bar.
+  function moveX(node, pct) {
+    var t = 'translateX(' + Math.round(pct * scrubBarPx / 100) + 'px)';
+    node.style.webkitTransform = t;
+    node.style.transform = t;
+  }
+
+  // rows: [[label, value]]; then the one setting, highlighted because OK toggles it.
+  function about(rows, adultOn) {
+    var html = '';
+    for (var r = 0; r < rows.length; r++) {
+      html += '<div class="about-row"><span class="about-k">' + Util.esc(rows[r][0]) + '</span><span class="about-v">' + Util.esc(rows[r][1]) + '</span></div>';
+    }
+    html += '<div class="about-row about-setting"><span class="about-k">Каналы для взрослых</span>' +
+      '<span class="about-v"><span class="switch' + (adultOn ? ' on' : '') + '" id="adult-switch"><i></i></span>' +
+      '<span id="adult-state">' + (adultOn ? 'показываются в меню' : 'скрыты') + '</span></span></div>';
+    el['about-table'].innerHTML = html;
+  }
 
   return {
-    init: init, guide: guide, groups: groups, channels: channels, panel: panel, searchResults: searchResults,
-    banner: banner, hideBanner: hideBanner, toast: toast, spinner: spinner, numEntry: numEntry, fatal: fatal
+    STICKY: STICKY, init: init, fitDesktop: fitDesktop, show: show, banner: banner, bannerTech: bannerTech, hideBanner: hideBanner, bannerShown: bannerShown,
+    toast: toast, spinner: spinner, numEntry: numEntry, fatal: fatal, panelTitle: panelTitle, scrub: scrub, about: about
   };
 }());

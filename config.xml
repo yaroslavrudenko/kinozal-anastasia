@@ -2,7 +2,7 @@
 <widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
         id="http://yaroslav.local/ottclubplayer" version="1.7.0" viewmodes="maximized">
     <tizen:application id="Yr0ttPlay1.OttClubPlayer" package="Yr0ttPlay1" required_version="2.3"/>
-    <name>Кинозал Анастасии</name>
+    <name>Настин кинозал</name>
     <icon src="img/icon.png"/>
     <content src="index.html"/>
     <access origin="*" subdomains="true"/>

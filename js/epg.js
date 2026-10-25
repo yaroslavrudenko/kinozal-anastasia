@@ -1,108 +1,164 @@
-// XMLTV program guide, parsed in small time slices so the UI never freezes.
-// Only channels present in the playlist and programmes in [now-3h, now+24h] are kept.
+// Programme guide store and its loading policy. Two sources:
+//   OTT Club: a "now" seed per channel from the channel list, plus a full guide (7 days back, 24 h ahead)
+//     fetched per channel on demand (setLoader). At most GUIDE_CACHE_CHANNELS full guides are kept; a
+//     failed or malformed answer keeps what was there and is retried with a growing delay.
+//   M3U: one XMLTV file (load), parsed by XMLTV in slices; only listed channels and the archive window.
+// Lookups are binary searches; indexAt is the one definition of "the programme at moment t".
 var EPG = (function () {
-  var byId = {};
-  var ready = false;
-  var PROG = /<programme\b([^>]*)>([\s\S]*?)<\/programme>/g;
-  var TITLE = /<title[^>]*>([\s\S]*?)<\/title>/;
+  var seeds = Util.dict();     // id -> [one programme] (the "now" line of the channel list)
+  var full = Util.dict();      // id -> sorted [{ start, stop, title }]
+  var fullAt = Util.dict();    // id -> when the full guide arrived
+  var lru = [];                // ids of per-channel full guides, most recent last
+  var pending = Util.dict();   // id -> { handle, subs: [] }
+  var fails = Util.dict();     // id -> { n, until }
+  var loader = null, focusId = null, retryTimer = null, hooks = {};
+  var xml = { url: '', okAt: 0, handle: null, parse: null, done: null, n: 0, timer: null, gen: 0 };
 
-  function load(url, wantedIds, onDone) {
-    if (!url) return;
-    Util.get(url, 60000, function (xml) { parseSliced(xml, wantedIds, onDone); }, function () {});
+  function setHooks(h) { hooks = h; }
+  function setLoader(fn) { loader = fn; }
+  function setSeeds(map) { seeds = map; }
+
+  function list(id) { return full[id] || seeds[id] || []; }
+
+  // First index whose programme has not ended at t (list.length when all have ended).
+  function indexAt(l, t) {
+    var lo = 0, hi = l.length;
+    while (lo < hi) { var mid = (lo + hi) >> 1; if (l[mid].stop > t) hi = mid; else lo = mid + 1; }
+    return lo;
+  }
+  function firstFrom(l, t) {
+    var lo = 0, hi = l.length;
+    while (lo < hi) { var mid = (lo + hi) >> 1; if (l[mid].start >= t) hi = mid; else lo = mid + 1; }
+    return lo;
   }
 
-  function parseSliced(xml, wanted, onDone) {
-    // Keep the archive window (7 days back) so past programmes can be played from the guide.
-    var from = Date.now() - 7 * 86400000, to = Date.now() + 24 * 3600000;
-    var tmp = {};
-    PROG.lastIndex = 0;
-    function slice() {
-      var t0 = Date.now(), m;
-      while ((m = PROG.exec(xml)) !== null) {
-        var head = m[1];
-        var ch = attr(head, 'channel');
-        if (wanted[ch]) {
-          var start = parseTime(attr(head, 'start')), stop = parseTime(attr(head, 'stop'));
-          if (stop > from && start < to) {
-            var tm = TITLE.exec(m[2]);
-            (tmp[ch] || (tmp[ch] = [])).push({ start: start, stop: stop, title: tm ? unxml(tm[1]) : '' });
-          }
-        }
-        if (Date.now() - t0 > 12) { setTimeout(slice, 0); return; }
-      }
-      for (var k in tmp) tmp[k].sort(function (a, b) { return a.start - b.start; });
-      byId = tmp; ready = true; xml = null;
-      if (onDone) onDone();
-    }
-    slice();
-  }
-
-  function attr(s, name) {
-    var i = s.indexOf(name + '="');
-    if (i < 0) return '';
-    i += name.length + 2;
-    return s.substring(i, s.indexOf('"', i));
-  }
-
-  // "20261025183000 +0300"
-  function parseTime(s) {
-    var d = Date.UTC(+s.substr(0, 4), +s.substr(4, 2) - 1, +s.substr(6, 2), +s.substr(8, 2), +s.substr(10, 2), +s.substr(12, 2) || 0);
-    var tz = s.substr(15, 5);
-    if (tz) {
-      var sign = tz.charAt(0) === '-' ? -1 : 1;
-      d -= sign * (+tz.substr(1, 2) * 60 + +tz.substr(3, 2)) * 60000;
-    }
-    return d;
-  }
-
-  function unxml(s) {
-    return s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
-  }
-
-  // Returns up to `count` programmes starting with the current one.
-  function upcoming(id, count) {
-    var list = byId[id];
-    if (!list) return [];
-    var now = Date.now();
-    for (var i = 0; i < list.length; i++) if (list[i].stop > now) return list.slice(i, i + count);
-    return [];
-  }
-
-  // The programme on air at moment `t` (for the archive banner).
+  // The programme on air at moment t, or null.
   function at(id, t) {
-    var list = byId[id];
-    if (!list) return null;
-    for (var i = 0; i < list.length; i++) if (list[i].start <= t && list[i].stop > t) return list[i];
-    return null;
+    var l = list(id), i = indexAt(l, t);
+    return i < l.length && l[i].start <= t ? l[i] : null;
   }
-
-  // Programmes of one calendar day (dayOffset 0 = today, -1 = yesterday ...).
-  function day(id, dayOffset) {
-    var list = byId[id] || [];
-    var d0 = new Date(); d0.setHours(0, 0, 0, 0);
-    var from = d0.getTime() + dayOffset * 86400000, to = from + 86400000;
+  // { cur, next }: next only when it follows the current one directly.
+  function nowNext(id, t) {
+    var cur = at(id, t);
+    return { cur: cur, next: cur ? at(id, cur.stop + 1000) : null };
+  }
+  // Up to `count` programmes starting with the current one.
+  function upcoming(id, count) {
+    var l = list(id), i = indexAt(l, Date.now());
+    return l.slice(i, i + count);
+  }
+  // Programmes of one calendar day (0 = today, -1 = yesterday ...), DST-safe.
+  function day(id, offset) {
+    var l = list(id), from = Util.addDays(Util.dayStart(Date.now()), offset), to = Util.addDays(from, 1);
     var out = [];
-    for (var i = 0; i < list.length; i++) if (list[i].start >= from && list[i].start < to) out.push(list[i]);
+    for (var i = firstFrom(l, from); i < l.length && l[i].start < to; i++) out.push(l[i]);
     return out;
   }
 
-  // Per-channel sources (OTT Club): `full` marks a complete 7-day guide, otherwise a now-only seed.
-  var complete = {}, pending = {}, loader = null;
-  function put(id, list, full) {
-    if (full) { byId[id] = list; complete[id] = Date.now(); }
-    else if (!complete[id]) byId[id] = list;
-    ready = true;
+  // Makes sure the full guide of `id` is loaded. cb(err): null when the guide arrived; an error when the
+  // request failed, or soon after the call when no request is possible ('cooldown' after a failure,
+  // 'none' with no guide source at all). A fresh guide makes no request and no callback.
+  function ensure(id, cb) {
+    if (!id) return;
+    if (!loader) { if (!xml.handle && !xml.parse) later(cb, 'none'); return; }   // XMLTV on its way: wait for it
+    if (pending[id]) { if (cb) pending[id].subs.push(cb); return; }
+    if (full[id] && Date.now() - fullAt[id] < CONFIG.GUIDE_FRESH_MS) return;
+    if (fails[id] && Date.now() < fails[id].until) { later(cb, 'cooldown'); return; }
+    var p = pending[id] = { handle: null, subs: cb ? [cb] : [] };
+    p.handle = loader(id, function (err, l) {
+      if (pending[id] !== p) return;
+      delete pending[id];
+      if (err) failed(id); else stored(id, l);
+      for (var i = 0; i < p.subs.length; i++) p.subs[i](err || null);
+    });
   }
-  function setLoader(fn) { loader = fn; }
-  // Fetch a channel's full guide once per hour at most; `done` fires when fresh data arrived.
-  function ensure(id, done) {
-    if (!loader || !id || pending[id] || (complete[id] && Date.now() - complete[id] < 3600000)) return;
-    pending[id] = true;
-    loader(id, function () { delete pending[id]; if (done) done(); });
+
+  function later(cb, err) { if (cb) setTimeout(function () { cb(err); }, 0); }
+
+  // Sorted on arrival: every lookup is a binary search over start/stop order.
+  function stored(id, l) {
+    full[id] = l.slice().sort(function (a, b) { return a.start - b.start; });
+    fullAt[id] = Date.now();
+    delete fails[id];
+    var at_ = lru.indexOf(id);
+    if (at_ >= 0) lru.splice(at_, 1);
+    lru.push(id);
+    for (var i = 0; lru.length > CONFIG.GUIDE_CACHE_CHANNELS && i < lru.length; ) {
+      if (lru[i] === focusId) { i++; continue; }          // the watched channel is never evicted
+      var old = lru.splice(i, 1)[0];
+      delete full[old]; delete fullAt[old];
+    }
+  }
+
+  // Keeps the seed / older guide. The watched channel is retried after the cool-down by itself.
+  function failed(id) {
+    var f = fails[id] || (fails[id] = { n: 0, until: 0 });
+    var wait = Util.backoff(f.n++, CONFIG.GUIDE_RETRY_MIN_MS, CONFIG.GUIDE_RETRY_MAX_MS);
+    f.until = Date.now() + wait;
+    if (id !== focusId) return;
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(function () {
+      if (id === focusId) ensure(id, function (err) { if (!err && hooks.onGuide) hooks.onGuide(id); });
+    }, wait);
+  }
+
+  // The viewer settled on `id`: every other guide still loading is dropped (silently, no cool-down).
+  function cancelExcept(id) {
+    if (focusId !== id) clearTimeout(retryTimer);
+    focusId = id;
+    for (var k in pending) {
+      if (k === id) continue;
+      var p = pending[k];
+      delete pending[k];
+      if (p.handle) p.handle.abort();
+      for (var i = 0; i < p.subs.length; i++) p.subs[i]('aborted');
+    }
+  }
+
+  // XMLTV (M3U playlists). done(err) runs once per call; a newer call supersedes an older one.
+  function load(url, wanted, done) {
+    if (!url) return;
+    var my = ++xml.gen;
+    finishXml('superseded');
+    clearTimeout(xml.timer);
+    xml.done = done || null;
+    if (url === xml.url && Date.now() - xml.okAt < CONFIG.XMLTV_REFRESH_MS) { finishXml(null); return; }
+    xml.handle = Net.get({ url: url, timeoutMs: CONFIG.XMLTV_TIMEOUT_MS, maxBytes: CONFIG.XMLTV_MAX_BYTES }, function (err, text) {
+      xml.handle = null;
+      if (err) { xmlFailed(url, wanted, err); return; }
+      var now = Date.now();
+      xml.parse = XMLTV.parse({ text: text, wanted: wanted, from: now - CONFIG.ARCHIVE_DAYS * Util.DAY_MS, to: now + Util.DAY_MS },
+        function (byId) {
+          xml.parse = null;
+          if (my !== xml.gen) return;
+          var any = false;
+          for (var id in byId) { full[id] = byId[id]; any = true; }
+          if (!any) { xmlFailed(url, wanted, 'empty'); return; }
+          xml.url = url; xml.okAt = Date.now(); xml.n = 0;
+          finishXml(null);
+        });
+    });
+  }
+
+  function finishXml(err) {
+    if (xml.handle) { xml.handle.abort(); xml.handle = null; }
+    if (xml.parse) { xml.parse.cancel(); xml.parse = null; }
+    var d = xml.done;
+    xml.done = null;
+    if (d) d(err);
+  }
+
+  function xmlFailed(url, wanted, err) {
+    var wait = Util.backoff(xml.n++, CONFIG.XMLTV_RETRY_MIN_MS, CONFIG.XMLTV_RETRY_MAX_MS);
+    var done = xml.done;
+    finishXml(err);
+    if (hooks.onXmltvFailed) hooks.onXmltvFailed(err);
+    var gen = xml.gen;
+    xml.timer = setTimeout(function () { if (gen === xml.gen) load(url, wanted, done); }, wait);
   }
 
   return {
-    load: load, upcoming: upcoming, at: at, day: day, put: put, setLoader: setLoader, ensure: ensure,
-    isReady: function () { return ready; }
+    setHooks: setHooks, setLoader: setLoader, setSeeds: setSeeds, ensure: ensure, cancelExcept: cancelExcept,
+    load: load, at: at, nowNext: nowNext, upcoming: upcoming, day: day, indexAt: indexAt
   };
 }());

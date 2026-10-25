@@ -19,18 +19,22 @@ var Country = (function () {
   var UA_LETTERS = /[іїєґІЇЄҐ]/;
   var NOT_UA_LETTERS = /[ўЎәғқңөұүһӘҒҚҢӨҰҮҺ]/;                                  // Belarusian, Kazakh
 
-  function has(list, name) {
-    for (var i = 0; i < list.length; i++) if (list[i].toLowerCase() === name.toLowerCase()) return true;
-    return false;
+  // Lower-cased once at load: a lookup is one dictionary read, not ~60 toLowerCase calls per channel.
+  function lowerSet(list) {
+    var out = Util.dict();
+    for (var i = 0; i < list.length; i++) out[list[i].toLowerCase()] = true;
+    return out;
   }
+  var IL_SET = lowerSet(IL_NAMES), UA_SET = lowerSet(UA_NAMES);
+  function has(set, name) { return set[name.toLowerCase()] === true; }
 
   // ch: { name, group, id }; nowTitle: what is on (optional). Returns { il: bool, ua: bool }.
   function detect(ch, nowTitle) {
-    var name = (ch.name || '').replace(/^\s+|\s+$/g, ''), group = ch.group || '', id = String(ch.id || '').toLowerCase();
-    var il = IL_TAG.test(name) || IL_GROUP.test(group) || /\.il$/.test(id) || HEBREW.test(name) || has(IL_NAMES, name);
+    var name = (ch.name || '').trim(), group = ch.group || '', id = String(ch.id || '').toLowerCase();
+    var il = IL_TAG.test(name) || IL_GROUP.test(group) || /\.il$/.test(id) || HEBREW.test(name) || has(IL_SET, name);
     var ua = false;
     if (!il) {
-      if (UA_TAG.test(name) || UA_GROUP.test(group) || /\.ua$/.test(id) || has(UA_NAMES, name)) ua = true;
+      if (UA_TAG.test(name) || UA_GROUP.test(group) || /\.ua$/.test(id) || has(UA_SET, name)) ua = true;
       else if (!OTHER_TAG.test(name)) {
         var text = name + ' ' + (nowTitle || '');
         ua = UA_LETTERS.test(text) && !NOT_UA_LETTERS.test(text);

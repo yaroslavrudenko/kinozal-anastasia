@@ -1,26 +1,38 @@
-// Native Samsung AVPlay (hardware decoding) with a self-healing watchdog.
-// Falls back to an HTML <video> element off the TV, for desktop checks.
+// Native Samsung AVPlay (hardware decoding) with a self-healing watchdog; an HTML <video> element off
+// the TV, for desktop checks. Every attempt has a generation: a callback of an older attempt does nothing.
+//   hooks: { onBuffering(on), onFirstFrame(), onStable(), onError(n, delayMs), onEnded(), onMutedStart(),
+//            retryTarget() -> { url, archive } | null (archive: a fresh URL at the position actually shown) }
 var Player = (function () {
-  var av = window.webapis && window.webapis.avplay;
-  var video = Util.$('html-player');
-  var gen = 0;                 // bumps on every open(); stale callbacks compare against it
-  var url = null;
-  var lastTime = -1, lastTimeAt = 0, bufferingSince = 0;
-  var retries = 0, retryTimer = null, retryPending = false;
-  var isArchive = false;      // archive playback = a finite recording: slower to prepare, and it ends
-  var displayModes = ['PLAYER_DISPLAY_MODE_AUTO_ASPECT_RATIO', 'PLAYER_DISPLAY_MODE_FULL_SCREEN', 'PLAYER_DISPLAY_MODE_LETTER_BOX'];
-  var displayNames = ['Авто', 'Во весь экран', 'С полями'];
-  var displayIdx = Util.store('displayIdx') || 0;
-  var hooks = { onBuffering: function () {}, onPlaying: function () {}, onError: function () {} };
+  var av = null, video = null, hooks = null;
+  var gen = 0, url = null, archive = false;
+  var lastTime = -1, lastTimeAt = 0, bufferingSince = 0, bufferStartAt = 0, mediaMs = 0;
+  var firstFrame = false, streakFrom = 0, stable = false, info = '', bufferPct = -1;
+  var retries = 0, retryTimer = null, retryPending = false, restartOnPlay = false, paused = false, suspended = false;
+  var WATCHDOG_MS = 1000;
 
-  if (!av) { video.style.display = 'block'; Util.$('av-player').style.display = 'none'; }
+  function init(h) {
+    hooks = h;
+    try { av = (window.webapis && window.webapis.avplay) || null; } catch (e) { av = null; Diag.note('avplay', (e && e.message) || String(e)); }
+    video = Util.$('html-player');
+    if (!av) HtmlVideo.init(video, {
+      current: function (my) { return my === gen; },
+      playing: function (t) { if (!firstFrame) advanced(t); },
+      waiting: bufferingStarted,
+      progress: function () { if (bufferingSince) bufferingSince = Date.now(); },   // <video> reports bytes, not a percentage
+      time: function (t) { if (bufferingSince && firstFrame) bufferingEnded(); advanced(t); },
+      ended: ended, fail: fail, mutedStart: function () { hooks.onMutedStart(); }
+    });
+    setInterval(tick, WATCHDOG_MS);
+  }
 
-  function setHooks(h) { hooks = h; }
-
-  function play(newUrl) {
-    url = newUrl;
-    isArchive = /[?&](archive|utc)=/.test(newUrl);
+  // o: { url, archive } — archive: a finite recording, slower to prepare, and it ends.
+  function open(o) {
+    url = o.url;
+    archive = !!o.archive;
     retries = 0;
+    paused = false;
+    suspended = false;
+    restartOnPlay = false;
     start();
   }
 
@@ -28,179 +40,160 @@ var Player = (function () {
     clearTimeout(retryTimer);
     retryPending = false;
     var my = ++gen;
-    lastTime = -1; lastTimeAt = Date.now(); bufferingSince = Date.now();
+    lastTime = -1; lastTimeAt = Date.now(); bufferingSince = Date.now(); bufferStartAt = 0; mediaMs = 0; bufferPct = -1;
+    firstFrame = false; streakFrom = 0; stable = false; info = '';
     hooks.onBuffering(true);
-    if (!av) { startHtml(my); return; }
-    try { av.stop(); } catch (e) {}
-    try { av.close(); } catch (e) {}
+    if (av) startAv(my); else HtmlVideo.start(my, url);
+  }
+
+  function startAv(my) {
+    try { av.stop(); } catch (e) { Diag.count('avStopIgnored'); }
+    try { av.close(); } catch (e) { Diag.count('avCloseIgnored'); }
     try {
       av.open(url);
-      av.setDisplayRect(0, 0, 1920, 1080);
-      av.setDisplayMethod(displayModes[displayIdx]);
-      // Start adaptive streams at the best quality the bandwidth allows.
-      try { av.setStreamingProperty('ADAPTIVE_INFO', 'STARTBITRATE=HIGHEST|SKIPBITRATE=LOWEST'); } catch (e) {}
-      try { av.setBufferingParam('PLAYER_BUFFER_FOR_PLAY', 'PLAYER_BUFFER_SIZE_IN_SECOND', 5); } catch (e) {}
-      try { av.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', 10); } catch (e) {}
+      setting(function () { av.setDisplayRect(0, 0, 1920, 1080); }, 'displayRect');
+      setting(function () { av.setDisplayMethod(AvTracks.displayMode()); }, 'displayMode');
+      // Start at the best quality the bandwidth allows, and let AVPlay drop to the lowest rendition
+      // rather than stall on a weak connection.
+      setting(function () { av.setStreamingProperty('ADAPTIVE_INFO', 'STARTBITRATE=HIGHEST'); }, 'adaptive');
+      setting(function () { av.setBufferingParam('PLAYER_BUFFER_FOR_PLAY', 'PLAYER_BUFFER_SIZE_IN_SECOND', CONFIG.BUFFER_PLAY_S); }, 'bufferPlay');
+      setting(function () { av.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', CONFIG.BUFFER_RESUME_S); }, 'bufferResume');
       av.setListener({
-        onbufferingstart: function () { if (my === gen) { bufferingSince = Date.now(); hooks.onBuffering(true); } },
-        onbufferingcomplete: function () { if (my === gen) { bufferingSince = 0; hooks.onBuffering(false); } },
-        oncurrentplaytime: function (t) { if (my === gen && t !== lastTime) { lastTime = t; lastTimeAt = Date.now(); } },
+        onbufferingstart: function () { if (my === gen) bufferingStarted(); },
+        onbufferingprogress: function (pct) { if (my === gen) bufferingProgress(pct); },
+        onbufferingcomplete: function () { if (my === gen) bufferingEnded(); },
+        oncurrentplaytime: function (t) { if (my === gen) advanced(t); },
         // A recording that reaches its end is not an error: the app continues with what follows it.
-        onstreamcompleted: function () { if (my === gen) { if (isArchive && hooks.onEnded) hooks.onEnded(); else fail('stream ended'); } },
-        onerror: function (e) { if (my === gen) fail(String(e)); },
+        onstreamcompleted: function () { if (my === gen) ended(my); },
+        onerror: function (e) { fail(my, String(e)); },
         onevent: function () {}
       });
       av.prepareAsync(function () {
-        if (my !== gen) return;
-        av.play();
-        ok();
-      }, function (e) { if (my === gen) fail(String(e)); });
+        if (my !== gen || paused) return;        // paused while preparing: play() starts it later
+        try { av.play(); } catch (e) { fail(my, 'play: ' + (e.message || e)); }
+      }, function (e) { fail(my, String(e)); });
     } catch (e) {
-      fail(e.message || String(e));
+      fail(my, e.message || String(e));
     }
   }
 
-  // Off the TV (desktop check): native HLS where the browser has it, otherwise hls.js loaded on demand.
-  var hls = null;
-  function startHtml(my) {
-    video.onplaying = function () { if (my === gen) ok(); };
-    video.onwaiting = function () { if (my === gen) { bufferingSince = Date.now(); hooks.onBuffering(true); } };
-    video.ontimeupdate = function () { if (my === gen) { bufferingSince = 0; lastTimeAt = Date.now(); } };
-    video.onerror = function () { if (my === gen) fail('video error'); };
-    if (hls) { hls.destroy(); hls = null; }
-    // Desktop Chrome reports native HLS ("maybe") but rejects MPEG-TS segments, so prefer hls.js on MSE.
-    if (!window.MediaSource) { video.src = url; safePlay(); return; }
-    withHlsJs(function () {
-      if (my !== gen) return;
-      hls = new window.Hls({ lowLatencyMode: false, maxBufferLength: 30, liveSyncDurationCount: 4 });
-      hls.on(window.Hls.Events.ERROR, function (_, d) { if (my === gen && d.fatal) fail(d.details); });
-      hls.loadSource(url);
-      hls.attachMedia(video);
-      safePlay();
-    });
-  }
-  // Browsers refuse to start video with sound before the first click or key press.
-  // Start muted instead of waiting forever, and unmute on the viewer's first input.
-  function safePlay() {
-    var p = video.play();
-    if (!p || !p['catch']) return;
-    p['catch'](function (e) {
-      if (!e || e.name !== 'NotAllowedError') return;
-      video.muted = true;
-      video.play();
-      hooks.onMutedStart();
-    });
-  }
-  function unmute() { if (video.muted) { video.muted = false; return true; } return false; }
-  function withHlsJs(cb) {
-    if (window.Hls) { cb(); return; }
-    var sc = document.createElement('script');
-    sc.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js';
-    sc.onload = cb;
-    document.head.appendChild(sc);
-  }
+  function setting(fn, name) { try { fn(); } catch (e) { Diag.count('settingsRejected'); Diag.note('setting.' + name, (e && e.message) || String(e)); } }
 
-  function ok() {
-    retries = 0; bufferingSince = 0; lastTimeAt = Date.now();
+  // ---- events shared by both backends ----
+  function bufferingStarted() {
+    bufferingSince = Date.now(); bufferPct = -1;
+    streakFrom = 0; stable = false;      // stability has to be earned again after a rebuffer
+    if (firstFrame) { bufferStartAt = Date.now(); Diag.count('rebuffer'); }
+    hooks.onBuffering(true);
+  }
+  // Only real progress (a higher percentage) restarts the buffering timeout.
+  function bufferingProgress(pct) {
+    if (!bufferingSince || !(+pct > bufferPct)) return;
+    bufferPct = +pct;
+    bufferingSince = Date.now();
+  }
+  function bufferingEnded() {
+    if (bufferStartAt) Diag.count('rebufferDone', Date.now() - bufferStartAt);
+    bufferingSince = 0; bufferStartAt = 0;
+    lastTimeAt = Date.now();             // the stall clock restarts when playback resumes
     hooks.onBuffering(false);
-    hooks.onPlaying();
   }
+  // t: media time in ms. The first advance after play() is the first frame. STABLE_MS of uninterrupted
+  // advancing playback (no rebuffer, no stall, no pause in between) resets the retry backoff.
+  function advanced(t) {
+    if (t === lastTime) return;
+    var now = Date.now();
+    if (!streakFrom || now - lastTimeAt > CONFIG.STALL_TIMEOUT_MS) streakFrom = now;
+    lastTime = t; lastTimeAt = now; mediaMs = t;
+    if (!firstFrame) {
+      firstFrame = true; bufferingSince = 0;
+      hooks.onBuffering(false);
+      info = readInfo();
+      if (av) Diag.note('variants', AvTracks.variantCount(av));
+      hooks.onFirstFrame();
+    } else if (!stable && !bufferingSince && now - streakFrom >= CONFIG.STABLE_MS) {
+      stable = true; retries = 0;
+      hooks.onStable();
+    }
+  }
+  function ended(my) { if (archive) hooks.onEnded(); else fail(my, 'stream ended'); }
 
-  // Exponential backoff: 0.5 s, 1 s, 2 s ... up to MAX_BACKOFF_MS, retried forever.
-  function fail(reason) {
-    var delay = Math.min(500 * Math.pow(2, retries), CONFIG.MAX_BACKOFF_MS);
+  // Growing delays (Util.backoff): 0.5 s, 1 s, 2 s … up to MAX_BACKOFF_MS, retried forever.
+  // A failure while paused waits for play(); nothing reopens behind a pause.
+  function fail(my, reason) {
+    if (my !== gen) return;
+    gen++;                               // every remaining callback of the failed attempt is inert
+    var delay = Util.backoff(retries, CONFIG.RETRY_MIN_MS, CONFIG.MAX_BACKOFF_MS);
     retries++;
-    console.log('[player] fail #' + retries + ' gen=' + gen + ' ' + reason);
-    // Keep the last 40 failures on the device, so a "no signal" seen by the viewer can be explained later.
-    var log = Util.store('failLog') || [];
-    log.push(new Date().toISOString() + ' #' + retries + ' ' + reason + ' ' + String(url).replace(/\/stream\/[^/]+\//, '/stream/<key>/'));
-    Util.store('failLog', log.slice(-40));
-    hooks.onError(reason, retries, delay);
+    Diag.fail({ n: retries, gen: gen, reason: reason, url: url });
     clearTimeout(retryTimer);
-    retryPending = true;
     bufferingSince = 0;
-    retryTimer = setTimeout(start, delay);
+    if (paused) { restartOnPlay = true; return; }
+    hooks.onError(retries, delay);
+    retryPending = true;
+    retryTimer = setTimeout(retry, delay);
+  }
+  // The URL and the mode change together (a live stream resumed after a pause retries as archive).
+  function retry() {
+    var target = hooks.retryTarget();
+    if (target) { url = target.url; archive = target.archive; }
+    restartOnPlay = false;
+    start();
   }
 
   function tick() {
-    if (!url) return;
+    if (!url || paused || suspended || retryPending) return;
     var now = Date.now(), state;
-    if (av) { try { state = av.getState(); } catch (e) { return; } } else state = video.paused ? 'PAUSED' : 'PLAYING';
-    // While a restart is already scheduled the watchdog stays quiet (otherwise it re-fails every second
-    // and the restart never happens).
-    if (retryPending) return;
-    var limit = isArchive ? CONFIG.ARCHIVE_BUFFER_TIMEOUT_MS : CONFIG.BUFFER_TIMEOUT_MS;
-    if (bufferingSince && now - bufferingSince > limit) { fail('buffering timeout ' + Math.round((now - bufferingSince) / 1000) + ' s'); return; }
-    if (state === 'PLAYING' && !bufferingSince && now - lastTimeAt > CONFIG.STALL_TIMEOUT_MS) fail('stalled');
-    // A player left IDLE/NONE (released by the TV or another app) never plays again by itself.
-    if (av && !document.hidden && (state === 'IDLE' || state === 'NONE') && now - lastTimeAt > CONFIG.STALL_TIMEOUT_MS) fail('player released (' + state + ')');
+    // An unreadable state is counted and treated as unknown: the buffering timeout still applies.
+    if (av) { try { state = av.getState(); } catch (e) { state = ''; Diag.count('getStateFailed'); } } else state = video.paused ? 'PAUSED' : 'PLAYING';
+    var limit = archive ? CONFIG.ARCHIVE_BUFFER_TIMEOUT_MS : CONFIG.BUFFER_TIMEOUT_MS;
+    // Buffering is measured from its last progress: a slow but progressing rebuffer is left alone.
+    if (bufferingSince) { if (now - bufferingSince > limit) fail(gen, 'buffering timeout ' + Math.round((now - bufferingSince) / 1000) + ' s'); return; }
+    if (state === 'PLAYING' && now - lastTimeAt > CONFIG.STALL_TIMEOUT_MS) fail(gen, 'stalled');
   }
-  setInterval(tick, 1000);
 
-  function suspend() { try { if (av) av.suspend(); } catch (e) {} }
-  function resume() {
-    if (!url) return;
-    // Tizen reports "visible" right after launch too; a stream that is already playing is left alone.
-    // Another app may have taken the TV's player while we were hidden: then the state is IDLE/NONE and
-    // restore() silently does nothing (black screen). Anything but PLAYING is reopened from scratch.
-    try { if (av && av.getState() === 'PLAYING') return; } catch (e) {}
-    retries = 0;
-    start();
+  // ---- control ----
+  // A pause also holds a pending retry: it runs on play(), not behind the pause.
+  function pause() {
+    paused = true;
+    streakFrom = 0; stable = false;
+    if (retryPending) { clearTimeout(retryTimer); retryPending = false; restartOnPlay = true; }
+    try { if (av) av.pause(); else HtmlVideo.pause(); } catch (e) { Diag.note('pause', (e && e.message) || String(e)); }
   }
-  function reconnect() { if (url) { retries = 0; start(); } }
+  // Resumes a native pause; a failure goes through the normal retry (archive: at the shown position).
+  function play() {
+    paused = false;
+    lastTimeAt = Date.now();
+    if (restartOnPlay) { retry(); return; }
+    if (!av) { HtmlVideo.play(); return; }
+    try { av.play(); } catch (e) { fail(gen, 'resume: ' + (e.message || e)); }
+  }
+  // The app goes to the background: the pipeline is released; the app reopens explicitly on return.
+  function suspend() {
+    suspended = true;
+    gen++;                               // callbacks of the suspended attempt are inert
+    clearTimeout(retryTimer);
+    retryPending = false;
+    try { if (av) av.suspend(); else HtmlVideo.pause(); } catch (e) { Diag.note('suspend', (e && e.message) || String(e)); }
+  }
+  // Network restored: the same path as a retry, so an archive resumes at the position shown.
+  function reconnect() { if (url && !paused && !suspended) { retries = 0; retry(); } }
+  function mediaTimeMs() { return mediaMs; }
 
-  function audioTracks() {
-    if (!av) return [];
-    var out = [];
-    try {
-      var info = av.getTotalTrackInfo();
-      for (var i = 0; i < info.length; i++) {
-        if (info[i].type !== 'AUDIO') continue;
-        var x = {};
-        try { x = JSON.parse(info[i].extra_info); } catch (e) {}
-        out.push({ index: info[i].index, label: (x.language || 'Дорожка ' + (out.length + 1)) + (x.channels ? ' · ' + x.channels + ' кан.' : '') });
-      }
-    } catch (e) {}
-    return out;
+  // Technical line for the banner: read once per attempt at its first frame ('' before it).
+  // fresh = true re-reads it (BLUE key, «О программе»: the bitrate may have changed).
+  function streamInfo(fresh) {
+    if (fresh && firstFrame) info = readInfo();
+    return firstFrame ? info : '';
   }
-  function selectAudio(index) { try { av.setSelectTrack('AUDIO', index); } catch (e) {} }
-
-  // Technical line for the banner: resolution · codec · frame rate · bitrate · audio.
-  function videoInfo() {
-    if (!av) {
-      if (!video.videoWidth) return '';
-      var lvl = hls && hls.levels && hls.levels[hls.currentLevel];
-      return video.videoWidth + '×' + video.videoHeight + (lvl && lvl.bitrate ? ' · ' + mbps(lvl.bitrate) : '');
-    }
-    var parts = [];
-    try {
-      var info = av.getCurrentStreamInfo();
-      for (var i = 0; i < info.length; i++) {
-        var x = {};
-        try { x = JSON.parse(info[i].extra_info); } catch (e) {}
-        if (info[i].type === 'VIDEO') {
-          parts.unshift(x.Width + '×' + x.Height + (x.fourCC ? ' · ' + String(x.fourCC).toUpperCase() : '') +
-            (x.fps ? ' · ' + Math.round(+x.fps) + ' к/с' : '') + (x.Bit_rate ? ' · ' + mbps(+x.Bit_rate) : ''));
-        } else if (info[i].type === 'AUDIO') {
-          var ac = +x.channels;
-          parts.push('звук ' + (ac === 2 ? 'стерео' : ac === 6 ? '5.1' : ac === 1 ? 'моно' : ac ? ac + ' кан.' : '') +
-            (x.fourCC ? ' ' + String(x.fourCC).toUpperCase() : ''));
-        }
-      }
-    } catch (e) {}
-    return parts.join(' · ');
-  }
-  function mbps(bps) { return (bps / 1e6).toFixed(1).replace('.', ',') + ' Мбит/с'; }
-
-  function cycleDisplay() {
-    displayIdx = (displayIdx + 1) % displayModes.length;
-    Util.store('displayIdx', displayIdx);
-    try { av.setDisplayMethod(displayModes[displayIdx]); } catch (e) {}
-    return displayNames[displayIdx];
-  }
+  function readInfo() { return av ? AvTracks.streamInfo(av) : HtmlVideo.info(); }
+  function audioTracks() { return av ? AvTracks.audioTracks(av) : []; }
+  function selectAudio(index) { return !!av && AvTracks.selectAudio(av, index); }
+  function cycleDisplay() { return AvTracks.cycleDisplay(av); }
 
   return {
-    setHooks: setHooks, play: play, unmute: unmute, reconnect: reconnect, suspend: suspend, resume: resume,
-    audioTracks: audioTracks, selectAudio: selectAudio, videoInfo: videoInfo, cycleDisplay: cycleDisplay
+    init: init, open: open, pause: pause, play: play, suspend: suspend, reconnect: reconnect,
+    mediaTimeMs: mediaTimeMs, streamInfo: streamInfo, audioTracks: audioTracks, selectAudio: selectAudio,
+    cycleDisplay: cycleDisplay, unmute: function () { return !av && HtmlVideo.unmute(); }
   };
 }());

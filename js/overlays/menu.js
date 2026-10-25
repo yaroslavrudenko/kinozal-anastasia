@@ -1,0 +1,99 @@
+// The channel menu: groups on the left, channels on the right. The group browsed here is the group
+// ◀ ▶ zap through afterwards (Zap.group).
+(function () {
+  var focus = 'channels', cursor = 0;
+
+  function groups() { return Channels.groups(); }
+  function group() { return groups()[clampGroup()]; }
+  function clampGroup() { var g = clamp(Zap.group(), groups().length); Zap.setGroup(g); return g; }
+  function clamp(v, n) { return Math.max(0, Math.min(n - 1, v)); }
+  function playingIdx() { var c = Playback.current(); return c ? Channels.indexOfKey(c.key) : -1; }
+
+  function open() {
+    ListView.reset('groups');
+    ListView.reset('channels');
+    focus = 'channels';
+    var playing = playingIdx(), at = group() ? group().items.indexOf(playing) : -1;
+    if (at < 0) { Zap.setGroup(Channels.allIdx()); at = Math.max(0, group().items.indexOf(playing)); }
+    cursor = at;
+    UI.show('guide', true);
+    render();
+  }
+  function close() { UI.show('guide', false); }
+
+  function render() {
+    var g = group(), gi = Zap.group();
+    if (!g) return;
+    cursor = clamp(cursor, g.items.length);            // a refresh may have shortened the group
+    var playing = playingIdx();
+    ListView.columns([{ name: 'groups', view: { total: groups().length, cursor: gi, active: focus === 'groups', row: groupRow } },
+      { name: 'channels', view: { total: g.items.length, cursor: cursor, active: focus === 'channels', row: function (i) {
+        var c = Channels.at(g.items[i]), on = EPG.upcoming(c.id, 1)[0];
+        return { num: c.num, logo: c.logo, title: (Favs.has(c.key) ? '★ ' : '') + c.name + (g.items[i] === playing ? '  ▶' : ''),
+          sub: c.dead ? 'отключён провайдером' : (on ? on.title : ''), playing: g.items[i] === playing };
+      } } }]);
+  }
+  function groupRow(i) {
+    var g = groups()[i];
+    return { num: '', logo: '', title: g.name, sub: g.search || g.about ? '' : g.items.length };
+  }
+
+  // Search and «О программе» are rows of the group column that open their own screens.
+  function openSpecial(g) {
+    if (g.search) { Overlay.open('search'); return true; }
+    if (g.about) { Overlay.open('about'); return true; }
+    return false;
+  }
+
+  function onKey(k, e) {
+    e.preventDefault();
+    var g = group();
+    if ((k === K.UP || k === K.DOWN) && ListView.scrollWithin(focus, k === K.UP ? -1 : 1)) return;   // a row taller than the column
+    if (k === K.UP) move(-1);
+    else if (k === K.DOWN) move(1);
+    else if (k === K.CH_UP || k === K.PG_UP) page(-1);
+    else if (k === K.CH_DOWN || k === K.PG_DOWN) page(1);
+    else if (k === K.LEFT) focus = 'groups';
+    else if (k === K.RIGHT) { if (focus === 'groups' && openSpecial(g)) return; focus = 'channels'; }
+    else if (k === K.ENTER) {
+      if (focus === 'groups') { if (openSpecial(g)) return; focus = 'channels'; cursor = 0; }
+      else { var c = Channels.at(g.items[cursor]); Overlay.close(); if (c) Zap.pick(c); return; }
+    }
+    else if (k === K.YELLOW || k === K.F || k === K.PLAY_PAUSE) toggleFav();
+    else if (k === K.BLUE) { Overlay.open('setup', { changingKey: true }); return; }
+    else if (Keys.isBack(k) || k === K.CH_LIST) { Overlay.close(); return; }
+    else return;
+    render();
+  }
+
+  // CH± / PG±: channels by the rows actually visible (DEC-2026-10-25-paging); groups by a full column.
+  function page(dir) {
+    if (focus === 'groups') { move(dir * CONFIG.VISIBLE_ROWS); return; }
+    cursor = ListView.page('channels', dir, { cursor: cursor, total: group().items.length });
+  }
+
+  function move(d) {
+    if (focus === 'groups') { Zap.setGroup(clamp(Zap.group() + d, groups().length)); cursor = 0; }
+    else cursor = clamp(cursor + d, group().items.length);
+  }
+
+  // The cursor stays on the same channel, in the same group.
+  function toggleFav() {
+    var g = group(), c = Channels.at(g.items[cursor]);
+    if (!c) return;
+    var on = Favs.toggle(c.key);
+    Channels.rebuild();                  // the browsed group is kept by identity (Zap.group)
+    var at = group().items.indexOf(Channels.indexOfKey(c.key));
+    cursor = at >= 0 ? at : clamp(cursor, group().items.length);
+    UI.toast(on ? 'Добавлено в избранное' : 'Убрано из избранного');
+  }
+
+  // Desktop preview: a click selects a group or tunes a channel.
+  function onClick(row) {
+    var i = +row.getAttribute('data-i'), col = row.parentNode.id;
+    if (col === 'groups') { focus = 'groups'; Zap.setGroup(i); cursor = 0; render(); }
+    else if (col === 'channels') { focus = 'channels'; cursor = i; onKey(K.ENTER, { preventDefault: function () {} }); }
+  }
+
+  Overlay.register('menu', { open: open, close: close, onKey: onKey, onClick: onClick, render: render });
+}());
