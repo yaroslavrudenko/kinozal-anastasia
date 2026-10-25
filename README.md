@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/channel-natgeowild.jpg" width="900" alt="Nat Geo Wild: a Nile crocodile close up, in full HD">
+  <img src="docs/screenshots/channel-1plus1-voice-coaches.jpg" width="900" alt="1+1 Україна — «Голос країни»: the four coaches in the red chairs, in full HD">
 </p>
 
 ---
@@ -58,9 +58,9 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
 <table>
   <tr>
     <td><img src="docs/screenshots/channel-m1.jpg" alt="М1, Ukrainian music channel"></td>
-    <td><img src="docs/screenshots/channel-1plus1-voice-coaches.jpg" alt="1+1 Україна — «Голос країни»: the four coaches in the red chairs"></td>
+    <td><img src="docs/screenshots/channel-natgeowild.jpg" alt="Nat Geo Wild: a Nile crocodile close up, in full HD"></td>
   </tr>
-  <tr><td align="center"><b>М1</b> · Ukrainian music</td><td align="center"><b>1+1 Україна</b> · «Голос країни»</td></tr>
+  <tr><td align="center"><b>М1</b> · Ukrainian music</td><td align="center"><b>Nat Geo Wild</b> · wildlife</td></tr>
   <tr>
     <td><img src="docs/screenshots/channel-channel9.jpg" alt="Channel 9, Israel, news"></td>
     <td><img src="docs/screenshots/channel-cartoons90.jpg" alt="Cartoons 90: cartoons of the 90s"></td>
