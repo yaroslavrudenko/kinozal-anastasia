@@ -36,11 +36,6 @@ var EPG = (function () {
     while (lo < hi) { var mid = (lo + hi) >> 1; if (l[mid].stop > t) hi = mid; else lo = mid + 1; }
     return lo;
   }
-  function firstFrom(l, t) {
-    var lo = 0, hi = l.length;
-    while (lo < hi) { var mid = (lo + hi) >> 1; if (l[mid].start >= t) hi = mid; else lo = mid + 1; }
-    return lo;
-  }
 
   // The programme on air at moment t, or null.
   function at(id, t) {
@@ -52,12 +47,13 @@ var EPG = (function () {
     var cur = at(id, t);
     return { cur: cur, next: cur ? at(id, cur.stop + 1000) : null };
   }
-  // Programmes of one calendar day (0 = today, -1 = yesterday ...), DST-safe. The programme panel shows the
+  // Programmes overlapping one calendar day (0 = today, -1 = yesterday ...), DST-safe: one that started
+  // before midnight and is still on comes first, with its real start. The programme panel shows the
   // full guide (or the channel list's "now" line until it arrives), not the few lines kept after eviction.
   function day(id, offset) {
     var l = full[id] || seeds[id] || [], from = Util.addDays(Util.dayStart(Date.now()), offset), to = Util.addDays(from, 1);
     var out = [];
-    for (var i = firstFrom(l, from); i < l.length && l[i].start < to; i++) out.push(l[i]);
+    for (var i = indexAt(l, from); i < l.length && l[i].start < to; i++) out.push(l[i]);
     return out;
   }
 
