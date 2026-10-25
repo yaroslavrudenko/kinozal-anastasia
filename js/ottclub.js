@@ -48,7 +48,16 @@ var OttClub = (function () {
       return r < 0 ? ORDER.GROUPS.length : r;
     }
     function seq(id) { return ORDER.SEQ[id] || 100000; }
+    // Pinned channels (Israel) open the list: Channel 9 is number 1, then 11, 12 ... by the number in the name.
+    function pinRank(id) {
+      for (var p = 0; p < ORDER.PINNED.length; p++) if (data[id].channel_name.indexOf(ORDER.PINNED[p].match) >= 0) return p;
+      return ORDER.PINNED.length;
+    }
+    function nameNumber(id) { var m = /\b(\d{1,3})\b/.exec(data[id].channel_name); return m ? +m[1] : 1000; }
     ids.sort(function (a, b) {
+      var pa = pinRank(a), pb = pinRank(b);
+      if (pa !== pb) return pa - pb;
+      if (pa < ORDER.PINNED.length) return (nameNumber(a) - nameNumber(b)) || (pos[a] - pos[b]);
       return (groupRank(a) - groupRank(b)) || (seq(a) - seq(b)) || (pos[a] - pos[b]);
     });
     var channels = [];

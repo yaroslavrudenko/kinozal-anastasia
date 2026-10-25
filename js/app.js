@@ -49,7 +49,7 @@
       onKey(e);
     });
     document.addEventListener('click', onClick);
-    UI.toast(window.webapis ? 'OK — список каналов' : 'Enter или клик — список каналов', 6000);
+    UI.toast(window.webapis ? '◀ ▶ — каналы · ▲ — программа и архив · OK — все каналы' : '← → каналы · ↑ программа и архив · Enter или клик — все каналы', 7000);
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) Player.suspend(); else Player.resume();
     });
@@ -59,9 +59,9 @@
 
   function startSources() {
     if (OttClub.enabled()) EPG.setLoader(OttClub.guide);
-    var cached = Util.store('playlistText');
-    if (cached) apply(cached);
-    loadPlaylist(!cached);
+    // Always start from the provider's current list. The saved copy is only a fallback
+    // when the server does not answer, so a stale list is never shown while the network works.
+    loadPlaylist(true);
     setInterval(function () { loadPlaylist(false); }, CONFIG.PLAYLIST_REFRESH_MS);
   }
 
@@ -123,9 +123,17 @@
     Util.get(OttClub.enabled() ? OttClub.sourceUrl() : playlistUrl(), 20000, function (text) {
       if (!parseSource(text)) { if (blocking) UI.fatal('Список каналов пуст или недоступен.'); return; }
       try { localStorage.setItem('playlistText', JSON.stringify(text)); } catch (e) {}
+      s.fromSaved = false;
       apply(text);
     }, function (err) {
-      if (blocking) { UI.spinner(false); UI.fatal('Не удалось загрузить плейлист (' + err + '). Повтор через 10 с.'); setTimeout(function () { loadPlaylist(true); }, 10000); }
+      if (!blocking && !s.fromSaved) return;
+      if (!all.length) {
+        var saved = Util.store('playlistText');
+        if (saved) { s.fromSaved = true; apply(saved); UI.toast('Сервер не ответил — показан последний список, обновлю автоматически', 5000); }
+        else { UI.spinner(false); UI.fatal('Не удалось загрузить список каналов (' + err + '). Повтор через 10 с.'); }
+      }
+      // Keep retrying until a fresh list arrives (silently once something is on screen).
+      setTimeout(function () { loadPlaylist(!all.length); }, 10000);
     });
   }
 
@@ -136,8 +144,6 @@
     if (!parsed) return;
     all = parsed.channels;
     // Until this launch's check finishes, hide what the previous check found removed.
-    var deadBefore = Util.store('deadUrls') || {};
-    for (var d = 0; d < all.length; d++) if (deadBefore[all[d].url]) all[d].dead = true;
     rebuildGroups();
     UI.fatal('');
     // Let the first channel take the whole bandwidth; check the rest 15 s later.
@@ -153,6 +159,7 @@
 
   function rebuildGroups() {
     groups = M3U.groupsOf(all, function (c) { return !c.dead; });
+    addPinnedGroups();
     rebuildFavGroup();
     s.groupIdx = clamp(s.groupIdx, groups.length);
     if (groups[s.groupIdx]) s.chCursor = clamp(s.chCursor, groups[s.groupIdx].items.length);
@@ -161,7 +168,7 @@
   // Every launch (and every list refresh) re-checks every channel, 4 at a time, ~0.1 s each:
   // channels the provider removed disappear, channels it restored come back. Nothing stale survives.
   function healthCheck() {
-    var list = all, next = 0, active = 0, dead = {}, removed = 0;
+    var list = all, next = 0, active = 0, removed = 0;
     function pump() {
       while (active < 4 && next < list.length) check(list[next++]);
       if (active === 0 && next >= list.length) finish();
@@ -170,13 +177,12 @@
       active++;
       Util.get(ch.url, 8000, function (text) {
         ch.dead = isDeadPlaylist(text);
-        if (ch.dead) { dead[ch.url] = true; removed++; }
+        if (ch.dead) removed++;
         active--; pump();
       }, function () { active--; pump(); });   // a network error is not proof of removal: keep the channel
     }
     function finish() {
       if (list !== all) return;                // a newer list arrived meanwhile; its own check wins
-      Util.store('deadUrls', dead);
       rebuildGroups();
       if (s.guideOpen) renderGuide();
       if (removed) UI.toast('Проверено каналов: ' + list.length + ', отключены провайдером: ' + removed, 3500);
@@ -189,8 +195,20 @@
       (text.indexOf('#EXT-X-STREAM-INF') >= 0 && text.indexOf('RESOLUTION=') < 0 && text.indexOf('avc1') < 0 && text.indexOf('hvc1') < 0);
   }
 
+  // Extra groups shown right after "All channels" (the channels also stay in their own group).
+  // Order inside: the number in the channel name first (Channel 9, 11, 12 ...), then the rest.
+  function addPinnedGroups() {
+    for (var p = 0; p < ORDER.PINNED.length; p++) {
+      var pin = ORDER.PINNED[p], items = [];
+      for (var i = 0; i < all.length; i++) if (!all[i].dead && all[i].name.indexOf(pin.match) >= 0) items.push(i);
+      items.sort(function (a, b) { return nameNumber(all[a].name) - nameNumber(all[b].name) || a - b; });
+      if (items.length) groups.splice(1 + p, 0, { name: pin.name, items: items });
+    }
+  }
+  function nameNumber(name) { var m = /\b(\d{1,3})\b/.exec(name); return m ? +m[1] : 1000; }
+
   function rebuildFavGroup() {
-    if (groups.length && groups[1] && groups[1].fav) groups.splice(1, 1);
+    for (var g = groups.length - 1; g >= 0; g--) if (groups[g].fav) groups.splice(g, 1);
     var items = [];
     for (var i = 0; i < all.length; i++) if (favs[all[i].url]) items.push(i);
     if (items.length) groups.splice(1, 0, { name: '★ Избранное', items: items, fav: true });
@@ -252,20 +270,63 @@
     return s.archiveStart + ((s.pausedAt || Date.now()) - s.playStartedAt);
   }
 
-  // Seeking accumulates key presses for 700 ms and then reopens once, so ten presses cost one request.
-  function seek(deltaMs) {
+  // ---------- archive scrubber (▼ while watching) ----------
+  // A timeline of the programme under the knob. Nothing is reloaded while the knob moves;
+  // OK opens the archive once, at the chosen moment.
+  function openScrub() {
     var ch = all[s.playing];
-    if (!Catchup.supported(ch)) { UI.toast('Перемотка недоступна: у канала нет архива'); return; }
-    s.seekTarget = (s.seekTarget || position()) + deltaMs;
-    if (s.seekTarget > Date.now()) s.seekTarget = Date.now();
-    var behind = Math.round((Date.now() - s.seekTarget) / 60000);
-    UI.toast((deltaMs < 0 ? '⏪ ' : '⏩ ') + Util.hhmm(new Date(s.seekTarget)) + (behind > 0 ? '  (−' + fmtMin(behind) + ')' : '  прямой эфир'), 1500);
-    clearTimeout(s.seekTimer);
-    s.seekTimer = setTimeout(function () {
-      var t = s.seekTarget; s.seekTarget = 0;
-      playArchive(t);
-    }, 700);
+    if (!ch) return;
+    if (!Catchup.supported(ch)) { showBanner(); UI.toast('У этого канала нет архива'); return; }
+    EPG.ensure(ch.id, function () { if (s.scrub) renderScrub(); });
+    s.scrub = { t: position(), lastKey: 0, run: 0 };
+    UI.hideBanner();
+    Util.show(Util.$('scrub'), true);
+    renderScrub();
   }
+  function closeScrub() { s.scrub = null; Util.show(Util.$('scrub'), false); }
+
+  function scrubKey(k) {
+    var sc = s.scrub, ch = all[s.playing], now = Date.now();
+    var minT = now - (ch.catchupDays || 7) * 86400000;
+    if (k === K.LEFT || k === K.RIGHT || k === K.REWIND || k === K.FF) {
+      // Holding the key repeats it: the step grows from 30 s to 2 min to 10 min.
+      sc.run = now - sc.lastKey < 450 ? sc.run + 1 : 0;
+      sc.lastKey = now;
+      var step = sc.run < 6 ? 30000 : sc.run < 16 ? 120000 : 600000;
+      if (k === K.REWIND || k === K.FF) step = Math.max(step, 300000);
+      sc.t += (k === K.LEFT || k === K.REWIND ? -1 : 1) * step;
+    } else if (k === K.UP || k === K.DOWN) {
+      var cur = EPG.at(ch.id, sc.t);
+      if (k === K.UP) { var prev = cur ? EPG.at(ch.id, cur.start - 1000) : null; sc.t = prev ? prev.start : sc.t - 1800000; }
+      else sc.t = cur ? cur.stop : sc.t + 1800000;
+    } else if (k === K.ENTER) {
+      var t = sc.t; closeScrub(); playArchive(t); return;
+    } else if (k === K.BACK || k === K.BACK_DESKTOP) {
+      closeScrub(); return;
+    } else return;
+    sc.t = Math.max(minT, Math.min(now, sc.t));
+    renderScrub();
+  }
+
+  function renderScrub() {
+    var sc = s.scrub, ch = all[s.playing], now = Date.now();
+    if (!sc || !ch) return;
+    var p = EPG.at(ch.id, sc.t);
+    // Without a guide entry the bar spans the hour around the knob.
+    var from = p ? p.start : sc.t - 1800000, to = p ? p.stop : sc.t + 1800000;
+    var pct = function (x) { return Math.max(0, Math.min(100, (x - from) / (to - from) * 100)) + '%'; };
+    Util.$('s-title').textContent = ch.name + (p ? '  ·  ' + p.title : '');
+    Util.$('s-time').textContent = sc.t >= now - 15000 ? 'прямой эфир' : hhmmss(new Date(sc.t));
+    Util.$('s-start').textContent = Util.hhmm(new Date(from));
+    Util.$('s-end').textContent = Util.hhmm(new Date(to));
+    var behind = Math.round((now - sc.t) / 60000);
+    Util.$('s-delta').textContent = behind > 0 ? '−' + fmtMin(behind) + ' от эфира' : '';
+    Util.$('s-played').style.width = pct(Math.min(now, to));
+    Util.$('s-now').style.left = pct(now);
+    Util.$('s-now').style.display = now >= from && now <= to ? 'block' : 'none';
+    Util.$('s-knob').style.left = pct(sc.t);
+  }
+  function hhmmss(d) { var s2 = d.getSeconds(); return Util.hhmm(d) + ':' + (s2 < 10 ? '0' : '') + s2; }
 
   function fmtMin(m) { return m >= 60 ? Math.floor(m / 60) + ' ч ' + (m % 60) + ' мин' : m + ' мин'; }
 
@@ -323,6 +384,15 @@
   }
   function closeGuide() { s.guideOpen = false; UI.guide(false); }
 
+  // The guide with the focus already on the playing channel's programme (today, the current show):
+  // ▲▼ walk the shows, CH+/CH− change the day, OK plays from the archive.
+  function openProgramme() {
+    openGuide();
+    s.focus = 'programs';
+    s.progCursor = currentProgIndex(dayPrograms());
+    renderGuide();
+  }
+
   function cursorChannel() { var g = groups[s.groupIdx]; return g ? all[g.items[s.chCursor]] : null; }
 
   function dayPrograms() {
@@ -374,7 +444,7 @@
         if (s.focus === 'groups') { s.focus = 'channels'; s.chCursor = 0; break; }
         if (s.focus === 'channels') { closeGuide(); tune(g.items[s.chCursor]); return; }
         playProgram(); return;
-      case K.YELLOW: case K.F: toggleFav(); break;
+      case K.YELLOW: case K.F: case K.PLAY_PAUSE: toggleFav(); break;
       case K.BLUE: closeGuide(); changeKey(); return;
       case K.BACK: case K.BACK_DESKTOP: case K.CH_LIST: closeGuide(); return;
       default: return;
@@ -455,18 +525,18 @@
       }
       return;
     }
+    if (s.scrub) { scrubKey(k); e.preventDefault(); return; }
     if (s.guideOpen) { guideKey(k); e.preventDefault(); return; }
     if (k >= 48 && k <= 57) { digit(k - 48); return; }
     var g = groups[0];
     switch (k) {
-      case K.UP: case K.CH_UP: tune(next(1), 1); break;
-      case K.DOWN: case K.CH_DOWN: tune(next(-1), -1); break;
-      case K.ENTER: case K.CH_LIST: openGuide(); break;
+      // ◀ ▶ (and CH−/CH+) zap; ▲ opens this channel's programme; ▼ / ⏪ ⏩ open the archive slider.
+      case K.RIGHT: case K.CH_UP: tune(next(1), 1); break;
+      case K.LEFT: case K.CH_DOWN: tune(next(-1), -1); break;
+      case K.UP: openProgramme(); break;
+      case K.DOWN: case K.REWIND: case K.FF: openScrub(); if (s.scrub && k !== K.DOWN) scrubKey(k); break;
       case K.INFO: showBanner(); break;
-      case K.LEFT: seek(-30000); break;
-      case K.RIGHT: if (s.archiveStart) seek(30000); else showBanner(); break;
-      case K.REWIND: seek(-300000); break;
-      case K.FF: if (s.archiveStart) seek(300000); break;
+      case K.ENTER: case K.CH_LIST: openGuide(); break;
       case K.PLAY_PAUSE: case K.PAUSE: togglePause(); break;
       case K.PLAY: if (s.pausedAt) togglePause(); break;
       case K.STOP: if (s.archiveStart) { tune(s.playing); UI.toast('Прямой эфир'); } break;
