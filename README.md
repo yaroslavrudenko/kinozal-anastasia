@@ -10,6 +10,11 @@
 </p>
 
 <p align="center">
+  <i>💐 Dedicated to my wife, Anastasia.<br>
+  So that in her free time she can switch on the TV, rest, enjoy life and simply have a wonderful time.</i>
+</p>
+
+<p align="center">
   <img alt="Samsung Tizen 3.0+" src="https://img.shields.io/badge/Samsung%20Tizen-3.0%2B-1428A0?style=for-the-badge">
   <img alt="Pure ES5, no build step" src="https://img.shields.io/badge/ES5-no%20build%20step-2f7ee8?style=for-the-badge">
   <img alt="Hardware playback" src="https://img.shields.io/badge/playback-hardware%20AVPlay-34a853?style=for-the-badge">

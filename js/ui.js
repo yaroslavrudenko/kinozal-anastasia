@@ -2,7 +2,7 @@
 // so a 1000-channel playlist costs the same as a 13-channel one.
 var UI = (function () {
   var $ = Util.$;
-  var rows = [], groupRows = [], progRows = [], panelRows = [], searchRows = [];
+  var rows = [], groupRows = [], panelRows = [], searchRows = [];
   var toastTimer = null, bannerTimer = null;
 
   function pool(container, n, cls) {
@@ -20,7 +20,6 @@ var UI = (function () {
   function init() {
     rows = pool($('channels'), CONFIG.VISIBLE_ROWS, 'row');
     groupRows = pool($('groups'), CONFIG.VISIBLE_ROWS, 'grow');
-    progRows = pool($('d-list'), CONFIG.VISIBLE_ROWS - 1, 'prow');
     panelRows = pool($('p-list'), CONFIG.VISIBLE_ROWS - 3, 'prow');   // leaves room for the hint
     searchRows = pool($('search-list'), 9, 'row');
   }
@@ -90,11 +89,6 @@ var UI = (function () {
     });
   }
 
-  function programs(title, list, cursor, active, nowMs, archive) {
-    $('d-title').textContent = title;
-    fillPrograms(progRows, list, cursor, active, nowMs, archive);
-  }
-
   function fillPrograms(pool_, list, cursor, active, nowMs, archive) {
     renderList(pool_, list, cursor, active, function (r, p) {
       var past = p.stop <= nowMs, live = p.start <= nowMs && p.stop > nowMs;
@@ -133,7 +127,7 @@ var UI = (function () {
   function fatal(text) { $('fatal').textContent = text; Util.show($('fatal'), !!text); }
 
   return {
-    init: init, guide: guide, groups: groups, channels: channels, programs: programs, panel: panel, searchResults: searchResults,
+    init: init, guide: guide, groups: groups, channels: channels, panel: panel, searchResults: searchResults,
     banner: banner, hideBanner: hideBanner, toast: toast, spinner: spinner, numEntry: numEntry, fatal: fatal
   };
 }());

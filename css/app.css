@@ -36,13 +36,12 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 .guide { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: -webkit-flex; display: flex;
   padding: 60px 60px 110px; background: rgba(6,9,15,.93); }
 .groups { width: 380px; margin-right: 24px; }
-.channels { width: 760px; margin-right: 24px; }
-.details { -webkit-flex: 1; flex: 1; overflow: hidden; }
+.channels { -webkit-flex: 1; flex: 1; overflow: hidden; }
 .row, .grow, .prow { height: 72px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center;
   padding: 0 22px; border-radius: 14px; font-size: 30px; white-space: nowrap; overflow: hidden; }
 .row .n { width: 76px; color: #8d99ad; font-size: 26px; }
 .row .logo { width: 72px; height: 48px; object-fit: contain; margin-right: 18px; }
-.row .t { -webkit-flex: 0 0 300px; flex: 0 0 300px; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.row .t { -webkit-flex: 0 0 560px; flex: 0 0 560px; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
 .row .s { -webkit-flex: 1; flex: 1; margin-left: 18px; color: #9aa6b8; font-size: 24px; overflow: hidden; text-overflow: ellipsis; }
 .grow .n, .grow .logo, .prow .logo { display: none; }
 .grow .t { -webkit-flex: 1; flex: 1; overflow: hidden; text-overflow: ellipsis; }

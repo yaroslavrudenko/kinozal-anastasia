@@ -14,8 +14,8 @@
   var favs = Util.store('favs') || {};
   var s = {
     playing: -1, previous: -1,
-    guideOpen: false, focus: 'channels',          // 'groups' | 'channels' | 'programs'
-    groupIdx: 0, chCursor: 0, progCursor: 0, dayOffset: 0,
+    guideOpen: false, focus: 'channels',          // 'groups' | 'channels'
+    groupIdx: 0, chCursor: 0,
     archiveStart: 0, playStartedAt: 0,            // archiveStart 0 = live
     pausedAt: 0,
     seekTarget: 0, seekTimer: null,
@@ -398,43 +398,19 @@
     var at = g ? g.items.indexOf(s.playing) : -1;
     if (at < 0) { s.groupIdx = allIdx(); at = Math.max(0, groups[s.groupIdx].items.indexOf(s.playing)); }
     s.chCursor = Math.max(0, at);
-    s.dayOffset = 0; s.progCursor = 0;
     UI.hideBanner();
     UI.guide(true);
     renderGuide();
   }
   function closeGuide() { s.guideOpen = false; UI.guide(false); }
 
-  // The guide with the focus already on the playing channel's programme (today, the current show):
-  // ▲▼ walk the shows, CH+/CH− change the day, OK plays from the archive.
-  function openProgramme() {
-    openGuide();
-    s.focus = 'programs';
-    s.progCursor = currentProgIndex(dayPrograms());
-    renderGuide();
-  }
-
   function cursorChannel() { var g = groups[s.groupIdx]; return g ? all[g.items[s.chCursor]] : null; }
-
-  function dayPrograms() {
-    var ch = cursorChannel();
-    return ch ? EPG.day(ch.id, s.dayOffset) : [];
-  }
 
   function renderGuide() {
     var g = groups[s.groupIdx];
     if (!g) return;
     UI.groups(groups, s.groupIdx, s.focus === 'groups');
     UI.channels(g.items, s.chCursor, s.focus === 'channels', all, s.playing, favs);
-    var ch = cursorChannel();
-    if (ch) EPG.ensure(ch.id, function () { if (s.guideOpen && cursorChannel() === ch) renderGuide(); });
-    var list = dayPrograms();
-    if (s.focus !== 'programs') s.progCursor = currentProgIndex(list);
-    var dayName = s.dayOffset === 0 ? 'Сегодня' : s.dayOffset === -1 ? 'Вчера' : dateName(s.dayOffset);
-    var arch = ch && Catchup.supported(ch);
-    UI.programs((ch ? ch.name : '') + ' — ' + dayName + (arch ? '' : '  (без архива)'),
-      list.length ? list : [{ start: Date.now(), stop: Date.now(), title: EPG.isReady() ? 'Нет программы' : 'Программа загружается…' }],
-      s.progCursor, s.focus === 'programs', Date.now(), arch);
   }
 
   function currentProgIndex(list) {
@@ -453,20 +429,17 @@
     switch (k) {
       case K.UP: move(-1); break;
       case K.DOWN: move(1); break;
-      case K.CH_UP: case K.PG_UP: if (s.focus === 'programs') day(1); else move(-CONFIG.VISIBLE_ROWS); break;
-      case K.CH_DOWN: case K.PG_DOWN: if (s.focus === 'programs') day(-1); else move(CONFIG.VISIBLE_ROWS); break;
-      case K.LEFT:
-        s.focus = s.focus === 'programs' ? 'channels' : 'groups'; break;
+      case K.CH_UP: case K.PG_UP: move(-CONFIG.VISIBLE_ROWS); break;
+      case K.CH_DOWN: case K.PG_DOWN: move(CONFIG.VISIBLE_ROWS); break;
+      case K.LEFT: s.focus = 'groups'; break;
       case K.RIGHT:
         if (s.focus === 'groups' && g.search) { openSearch(); return; }
-        s.focus = s.focus === 'groups' ? 'channels' : 'programs';
-        if (s.focus === 'programs') s.progCursor = currentProgIndex(dayPrograms());
+        s.focus = 'channels';
         break;
       case K.ENTER:
         if (s.focus === 'groups' && g.search) { openSearch(); return; }
         if (s.focus === 'groups') { s.focus = 'channels'; s.chCursor = 0; break; }
-        if (s.focus === 'channels') { closeGuide(); tune(g.items[s.chCursor]); return; }
-        playProgram(); return;
+        closeGuide(); tune(g.items[s.chCursor]); return;
       case K.YELLOW: case K.F: case K.PLAY_PAUSE: toggleFav(); break;
       case K.BLUE: closeGuide(); changeKey(); return;
       case K.BACK: case K.BACK_DESKTOP: case K.CH_LIST: closeGuide(); return;
@@ -477,35 +450,13 @@
 
   function move(d) {
     if (s.focus === 'groups') {
-      s.groupIdx = clamp(s.groupIdx + d, groups.length); s.chCursor = 0; s.dayOffset = 0;
-    } else if (s.focus === 'channels') {
-      s.chCursor = clamp(s.chCursor + d, groups[s.groupIdx].items.length);
-      s.dayOffset = 0;
+      s.groupIdx = clamp(s.groupIdx + d, groups.length); s.chCursor = 0;
     } else {
-      s.progCursor = clamp(s.progCursor + d, dayPrograms().length);
+      s.chCursor = clamp(s.chCursor + d, groups[s.groupIdx].items.length);
     }
   }
 
-  function day(d) {
-    var ch = cursorChannel();
-    var maxBack = -(ch && ch.catchupDays ? ch.catchupDays : 7);
-    s.dayOffset = Math.max(maxBack, Math.min(1, s.dayOffset + d));
-    s.progCursor = 0;
-  }
-
   function clamp(v, n) { return Math.max(0, Math.min(n - 1, v)); }
-
-  function playProgram() {
-    var list = dayPrograms(), p = list[s.progCursor];
-    var idx = groups[s.groupIdx].items[s.chCursor];
-    if (!p) return;
-    var now = Date.now();
-    if (p.start > now) { UI.toast('Передача ещё не началась'); return; }
-    closeGuide();
-    if (p.stop > now && !Catchup.supported(all[idx])) { tune(idx); return; }
-    if (s.playing !== idx) { s.previous = s.playing; s.playing = idx; Util.store('lastUrl', all[idx].url); }
-    playArchive(p.start);
-  }
 
   // ---------- programme panel (▼ while watching) ----------
   // Over the video, without the channel menu: ▲▼ shows, ◀ ▶ days, OK watches (archive or live).
@@ -620,8 +571,7 @@
     if (!el || el === document.body || !el.getAttribute) return;
     var i = +el.getAttribute('data-i'), col = el.parentNode.id;
     if (col === 'groups') { s.focus = 'groups'; s.groupIdx = i; s.chCursor = 0; renderGuide(); return; }
-    if (col === 'channels') { s.focus = 'channels'; s.chCursor = i; guideKey(K.ENTER); return; }
-    if (col === 'd-list') { s.focus = 'programs'; s.progCursor = i; guideKey(K.ENTER); }
+    if (col === 'channels') { s.focus = 'channels'; s.chCursor = i; guideKey(K.ENTER); }
   }
 
   // ---------- live keys ----------
