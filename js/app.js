@@ -42,7 +42,11 @@
     registerKeys();
     Player.setHooks({
       onBuffering: function (on) { UI.spinner(on); },
-      onPlaying: function () { UI.spinner(false); },
+      // Once the picture is up, show the banner again with the stream's technical details.
+      onPlaying: function () {
+        UI.spinner(false);
+        setTimeout(function () { if (!s.guideOpen && !s.scrub && !s.panel && !s.search) showBanner(); }, 1200);
+      },
       onError: function (reason, n, delay) {
         // The first three retries (≈3.5 s) are silent: a channel switch or a short hiccup is not "no signal".
         if (n >= 4) UI.toast('Нет сигнала, переподключаюсь… (' + n + ')', delay + 500);
@@ -377,8 +381,7 @@
     var line2 = next ? 'Далее ' + Util.hhmm(new Date(next.start)) + '  ' + next.title : '';
     var progress = cur ? (t - cur.start) / (cur.stop - cur.start) * 100 : 0;
     var extra = s.archiveStart ? 'Архив · ' + Util.hhmm(new Date(t)) : '';
-    var vi = Player.videoInfo();
-    UI.banner(ch, line1, line2, progress, [extra, vi].filter(Boolean).join('  ·  '));
+    UI.banner(ch, line1, line2, progress, extra, Player.videoInfo());
   }
 
   function watchNetwork() {

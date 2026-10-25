@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/channel-discovery.jpg" width="900" alt="Discovery playing with the info banner: channel, current show, progress and what is next">
+  <img src="docs/screenshots/channel-natgeowild.jpg" width="900" alt="Nat Geo Wild: a Nile crocodile close up, in full HD">
 </p>
 
 ---
@@ -49,7 +49,7 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
 | 📺 **Every channel, in order** | The full live list of **389 channels** from the provider: 🇮🇱 Israel first, then National, News, Documentary, Movies, Kids, Sport and more. The list is fetched fresh on every start. Channels the provider removed are hidden automatically. |
 | ★ **Your own favourites** | Press ⏯ (or Yellow) on any channel to pin it to ★ Favourites. CH+/CH− inside Favourites zaps through favourites only. |
 | ⚡ **Instant on old hardware** | Virtualised lists keep a 1000‑channel playlist as fast as a 10‑channel one. The programme guide loads per channel, only when you look at it. |
-| 🔊 **Picture and sound under control** | Choose the audio track, the picture mode (auto, full screen or letter‑box) and see the live resolution and bitrate. |
+| 🔊 **Picture and sound under control** | Every channel switch shows the stream briefly: resolution, codec, bitrate and sound (for example `1920×1080 · H264 · 7,5 Мбит/с · звук стерео`). Choose the audio track and the picture mode (auto, full screen or letter‑box). |
 
 ## See it in action
 
@@ -66,6 +66,11 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
     <td><img src="docs/screenshots/channel-cartoons90.jpg" alt="Cartoons 90: cartoons of the 90s"></td>
   </tr>
   <tr><td align="center"><b>Channel 9</b> · Israel, news</td><td align="center"><b>Cartoons 90</b> · cartoons of the 90s</td></tr>
+  <tr>
+    <td><img src="docs/screenshots/channel-discovery.jpg" alt="Discovery: sailing boats on the sea"></td>
+    <td><img src="docs/screenshots/channel-cartoonsshort.jpg" alt="Cartoons Short: classic animation"></td>
+  </tr>
+  <tr><td align="center"><b>Discovery</b> · documentary</td><td align="center"><b>Cartoons Short</b> · classic animation</td></tr>
 </table>
 
 ### The player
@@ -77,7 +82,7 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
   </tr>
   <tr><td align="center"><b>▲ Archive slider</b>: scrub to any minute</td><td align="center"><b>▼ Programme</b>: past shows play from the archive</td></tr>
   <tr>
-    <td><img src="docs/screenshots/2-guide-movies.jpg" alt="Channel menu: groups, channels with logos and what is on, the programme"></td>
+    <td><img src="docs/screenshots/ui-menu.jpg" alt="Channel menu: search, groups, channels with logos and what is on now"></td>
     <td><img src="docs/screenshots/ui-search.jpg" alt="Search: typing муз lists the music channels"></td>
   </tr>
   <tr><td align="center"><b>OK · Channel menu</b>: groups, logos, what's on</td><td align="center"><b>🔍 Search</b>: results as you type</td></tr>

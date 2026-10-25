@@ -34,15 +34,16 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 
 /* guide */
 .guide { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: -webkit-flex; display: flex;
-  padding: 60px 60px 110px; background: rgba(6,9,15,.93); }
+  padding: 60px 60px 110px; background: rgba(6,9,15,.97); }
 .groups { width: 380px; margin-right: 24px; }
 .channels { -webkit-flex: 1; flex: 1; overflow: hidden; }
 .row, .grow, .prow { height: 72px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center;
   padding: 0 22px; border-radius: 14px; font-size: 30px; white-space: nowrap; overflow: hidden; }
 .row .n { width: 76px; color: #8d99ad; font-size: 26px; }
 .row .logo { width: 72px; height: 48px; object-fit: contain; margin-right: 18px; }
-.row .t { -webkit-flex: 0 0 560px; flex: 0 0 560px; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
-.row .s { -webkit-flex: 1; flex: 1; margin-left: 18px; color: #9aa6b8; font-size: 24px; overflow: hidden; text-overflow: ellipsis; }
+.row .t { -webkit-flex: 0 0 400px; flex: 0 0 400px; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.row .s { -webkit-flex: 1; flex: 1; margin-left: 24px; color: #9aa6b8; font-size: 24px; line-height: 28px; overflow: hidden;
+  white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }   /* what is on: up to two lines */
 .grow .n, .grow .logo, .prow .logo { display: none; }
 .grow .t { -webkit-flex: 1; flex: 1; overflow: hidden; text-overflow: ellipsis; }
 .grow .s { color: #8d99ad; font-size: 24px; margin-left: 12px; }
@@ -106,4 +107,11 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
   background: #101724; color: #fff; outline: none; margin-bottom: 24px; }
 .search-input:focus { border-color: #8cc2ff; }
 .search-hint { left: 360px; bottom: 50px; }
-.ver { position: absolute; right: 60px; bottom: 40px; font-size: 22px; color: #5d6a7e; }
+.ver { position: absolute; right: 60px; top: 18px; font-size: 22px; color: #5d6a7e; }
+.banner-tech { font-size: 22px; margin-top: 6px; color: #4da3ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.banner { height: auto; min-height: 190px; padding-top: 18px; padding-bottom: 18px; }
+/* Overlays always above the video layer (hardware video can be composited on top otherwise). */
+#av-player, #html-player { z-index: 0; }
+.guide, .search, .setup { z-index: 20; }
+.banner, .scrub, .prog, .numentry { z-index: 15; }
+.toast, .fatal, .spinner { z-index: 30; }

@@ -161,18 +161,32 @@ var Player = (function () {
   }
   function selectAudio(index) { try { av.setSelectTrack('AUDIO', index); } catch (e) {} }
 
+  // Technical line for the banner: resolution · codec · frame rate · bitrate · audio.
   function videoInfo() {
-    if (!av) return '';
+    if (!av) {
+      if (!video.videoWidth) return '';
+      var lvl = hls && hls.levels && hls.levels[hls.currentLevel];
+      return video.videoWidth + '×' + video.videoHeight + (lvl && lvl.bitrate ? ' · ' + mbps(lvl.bitrate) : '');
+    }
+    var parts = [];
     try {
       var info = av.getCurrentStreamInfo();
       for (var i = 0; i < info.length; i++) {
-        if (info[i].type !== 'VIDEO') continue;
-        var x = JSON.parse(info[i].extra_info);
-        return x.Width + '×' + x.Height + (x.Bit_rate ? ' · ' + Math.round(x.Bit_rate / 1000) + ' кбит/с' : '');
+        var x = {};
+        try { x = JSON.parse(info[i].extra_info); } catch (e) {}
+        if (info[i].type === 'VIDEO') {
+          parts.unshift(x.Width + '×' + x.Height + (x.fourCC ? ' · ' + String(x.fourCC).toUpperCase() : '') +
+            (x.fps ? ' · ' + Math.round(+x.fps) + ' к/с' : '') + (x.Bit_rate ? ' · ' + mbps(+x.Bit_rate) : ''));
+        } else if (info[i].type === 'AUDIO') {
+          var ac = +x.channels;
+          parts.push('звук ' + (ac === 2 ? 'стерео' : ac === 6 ? '5.1' : ac === 1 ? 'моно' : ac ? ac + ' кан.' : '') +
+            (x.fourCC ? ' ' + String(x.fourCC).toUpperCase() : ''));
+        }
       }
     } catch (e) {}
-    return '';
+    return parts.join(' · ');
   }
+  function mbps(bps) { return (bps / 1e6).toFixed(1).replace('.', ',') + ' Мбит/с'; }
 
   function cycleDisplay() {
     displayIdx = (displayIdx + 1) % displayModes.length;

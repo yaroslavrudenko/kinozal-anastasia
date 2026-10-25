@@ -100,13 +100,14 @@ var UI = (function () {
     });
   }
 
-  function banner(ch, line1, line2, progress, extra) {
+  function banner(ch, line1, line2, progress, extra, tech) {
     $('b-num').textContent = ch.num;
     $('b-logo').style.visibility = ch.logo ? 'visible' : 'hidden';
     if (ch.logo) $('b-logo').src = ch.logo;
     $('b-title').textContent = ch.name + (extra ? '   ·   ' + extra : '');
     $('b-now').textContent = line1 || '';
     $('b-next').textContent = line2 || '';
+    $('b-tech').textContent = tech || '';
     $('b-progress').style.width = Math.max(0, Math.min(100, progress || 0)) + '%';
     $('b-clock').textContent = Util.hhmm(new Date());
     Util.show($('banner'), true);
