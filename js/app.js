@@ -276,7 +276,8 @@
     if (!Catchup.supported(ch)) { UI.toast('Для этого канала архив недоступен'); return; }
     var minMs = Date.now() - (ch.catchupDays || 7) * 86400000;
     fromMs = Math.max(minMs, fromMs);
-    if (fromMs >= Date.now() - 15000) { tune(s.playing); UI.toast('Прямой эфир'); return; }
+    // Close to the live edge the archive would only arrive in short pieces: switch to live instead.
+    if (fromMs >= Date.now() - CONFIG.LIVE_SNAP_MS) { tune(s.playing); UI.toast('Прямой эфир'); return; }
     var p = EPG.at(ch.id, fromMs);
     s.archiveStart = fromMs; s.pausedAt = 0;
     Player.play(Catchup.url(ch, fromMs, p ? p.stop - fromMs : 0));
@@ -336,7 +337,7 @@
     var from = p ? p.start : sc.t - 1800000, to = p ? p.stop : sc.t + 1800000;
     var pct = function (x) { return Math.max(0, Math.min(100, (x - from) / (to - from) * 100)) + '%'; };
     Util.$('s-title').textContent = ch.name + (p ? '  ·  ' + p.title : '');
-    Util.$('s-time').textContent = sc.t >= now - 15000 ? 'прямой эфир' : hhmmss(new Date(sc.t));
+    Util.$('s-time').textContent = sc.t >= now - CONFIG.LIVE_SNAP_MS ? 'прямой эфир' : hhmmss(new Date(sc.t));
     Util.$('s-start').textContent = Util.hhmm(new Date(from));
     Util.$('s-end').textContent = Util.hhmm(new Date(to));
     var behind = Math.round((now - sc.t) / 60000);
