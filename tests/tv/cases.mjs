@@ -32,6 +32,13 @@ export function helpers(d, opt) {
     const cur = (await st()).group;
     await keys(g > cur ? K.DOWN : K.UP, Math.abs(g - cur), 80);
     await d.key(K.RIGHT); await d.sleep(300);
+    // When the group did not change, the cursor stays where it was (the playing channel): page up to the top.
+    let prevTop = null;
+    for (let i = 0; i < 80; i++) {
+      const top = ((await d.ev("__TT.rows('channels')")).find((r) => r.focus) || {}).num;
+      if (top === prevTop) break;
+      prevTop = top; await d.key(K.PG_UP); await d.sleep(120);
+    }
   }
   return { st, waitFor, keys, closeAll, firstFrame, api, openGroup, guideLoaded };
 }
@@ -324,4 +331,27 @@ export async function M6(d, opt) {
   const expected = from + (Date.now() - t);
   return [row('M6.continuation (D2)', s0.ch.num + ' ' + s0.ch.name + ' · «' + p.title + '»', `position ${new Date(s.pos).toTimeString().slice(0, 8)} vs expected ${new Date(expected).toTimeString().slice(0, 8)} · mode ${s.mode} · new failures ${s.fails - s0.fails}`,
     Math.abs(s.pos - expected) <= 10000 && s.fails === s0.fails)];
+}
+
+// ---------- M11 (menu left open): the visible rows stay equal to the programme on air for N minutes ----------
+// Checked every minute against the API fetched at that moment; a row may lag an ended programme ≤ 10 s.
+export async function menuOpenFreshness(d, minutes) {
+  const h = helpers(d), out = [];
+  await h.closeAll(); await d.key(K.ENTER); await d.sleep(800);
+  let bad = 0, checks = 0; const examples = [];
+  for (let m = 1; m <= minutes; m++) {
+    await d.sleep(60000);
+    if ((await h.st()).overlay !== 'menu') { out.push(row('M11.menu-open', '—', 'the menu closed by itself at +' + m + ' min', false)); return out; }
+    await h.api();
+    const rows = (await d.ev("__TT.rows('channels')")).filter((r) => r.full);
+    for (const r of rows) {
+      const c = await d.ev(`__TT.chByNum(${JSON.stringify(r.num)})`), a = c && await d.ev(`__TT.apiNow(${JSON.stringify(c.id)})`);
+      if (!a) continue;
+      checks++;
+      if (!hasText(r.sub, a.title) && Date.now() - a.start > 10000) { bad++; if (examples.length < 5) examples.push('+' + m + ' min ' + r.num + ' ' + norm(r.title) + ': «' + norm(r.sub) + '» ≠ «' + a.title + '»'); }
+    }
+  }
+  await h.closeAll();
+  out.push(row('M11.menu-open', minutes + ' min', `${checks} row checks · ${bad} not on air` + (examples.length ? ' · ' + examples.join(' | ') : ''), bad === 0 && checks > 0));
+  return out;
 }

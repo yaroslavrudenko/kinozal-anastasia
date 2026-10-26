@@ -1,6 +1,6 @@
 // The TV runner: executes the automatic use cases of docs/TESTING.md against the installed app (or, with
 // --dry, against this repository's app in headless Chrome) and writes a markdown results table per run.
-//   node tests/tv/run.mjs --dry [--cases U0,M2,...] [--quick]
+//   node tests/tv/run.mjs --dry [--root <tree>] [--cases U0,M2,...] [--quick] [--m11-min N]
 //   node tests/tv/run.mjs [--port N] [--cases ...] [--soak-min 10] [--m11-min 30] [--c2 "A,B,C,D"]
 // TV setup: tests/tv/launch.sh (writes tests/tv/.port). OTHER_APP=<app id> lets M9 really switch apps
 // through sdb (TV=<ip:port> and SDB=<path> are read from the environment); without it M9 simulates a hide.
@@ -8,8 +8,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { tvDriver, dryDriver, ROOT } from './driver.mjs';
-import * as C from './cases.mjs';
+// --root <tree>: the app tree the dry driver serves (sets KINOZAL_ROOT before the driver loads).
+{ const i = process.argv.indexOf('--root'); if (i >= 0) process.env.KINOZAL_ROOT = path.resolve(process.argv[i + 1]); }
+const { tvDriver, dryDriver, ROOT } = await import('./driver.mjs');
+const C = await import('./cases.mjs');
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -47,7 +49,8 @@ try {
     U0: () => C.U0(d, opt, quick), M2: () => C.M2(d, opt), M4: () => C.M4(d, opt), M5: () => C.M5(d, opt), M7: () => C.M7(d, opt),
     M8: () => C.M8(d, opt), M9: () => C.M9(d, opt), M6: () => C.M6(d, opt), C2: () => C.C2archive(d, opt), M10: () => C.M10(d, opt),
     M11: async () => { if (!opt.m11Min) return [{ id: 'M11', channel: '—', measured: 'skipped (--m11-min 0)', result: 'NOT-RUN' }];
-      await d.sleep(opt.m11Min * 60000); return (await C.U0(d, opt, true)).map((r) => Object.assign(r, { id: 'M11·' + r.id })); }
+      const open = await C.menuOpenFreshness(d, opt.m11Min);         // the menu left open the whole time
+      return open.concat((await C.U0(d, Object.assign({}, opt, { landings: false }), true)).map((r) => Object.assign(r, { id: 'M11·' + r.id }))); }
   };
   for (const id of cases) {
     if (!run[id]) { rows.push({ id, channel: '—', measured: 'unknown case', result: 'FAIL' }); continue; }
@@ -64,7 +67,7 @@ const count = (r) => rows.filter((x) => x.result === r).length;
 const esc = (s) => String(s).replace(/\|/g, '\\|');
 // Local time (the TV's and the owner's clock), not UTC.
 const stamp = started.toLocaleString('sv-SE', { hour12: false }).slice(0, 16);
-const md = [`### ${stamp} (local) — ${dry ? 'DRY (desktop, headless Chrome, no picture)' : 'TV'} · cases ${cases.join(',')}`,
+const md = [`### ${stamp} (local) — ${dry ? 'DRY (desktop, headless Chrome, no picture) · tree ' + ROOT : 'TV'} · cases ${cases.join(',')}`,
   '', `PASS ${count('PASS')} · FAIL ${count('FAIL')} · DRY-SKIP ${count('DRY-SKIP')} · NOT-RUN ${count('NOT-RUN')}`, '',
   '| Case | Channel / group | Measured | Result |', '|---|---|---|---|',
   ...rows.map((r) => `| ${esc(r.id)} | ${esc(r.channel)} | ${esc(r.measured)} | ${r.result} |`), ''].join('\n');
