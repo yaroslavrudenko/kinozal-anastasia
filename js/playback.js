@@ -5,21 +5,13 @@ var Playback = (function () {
   var mode = 'idle';           // 'idle' | 'live' | 'archive' | 'paused'
   var ch = null;               // the playing channel's record; stays valid when a refresh drops the channel
   var anchorWallMs = 0, anchorMediaMs = null, frozenMs = 0, pausedAt = 0;   // anchorMediaMs null: until the first frame
-  var pipelineLost = false, hiddenMs = null, selection = 0, audioIdx = 0, hooks = {}, healthTimer = null;
+  var pipelineLost = false, hiddenMs = null, selection = 0, audioIdx = 0, hooks = {};
 
   // hooks: { onOpened(ch) } — a new stream started (banner, landing bookkeeping).
   function setHooks(h) { hooks = h; }
 
-  // The background channel check runs only behind steady playback: every change of what plays, a pause,
-  // the background and any rebuffer stop it; onStable (STABLE_MS of advancing playback) re-arms it.
-  function quiet() { clearTimeout(healthTimer); healthTimer = null; Health.setReady(false); }
-  function onStable() {
-    clearTimeout(healthTimer);
-    healthTimer = setTimeout(function () { if (mode === 'live' || mode === 'archive') Health.setReady(true); }, CONFIG.HEALTH_START_AFTER_STABLE_MS);
-  }
 
   function live(c) {
-    quiet();
     selection++;
     ch = c; mode = 'live'; pipelineLost = false; audioIdx = 0;
     Player.open({ url: c.url, archive: false });
@@ -33,7 +25,6 @@ var Playback = (function () {
     fromMs = Math.max(Catchup.earliest(c, now), fromMs);
     // Close to the live edge the archive would only arrive in short pieces: switch to live instead.
     if (fromMs >= now - CONFIG.LIVE_SNAP_MS) { ch = c; goLive(); return; }
-    quiet();
     selection++;
     ch = c; mode = 'archive'; pipelineLost = false; audioIdx = 0;
     anchorWallMs = fromMs; anchorMediaMs = null;
@@ -62,7 +53,6 @@ var Playback = (function () {
     if (!ch) return;
     if (mode === 'paused') { resume(); return; }
     if (mode === 'live' && !Catchup.supported(ch)) { UI.toast('Пауза недоступна: у канала нет архива'); return; }
-    quiet();
     selection++;
     frozenMs = position(); pausedAt = Date.now(); mode = 'paused';
     Player.pause();
@@ -91,8 +81,7 @@ var Playback = (function () {
     if (hidden) {
       if (mode === 'idle' || hiddenMs !== null) return;
       hiddenMs = position();
-      quiet();
-      selection++;                       // nothing pending (a zap, a probe) acts while in the background
+        selection++;                       // nothing pending (a zap, a probe) acts while in the background
       if (mode === 'paused') pipelineLost = true;
       Player.suspend();
       return;
@@ -139,7 +128,7 @@ var Playback = (function () {
 
   return {
     setHooks: setHooks, live: live, archive: archive, position: position, retryTarget: retryTarget, togglePause: togglePause,
-    goLive: goLive, onVisibility: onVisibility, onFirstFrame: onFirstFrame, quiet: quiet, onStable: onStable, watchNetwork: watchNetwork, onEnded: onEnded, adopt: adopt, cycleAudio: cycleAudio,
+    goLive: goLive, onVisibility: onVisibility, onFirstFrame: onFirstFrame, watchNetwork: watchNetwork, onEnded: onEnded, adopt: adopt, cycleAudio: cycleAudio,
     current: function () { return ch; }, mode: function () { return mode; }, selection: function () { return selection; }
   };
 }());

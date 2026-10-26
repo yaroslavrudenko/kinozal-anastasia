@@ -7,7 +7,7 @@ var Channels = (function () {
   var showAdult = Util.load('showAdult') === true;     // off by default; switched in «О программе»
 
   // The one rule: hidden channels are never listed, zapped to, numbered, searched or restored.
-  function isEligible(ch) { return !!ch && !ch.dead && (showAdult || ch.group !== ADULT); }
+  function isEligible(ch) { return !!ch && (showAdult || ch.group !== ADULT); }
   function adultAllowed(ch) { return showAdult || ch.group !== ADULT; }
 
   function replace(newList) {
@@ -89,11 +89,7 @@ var Channels = (function () {
     return n;
   }
 
-  function stats() {
-    var dead = 0;
-    for (var i = 0; i < list.length; i++) if (list[i].dead) dead++;
-    return { alive: list.length - dead, dead: dead };
-  }
+  function stats() { return { total: list.length }; }
 
   return {
     replace: replace, rebuild: rebuild, at: at, count: count, indexOfKey: indexOfKey, get: get, byNum: byNum,

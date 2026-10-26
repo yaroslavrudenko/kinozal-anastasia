@@ -114,7 +114,7 @@ var Player = (function () {
       hooks.onFirstFrame();
     } else if (!stable && !bufferingSince && now - streakFrom >= CONFIG.STABLE_MS) {
       stable = true; retries = 0;
-      hooks.onStable();
+      if (hooks.onStable) hooks.onStable();
     }
   }
   function ended(my) { if (archive) hooks.onEnded(); else fail(my, 'stream ended'); }

@@ -20,7 +20,7 @@
       ['Телевизор', (model || 'Samsung') + (tizen ? ' · Tizen ' + tizen : '') + (chromium ? ' · веб-движок Chromium ' + chromium : '')],
       ['Плеер', window.webapis ? 'аппаратный Samsung AVPlay' : 'браузер (hls.js)'],
       ['Источник каналов', Sources.mode() === 'ott' ? 'OTT Club (' + CONFIG.OTT_SERVER + ')' : 'M3U-плейлист'],
-      ['Каналы', st.alive + ' доступно' + (st.dead ? ', ' + st.dead + ' отключены провайдером' : '') + ' · групп: ' + Channels.providerGroupCount()],
+      ['Каналы', st.total + ' · групп: ' + Channels.providerGroupCount()],
       ['Архив', CONFIG.ARCHIVE_DAYS + ' дней · перемотка ползунком (▲)'],
       ['Сейчас', (c ? c.name + ' · ' : '') + (Player.streamInfo(true) || 'нет данных о потоке')],
       ['Буфер', 'старт ' + CONFIG.BUFFER_PLAY_S + ' с · после подгрузки ' + CONFIG.BUFFER_RESUME_S + ' с · переподключение через ' +

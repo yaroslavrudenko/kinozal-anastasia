@@ -7,7 +7,7 @@ var CONFIG = {
   OTT_KEY: '__OTT_KEY__',
   PLAYLIST_URL: '__PLAYLIST_URL__',
   EPG_URL: '',                 // empty = use url-tvg from the playlist header
-  VERSION: '1.8.2',            // must equal config.xml's version
+  VERSION: '1.8.3',            // must equal config.xml's version
   BUILD: '__BUILD__',          // filled by build.sh: commit and date
 
   // channel list
@@ -16,7 +16,6 @@ var CONFIG = {
   LIST_RETRY_MIN_MS: 10000,
   LIST_RETRY_MAX_MS: 300000,
   SNAPSHOT_MAX_CHARS: 2500000, // offline copy of the list; bigger lists are not kept
-  KEY_CHECK_TIMEOUT_MS: 15000,
   // "now" lines (DEC-2026-10-26-now-refresh-2)
   NOW_SETTLE_MS: 1000,         // a visible row's "now" is re-read this long after its programme ends
   NOW_MIN_INTERVAL_MS: 10000,  // from one "now" answer (or failure) to the next request
@@ -47,12 +46,6 @@ var CONFIG = {
   XMLTV_RETRY_MAX_MS: 30 * 60000,
   SLICE_MS: 8,                 // longest piece of parsing per task, so a key press never waits
 
-  // channel health (dead streams)
-  PROBE_TIMEOUT_MS: 8000,
-  PROBE_MAX_BYTES: 65536,      // a master playlist is a few KB; anything bigger is not read to the end
-  HEALTH_PERIOD_MS: 6 * 3600 * 1000,
-  HEALTH_CONCURRENCY: 2,
-  HEALTH_START_AFTER_STABLE_MS: 60000,
 
   // player
   BUFFER_PLAY_S: 5,

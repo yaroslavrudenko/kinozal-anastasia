@@ -74,12 +74,12 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 |---|---|---|---|---|---|
 | A1 | Fresh install (no key), open the app | Setup screen: field focused, OK submits, the on-screen keyboard's «Done» submits | — | MANUAL | P0 |
 | A2 | Setup: enter a valid key, OK | «Проверяю ключ…», then the list loads and a channel plays within 10 s | C3 | MANUAL | P0 |
-| A3 | Setup: enter a wrong key | «Ключ не подошёл…», the setup stays open, nothing plays | — | MANUAL + HARNESS setup-and-key | P1 |
+| A3 | Setup: enter a key (first run, or menu → BLUE at any time) | The key is saved and used at once, with no check of the app's own; a key the provider refuses gets the provider's error in the stream | — | MANUAL + HARNESS setup-and-key | P1 |
 | A4 | Setup: paste an M3U link | The M3U list loads (groups from the playlist), a channel plays | — | MANUAL | P2 |
 | A5 | Open with a saved last channel | That channel starts before the list arrives; then the list appears | C3 | MANUAL (owner's cycle, L11) | P0 |
 | A6 | Open with the list server down and an offline copy saved | «Сервер не ответил — показан последний список…», all channels listed, a channel plays; when the network returns, «now» lines fill in | C1 | MANUAL (unplug the router) + HARNESS list-load, refresh-now | P1 |
 | A7 | Open with the server down and no copy | Error text with «Повтор через N с»; the list appears by itself when the server returns | — | MANUAL + HARNESS list-load | P1 |
-| A8 | The key expires (provider «no key» clip) | A clear bad-key message, not "every channel removed" | — | MANUAL | P1 |
+| A8 | The key expires (provider «no key» clip) | The provider's clip plays; menu → BLUE → a new key is used at once (DEC-2026-10-26-show-as-is) | — | MANUAL + HARNESS setup-and-key | P1 |
 | A9 | BLUE in the menu: change the key; BACK cancels | Old key kept on BACK; a new valid key reloads the app | — | MANUAL | P2 |
 | A10 | The list refreshes (6 h, or «now» refresh) while watching | Playing channel continues; order and groups unchanged; no flicker | C1 | AUTO-TV M11 + HARNESS refresh-now | P1 |
 
@@ -144,7 +144,7 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 | Z1 | Single ◀▶ / CH± | First frame ≤ 3 s; banner with the new channel | C2, C3 | AUTO-TV M7 | P0 |
 | Z2 | Burst of 10 quick presses | Lands on the 10th channel; ≤ 3 app requests | C2, C3 | AUTO-TV M7 (burst) | P1 |
 | Z3 | Across a group boundary / past the end | Wraps inside the browsed group | C3 | MANUAL | P1 |
-| Z4 | A channel found removed while zapping | Message, moves on in the same direction | — | MANUAL + HARNESS health | P2 |
+| Z4 | A channel whose stream answers the provider's «removed» clip | Tuned like any other; no skip, no app message — the provider's stream shows what it shows (DEC-2026-10-26-show-as-is) | — | HARNESS health-check (show-as-is) | P2 |
 | Z5 | PREV CH | Returns to the previous channel (even after a list refresh) | — | MANUAL + HARNESS refresh | P1 |
 | Z6 | Digits 1-2-3 | Number shown; after 1.8 s channel 123; an unknown number «Нет канала N» | — | MANUAL | P1 |
 | Z7 | Zap then quickly ▼ / ▲ / OK / Home / ⏯ | The latest choice wins (no reopen under an overlay, no stream in the background) | — | HARNESS races | P1 |
@@ -153,7 +153,7 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 | ID | Steps | Expected result | Set | Verified | P |
 |---|---|---|---|---|---|
 | N1 | Every landing (zap, menu, number, boot, return) | Number, logo, name; programme with its time range; progress; clock; «Далее HH:MM …» | C1 sample | AUTO-TV U0.banner-fields, U0.next | P0 |
-| N2 | Until the first frame | State line: «Подключение…» / «Загрузка видео… N%» / «Нет сигнала — повтор через N с (попытка K)» / «Канал отключён провайдером»; never hides early | C2 | MANUAL + HARNESS connect-banner | P0 |
+| N2 | Until the first frame | State line: «Подключение…» / «Загрузка видео… N%» / «Нет сигнала — повтор через N с (попытка K)»; never hides early | C2 | MANUAL + HARNESS connect-banner | P0 |
 | N3 | After the first frame | Tech line (resolution · codec · fps · Мбит/с · sound) for TECH_LINE_MS, then hides | C2, C4 | AUTO-TV U0.tech-line | P0 |
 | N4 | Banner "now" vs the menu row and the API | The same programme | C1 sample | **AUTO-TV U0.banner==row** | P0 |
 | N5 | INFO | The banner with current data | — | MANUAL | P1 |
@@ -350,7 +350,7 @@ Run it once from a second-half channel and once from the heaviest movie channel.
 - A single CH± or ◀▶ press: first frame time on 10 different channels.
 - A burst of 10 quick presses lands on the right channel, with at most 3 app requests.
 - Crossing group boundaries works.
-- Zapping into a channel the provider removed shows a message and moves on.
+- Zapping into a channel the provider removed tunes it like any other (DEC-2026-10-26-show-as-is): the app hides and skips nothing.
 
 ### 3. Archive (movie channels)
 - From the ▼ panel, open a film from yesterday and from 3 or more days ago. It plays, with the right title in the banner.
@@ -1866,3 +1866,20 @@ Source logs, read for this summary: `tv-full-f7ccc45.txt`, `tv-m11-f7ccc45.txt` 
 - The 60 s floor of the «now» refresh: rows can lag a show change by up to 60 s. Owner decision pending.
 - The tech-line check: fixed in the runner (read right after the first frame, polled up to 15 s, delay recorded); to be re-run on the TV.
 - Repeated sdb disconnects during TV runs (reported by the coordinator; not in the logs above).
+
+## DEC-2026-10-26-show-as-is — every channel the provider lists is shown (v1.8.3)
+
+Owner, 2026-10-26: «бери всё, что даёт провайдер, не блокируй, показывай как есть». Found: from about 14:00 to 22:00 on 2026-10-26 the TV showed 11 of the provider's 18 Israeli channels (TV runs 14:02: «Израиль» 11/18 seen; 15:09 and 16:57: 339 channels, «Израиль» 11/11; provider at 22:42: 389 channels, 18 Israeli, all 18 streams 1080p/576p «ok»). Cause: the background health sweep (`js/health.js`) marked a channel «removed» when its stream answered the provider's placeholder and hid it from every group for 6 h, remembered across launches.
+
+Change: no channel is hidden, skipped or marked by the app, and the app checks no key. The background sweep and the landing check are gone (`js/health.js` deleted): no stream request besides the channel tuned. Owner: «Ключ проверяет сам провайдер. Если ключ недействующий, просто место потока вернется на страницу с ошибкой» and «Нужно дать возможность в любой момент ввести ключ или поменять… он должен будет использоваться для работы»: the key screen (first run, or menu → BLUE at any time) saves the key and uses it at once, without the app's own check (`OttClub.checkKey` / `classify` removed).
+
+| Test (`tests/health-check.test.js`) | On 3991b71 | On the fix |
+|---|---|---|
+| show-as-is: channels whose streams answer the "removed" clip all stay in the menu after 10 min | FAIL | PASS |
+| show-as-is: zapping onto a "removed" channel tunes it, with no skip and no «отключён» message | FAIL | PASS |
+| show-as-is: steady playback makes no background stream requests (old sweep: one per channel) | FAIL | PASS |
+| show-as-is: a stream answering the provider's "no key" clip is tuned; the app adds no key message of its own | FAIL | PASS |
+| key change (BLUE in the menu): the new key is saved and used even when the provider answers its «no key» clip (`tests/setup-and-key.test.js`) | FAIL | PASS |
+
+Suite: 229 tests, 229 pass (with `--browser`). By name vs 3991b71 (231/231): 0 newly failing. Removed, because they encoded the old hide/skip policy: the three `P-D:` sweep tests, `connect banner: a channel found removed says «Канал отключён провайдером» on the banner`, `correctness (pin): the provider's "removed" clip still hides the channel`, `correctness: a generic HLS master with only BANDWIDTH is not hidden as "removed by the provider"` (nothing is hidden any more; covered by the first show-as-is test), `landing probe: a late "removed" answer does not override the archive show picked meanwhile` (the landing check no longer acts on «removed»).
+

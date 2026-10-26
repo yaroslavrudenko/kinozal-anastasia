@@ -1,13 +1,11 @@
 // Zapping with ◀ ▶ / CH± and picking a channel. A press after a pause opens the channel at once; inside
 // a burst of presses each name is shown at once but only the channel stopped on is opened. Only the
-// landing channel gets a guide request (once the zapping has settled and its picture is up) and a probe;
-// everything started for the channels passed is aborted, and the background check stops while zapping.
+// landing channel gets a guide request (once the zapping has settled and its picture is up); everything
+// started for the channels passed is aborted.
 var Zap = (function () {
   var GROUP_STORE = 'zapGroup';
   var groupKey = savedGroup(); // the group the viewer last picked a channel in (by identity): zapping stays inside it
   var pending = null, timer = null, lastStepAt = 0, prevKey = null, saveTimer = null, settleTimer = null;
-
-  function removedToast(c, ms) { UI.toast('Канал «' + c.name + '» отключён провайдером', ms); }
 
   function step(dir) {
     var from = pending || Playback.current();
@@ -15,19 +13,17 @@ var Zap = (function () {
     if (!key) { UI.toast('Нет других доступных каналов'); return; }
     var c = Channels.get(key), now = Date.now(), burst = now - lastStepAt < CONFIG.ZAP_IDLE_MS;
     lastStepAt = now;
-    Playback.quiet();
     NowLines.cancel();
-    Health.cancelProbe();
     EPG.cancelExcept(c.id);
     cancel();
-    if (!burst) { land(c, dir); return; }
+    if (!burst) { land(c); return; }
     pending = c;
     Banner.preview(c);
     var sel = Playback.selection();
     timer = setTimeout(function () {
       timer = null;
       pending = null;
-      if (sel === Playback.selection()) land(c, dir);
+      if (sel === Playback.selection()) land(c);
     }, CONFIG.ZAP_SETTLE_MS);
   }
 
@@ -38,9 +34,8 @@ var Zap = (function () {
   // groupIdx: the menu group it was picked in; omitted elsewhere.
   function pick(c, groupIdx) {
     cancel();
-    if (c.dead) { removedToast(c); return; }
     remember(c, groupIdx);
-    land(c, 0);
+    land(c);
   }
 
   // The group a channel is picked in is remembered across restarts. Picked outside the menu, the
@@ -59,8 +54,7 @@ var Zap = (function () {
   }
   function savedGroup() { var k = Util.load(GROUP_STORE); return typeof k === 'string' ? k : ''; }
 
-  // dir: +1 / -1 when zapping (a channel found removed is stepped over in that direction), 0 otherwise.
-  function land(c, dir) {
+  function land(c) {
     var cur = Playback.current();
     // The channel already on screen (live) is not reopened: OK on it just shows the banner.
     if (cur && cur.key === c.key && Playback.mode() === 'live') { Banner.show(true); return; }
@@ -70,15 +64,6 @@ var Zap = (function () {
     EPG.cancelExcept(c.id);
     NowLines.landed();
     Playback.live(c);
-    var sel = Playback.selection();
-    // A late answer acts only while this very choice still stands (no archive, pause or zap since).
-    Health.probe(c, Sources.mode(), function () {
-      if (sel !== Playback.selection()) return;
-      Channels.rebuild();
-      removedToast(c, 3500);
-      Banner.setState('Канал отключён провайдером');
-      if (dir) step(dir);
-    });
   }
 
   function previous() {

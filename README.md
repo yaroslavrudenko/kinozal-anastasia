@@ -163,7 +163,7 @@ The full before → after table and what is still to verify on the TV: **[docs/P
 
 ## 📡 Use it with any IPTV provider
 
-**OTT Club** (built-in): enter your subscriber key when the app starts for the first time, or put `OTT_KEY=` into `build.local.env`. The channels, groups, logos, the 7-day guide and the archive then come from OTT Club directly.
+**OTT Club** (built-in): enter your subscriber key when the app starts for the first time, or put `OTT_KEY=` into `build.local.env`. To enter or change the key at any time, open the channel menu (OK) and press **Blue**: the new key is used at once. The player does not judge the key itself; if OTT Club refuses it, its error shows in the stream. The channels, groups, logos, the 7-day guide and the archive then come from OTT Club directly.
 
 **Any other provider**: on the first-run screen, paste your **M3U playlist URL** instead of a key, or build it in with `PLAYLIST_URL=` in `build.local.env`. Typing a long URL with a TV remote is slow, so building it in is easier. From a standard extended M3U the player takes:
 

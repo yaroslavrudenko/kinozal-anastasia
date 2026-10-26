@@ -26,27 +26,6 @@ var OttClub = (function () {
     return m ? m[1] : '';
   }
 
-  // The provider's answer for a stream, in one place:
-  //   'nokey'     the key is wrong or expired: segments point at the provider's /system/<lang>/key.ts clip
-  //               (measured 2026-10-26 with a fake key) — the key, not the channel, is the problem
-  //   'removed'   the provider's "/system/" placeholder: the channel is gone
-  //   'audioOnly' a master listing only audio-like variants: OTT Club's stub for a removed channel
-  //   'ok'        anything else
-  function classify(text) {
-    if (text.indexOf('NOTKEY') >= 0 || /\/system\/(?:[^\/\s?]+\/)*key\.ts/.test(text)) return 'nokey';
-    if (text.indexOf('/system/') >= 0) return 'removed';
-    if (text.indexOf('#EXT-X-STREAM-INF') >= 0 && text.indexOf('RESOLUTION=') < 0 &&
-        text.indexOf('avc1') < 0 && text.indexOf('hvc1') < 0) return 'audioOnly';
-    return 'ok';
-  }
-
-  // A wrong key still gets a playlist, but it points at the provider's "no key" clip.
-  function checkKey(k, done) {
-    return Net.get({ url: base() + '/stream/' + k + '/136.m3u8', timeoutMs: CONFIG.KEY_CHECK_TIMEOUT_MS }, function (err, text) {
-      done(!err && text.indexOf('#EXTM3U') >= 0 && classify(text) === 'ok');
-    });
-  }
-
   function sourceUrl() { return base() + '/api/channel_now'; }
   // The same list, past the provider's server cache (which serves the plain URL minutes old): a URL of its
   // own (to the second) makes the provider build it now. Slower (about 3 s against 0.3 s), so only for the
@@ -141,7 +120,7 @@ var OttClub = (function () {
   }
 
   return {
-    enabled: enabled, extractKey: extractKey, checkKey: checkKey, saveKey: saveKey, classify: classify,
+    enabled: enabled, extractKey: extractKey, saveKey: saveKey,
     sourceUrl: sourceUrl, freshUrl: freshUrl, streamUrl: streamUrl, parse: parse, seedsOf: seedsOf, guide: guide
   };
 }());

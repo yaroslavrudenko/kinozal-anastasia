@@ -81,15 +81,6 @@ test('connect banner: a failing stream shows «Нет сигнала — пов�
   assert.equal(texts.filter((s) => !s.shown).length, 0, 'banner hidden while the stream keeps failing');
 });
 
-test('connect banner: a channel found removed says «Канал отключён провайдером» on the banner', () => {
-  const app = f.ottApp({ channels: 10, boot: false, avPrepareMs: SLOW_PREPARE_MS });
-  app.net.route((u) => f.isStream(u), () => ({ body: f.MASTER.ottDead, delay: 300 }));
-  app.boot();
-  app.advance(3000);
-  assert.ok(app.visible('banner'), 'banner hidden');
-  assert.match(banner(app), /Канал отключён провайдером|отключён провайдером/);
-});
-
 test('connect banner: returning from another app keeps the state banner up until the first frame', () => {
   const app = f.untilPlaying(f.ottApp({ channels: 10 }));
   app.advance(20000);

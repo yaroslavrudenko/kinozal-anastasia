@@ -1,6 +1,6 @@
 // Boot, wiring of the modules' hooks, and the remote-control keys while watching.
 (function () {
-  var lastBack = 0, guideNoticeShown = false, BAD_KEY = 'Неверный или просроченный ключ — откройте настройки (синяя кнопка)';
+  var lastBack = 0, guideNoticeShown = false;
 
   // Optional platform setup: a throw is recorded and boot carries on (a TV refusing one of these calls
   // must never leave the screen black).
@@ -12,7 +12,7 @@
     Overlay.onBeforeOpen(function () { NumEntry.cancel(); Zap.cancel(); });
     Player.init({
       // The state line on the banner while there is no picture (not over a zap burst's preview).
-      onBuffering: function (on) { UI.spinner(on); if (!on) Banner.resumed(); else { Playback.quiet(); if (!Zap.choosing()) Banner.connecting(); } },
+      onBuffering: function (on) { UI.spinner(on); if (!on) Banner.resumed(); else { if (!Zap.choosing()) Banner.connecting(); } },
       onLoading: function (pct) { if (!Zap.choosing()) Banner.loading(pct); },
       // The picture is up: the banner with this stream's technical line, at once.
       onFirstFrame: function () {
@@ -20,7 +20,6 @@
         Zap.onFirstFrame(); Util.idle(function () { Overlay.prepare('menu'); });   // menu laid out ahead, hidden
         if (!Zap.choosing()) Banner.onFirstFrame();
       },
-      onStable: Playback.onStable,
       // The first three retries (≈3.5 s) are silent (a channel switch or a short hiccup is not "no signal"); none over a menu.
       onError: function (n, delay) { if (n >= 4 && Overlay.isNone()) UI.toast('Нет сигнала, переподключаюсь… (' + n + ')', delay + 500); if (!Zap.choosing()) Banner.retrying(n, delay); },
       onEnded: Playback.onEnded,
@@ -31,11 +30,6 @@
     NowLines.setHooks({ onUpdate: Overlay.refreshQuiet });
     Sources.setHooks({ onApplied: onListApplied, onFatal: UI.fatal, onSpinner: UI.spinner, onGuide: Overlay.refresh,
       onNotice: function (text) { UI.toast(text, 5000); } });
-    Health.setHooks({ onSwept: function (checked, removed) {
-      Channels.rebuild();
-      Overlay.refresh();
-      if (removed) UI.toast('Проверено каналов: ' + checked + ', отключены провайдером: ' + removed, 3500);
-    }, onBadKey: function () { Banner.setState(BAD_KEY); UI.toast(BAD_KEY, 10000); } });
     EPG.setHooks({
       onGuide: function () { Banner.onGuide(null); Overlay.refresh(); },
       onXmltvFailed: function () { if (!guideNoticeShown) UI.toast('Программа передач недоступна, повторю позже', 5000); guideNoticeShown = true; }

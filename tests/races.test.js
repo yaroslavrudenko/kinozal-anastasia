@@ -70,19 +70,3 @@ for (const [name, key] of [['the programme panel (▼)', KEYS.DOWN], ['the archi
   });
 }
 
-// ---------- landing probe ----------
-test('landing probe: a late "removed" answer does not override the archive show picked meanwhile', () => {
-  const app = f.untilPlaying(f.ottApp({ channels: 10, guideLatency: 10 }));
-  app.advance(3000);
-  let slowDead = true;
-  app.net.route((u) => f.isStream(u), () => (slowDead ? { body: f.MASTER.ottDead, delay: 3000 } : { body: f.MASTER.ottAlive, delay: 50 }));
-  app.press(KEYS.RIGHT, 600);                           // lands at once; its probe answers "removed" after 3 s
-  slowDead = false;
-  app.press(KEYS.DOWN, 50);
-  app.press(KEYS.UP, 50);                               // the previous show
-  app.press(KEYS.ENTER, 0);
-  const archiveUrl = f.lastOpenUrl(app);
-  assert.ok(f.archiveStartOf(archiveUrl) !== null, 'the archive did not open: ' + archiveUrl);
-  app.advance(5000);
-  assert.equal(f.lastOpenUrl(app), archiveUrl, 'the late probe switched away from the archive');
-});

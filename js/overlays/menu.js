@@ -48,7 +48,7 @@
       { name: 'channels', view: { total: g.items.length, cursor: cursor, active: focus === 'channels', row: function (i) {
         var c = Channels.at(g.items[i]), on = EPG.label(EPG.shown(c.id, now));   // the banner's lookup and text too
         return { num: c.num, logo: c.logo, title: (Favs.has(c.key) ? '★ ' : '') + c.name + (g.items[i] === playing ? '  ▶' : ''),
-          sub: c.dead ? 'отключён провайдером' : on, playing: g.items[i] === playing };
+          sub: on, playing: g.items[i] === playing };
       } } }]);
     UI.listEnd('channels-more', ListView.rest('channels'), ListView.end('channels'));
     NowLines.update();

@@ -85,7 +85,6 @@ var Sources = (function () {
   function apply(result, m) {
     var firstLoad = !hasList;
     hasList = true;
-    Health.markDead(result.channels);
     Favs.migrate(result.channels);
     Channels.replace(result.channels);
     hooks.onFatal('');
@@ -97,7 +96,6 @@ var Sources = (function () {
     }
     else if (!CONFIG.EPG_URL) xmltvPending = { url: result.epgUrl, channels: result.channels };
     if (!fromSaved) persistPending = { m: m, epgUrl: result.epgUrl || '', channels: result.channels };
-    Health.schedule(result.channels, m);
     if (firstFrameSeen) afterFirstFrame();
     hooks.onApplied(firstLoad);
   }
