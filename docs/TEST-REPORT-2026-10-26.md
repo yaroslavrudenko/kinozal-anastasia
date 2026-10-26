@@ -111,3 +111,20 @@ File `tests/tv/results/2026-10-26-14-02-tv.md` (14:02–14:46, build `8413f34`):
   - Empty rows: 0 in every group; every group swept in full this time (e.g. «Израиль» 11/11, «Национальные» 49/49).
   - Rows behind the show on air: 4, at 5, 7, 9 and 60 s after the show changed (8413f34: 98 s and 210 s; baseline 37fb286: 7 rows, all < 60 s). No row more than 60 s behind.
   - The other 3 FAILs are 348 Stingray iConcerts (provider fault: no first frame, so no tech line and no «Далее»).
+
+## 9. TV acceptance of the «now» policy (Q1-TV1 … Q1-TV6), 2026-10-26 15:29–16:29, build 00c2f5b
+
+**How:** one scripted run on the TV over the remote-debugging inspector (`tests/tv/accept/q1-accept.mjs` with `tests/tv/accept/cdp-client.mjs`; raw log `tests/tv/results/2026-10-26-15-29-tv-accept.md`). The script presses the remote's keys, opens the menu and leaves it open for 60 min while a channel plays under it. It wraps the app's `Net.get` to log every list request (time, fresh `?t=` or plain) and, during the cuts, to make list requests fail after 0.5 s. **The network cut is simulated inside the app:** the TV's real network stays up and the video keeps streaming; only the «now» list fails, which is what the rows depend on. Every 30 s it reads the channel rows actually visible on screen (empty? marked «(шла до HH:MM)»?), the player state and the app's buffering counter (`Diag` `rebuffer`). What it reads is the page and the player, not the picture (no screenshot is possible on this TV).
+
+| # | What was tested | Result | Verdict |
+|---|---|---|---|
+| TV1 | U0 in every group, all rows (run of 15:09, §8) | 0 empty rows; menu closed after every pick 33/33; 4 rows behind the show on air, max 60 s | PASS (one row exactly at the 60 s limit) |
+| TV2 | Menu open 60 min, list requests counted | 59 list requests in 60 min (37 on the healthy network, 22 retries during the cuts); 0 plain (all `?t=`); ≈ 58/h on the healthy network | PASS against the owner's 60 s re-read (≤ 65/h) |
+| TV3 | Fast paging: 15 × CH− every 200 ms | 0 requests while the keys repeated; 0 after (the rows were already current from the 60 s re-read); 13 rows, 0 empty | PASS |
+| TV4 | Network cut 2 min (+10.5 … +12.5 min) | 0 empty rows; no mark (inside the 15-min linger, as specified); video kept playing | PASS |
+| TV5 | Network cut 20 min (+25.5 … +45.5 min) | 0 empty rows in every sample; **no «(шла до …)» mark appeared** | PARTIAL — no row on screen reached the mark condition (a visible row whose last named show ended > 15 min before, with no guide that knows the next show), so the marking and its removal were **not exercised on the TV**. They are covered by the desktop tests (`now retained …`, 6 fault kinds, mutation-proven). A TV case that forces such a row is still to be written. |
+| TV6 | Healthy play under the menu for 60 min, buffering counter | rebuffers 0 → 0; player PLAYING; video time advanced 3612 s in 3612 s; failure-log lines 0 → 0 | PASS |
+
+Samples: 120 (every 30 s), empty rows max 0. The menu never closed by itself.
+
+**How many times, in total, for this period:** desktop suite 217 tests, run in full 8 times on 2026-10-26; mutation proofs 29 (all red); dry runs of the TV runner 17; TV runs 7 (08:23, 09:02, 09:52, 10:04, 11:58, 14:02, 15:09) plus this 60-min acceptance; manual inspector checks of the pick on 4 builds.

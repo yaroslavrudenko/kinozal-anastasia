@@ -313,11 +313,13 @@ Existing pins kept unchanged: D5 banner == row (`now never empty …`, `now line
 | ID | Steps | Expected result |
 |---|---|---|
 | Q1-TV1 | U0 in every group, covering **all** rows (an unseen row is not green) | 0 empty rows; 0 rows more than 10 s late after a change; banner == row |
-| Q1-TV2 | M11: menu open 60 min, list requests counted from the network log | ≤ 30 list requests/h; every one with `?t=` |
+| Q1-TV2 | M11: menu open 60 min, list requests counted from the network log | ≤ 65 list requests/h (owner 2026-10-26: the open menu re-reads every 60 s; was ≤ 30/h); every one with `?t=` |
 | Q1-TV3 | Fast page flipping (CH± held) through «Все каналы», requests counted | no request while the keys repeat; one ≈ 1 s after they stop; rows on air within ≈ 5 s |
 | Q1-TV4 | Network cut 2 min during M11 | 0 empty rows; no mark (inside the 15-min linger); recovery at the next attempt |
 | Q1-TV5 | Network cut 20 min during M11 | 0 empty rows; rows past the linger marked «(шла до HH:MM)», banner the same; marks gone after the first good answer |
 | Q1-TV6 | Healthy soak on one stream, before/after, a real buffering counter (`Diag` `rebuffer`) | 0 rebuffers |
+
+Run: `zsh tests/tv/launch.sh`, then `node tests/tv/accept/cdp-client.mjs <port> tests/tv/accept/q1-accept.mjs 60` (cuts simulated in the app). Results 2026-10-26: TEST-REPORT-2026-10-26.md §9.
 
 ## Channels to use (never only the default one)
 - Two channels from the middle and two from the second half of «Все каналы» (positions ~150, ~250, last).
