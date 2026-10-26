@@ -53,7 +53,9 @@ export function helpers(d, opt) {
 // ---------- U0 / M1 / M11: every group, every row's "now" == on air per the API; banner on landing == row ----------
 export async function U0(d, opt, onlyAll) {
   const h = helpers(d, opt), out = [];
-  const groups = (await d.ev('__TT.groups()')).filter((g) => !g.special && (!onlyAll || g.name === 'Все каналы'));
+  const all = await d.ev('__TT.groups()');
+  if (!Array.isArray(all)) throw new Error('could not read the groups: ' + JSON.stringify(all).slice(0, 200));
+  const groups = all.filter((g) => !g.special && (!onlyAll || g.name === 'Все каналы'));
   for (const g of groups) {
     // Sweep start (local clock) and how long the menu had been closed before it.
     const sweep = await d.ev("(function(){var n=Date.now();return {at:new Date(n).toTimeString().slice(0,8),closed:Math.round((n-__TT.menuClosedAt)/1000),open:!/(^|\\s)hidden(\\s|$)/.test(document.getElementById('guide').className)}})()");
@@ -417,17 +419,21 @@ export async function cold348(d) {
   const t = Date.now();
   for (const k of [51, 52, 56]) { await d.key(k); await d.sleep(150); }    // digits 3 4 8
   const states = [], spin = [];
-  let lastState = '', lastSpin = null, ff = -1;
+  // A first frame counts only on 348, after the player left PLAYING for the zap: the previous channel's frames must not pass.
+  let lastState = '', lastSpin = null, ff = -1, left = false, last = null;
   while (Date.now() - t < 30000) {
     const s = await d.ev("(function(){var a=window.webapis&&webapis.avplay,st='';try{st=a?a.getState():'html'}catch(e){st='ERR'}var sp=document.getElementById('spinner');return {st:st,media:Player.mediaTimeMs(),spin:!!sp&&!/(^|\\s)hidden(\\s|$)/.test(sp.className),ch:(Playback.current()||{}).num}})()");
     const at = Date.now() - t;
     if (s.st !== lastState) { states.push(at + 'ms ' + s.st); lastState = s.st; }
     if (s.spin !== lastSpin) { spin.push(at + 'ms ' + (s.spin ? 'buffering' : 'clear')); lastSpin = s.spin; }
-    if (ff < 0 && s.st === 'PLAYING' && s.media > 0) ff = at;
+    if (s.st !== 'PLAYING') left = true;
+    if (ff < 0 && left && s.ch === 348 && s.st === 'PLAYING' && s.media > 0) ff = at;
+    last = s;
     await d.sleep(200);
   }
   const after = await d.ev('(function(){var s=Diag.snapshot();return {rebuffer:s.counters.rebuffer||0,fails:s.recent.length,last:s.recent.slice(-3)}})()');
   const where = c ? c.num + ' ' + c.name : '348 (not in the list)';
   const measured = `first frame ${ff < 0 ? 'none in 30 s' : ff + ' ms after the first digit'} · states ${states.join(' → ')} · spinner ${spin.join(', ')} · rebuffers +${after.rebuffer - before.rebuffer} · new failures +${after.fails - before.fails}` + (after.fails > before.fails ? ' · ' + after.last.join(' | ') : '');
-  return [row('M2.cold-348', where, measured, d.mode === 'dry' ? null : ff >= 0)];
+  const held = !!last && last.ch === 348 && last.st === 'PLAYING' && !last.spin;
+  return [row('M2.cold-348', where, measured + ` · at 30 s: ${last ? last.st + (last.spin ? ' + spinner' : '') + ' on ' + last.ch : 'no reading'}`, d.mode === 'dry' ? null : ff >= 0 && held)];
 }

@@ -25,13 +25,28 @@ const KEY_JS = (code) => `(function(){var e=document.createEvent('Event');e.init
 
 export async function tvDriver(port) {
   const p = port || fs.readFileSync(path.join(HERE, '.port'), 'utf8').trim();
-  const list = await (await fetch(`http://127.0.0.1:${p}/json`)).json();
+  // Right after launch.sh the forwarded inspector may still reset connections: retry for up to 30 s.
+  let list = null, lastErr = null;
+  for (let i = 0; i < 30 && !list; i++) {
+    try { list = await (await fetch(`http://127.0.0.1:${p}/json`)).json(); } catch (e) { lastErr = e; await sleep(1000); }
+  }
+  if (!list) throw new Error('inspector not reachable on port ' + p + ': ' + (lastErr && (lastErr.cause && lastErr.cause.code || lastErr.message)));
   const ws = new WebSocket(list[0].webSocketDebuggerUrl);
   let id = 0;
   const pending = new Map();
   await new Promise((res, rej) => { ws.onopen = res; ws.onerror = (e) => rej(new Error('inspector: ' + (e.message || 'ws error'))); });
   ws.onmessage = (m) => { const msg = JSON.parse(m.data); if (msg.id && pending.has(msg.id)) { pending.get(msg.id)(msg); pending.delete(msg.id); } };
-  const call = (method, params = {}) => new Promise((res) => { const i = ++id; pending.set(i, res); ws.send(JSON.stringify({ id: i, method, params })); });
+  // A dropped inspector (sdb disconnect, app restart) must end every pending call, never leave it hanging.
+  let closed = null;
+  ws.onclose = () => { closed = 'the inspector connection closed'; for (const [, res] of pending) res({ error: { message: closed } }); pending.clear(); };
+  const CALL_TIMEOUT_MS = 30000;
+  const call = (method, params = {}) => new Promise((res) => {
+    if (closed) { res({ error: { message: closed } }); return; }
+    const i = ++id;
+    const timer = setTimeout(() => { if (pending.has(i)) { pending.delete(i); res({ error: { message: method + ' timed out after ' + CALL_TIMEOUT_MS / 1000 + ' s' } }); } }, CALL_TIMEOUT_MS);
+    pending.set(i, (msg) => { clearTimeout(timer); res(msg); });
+    ws.send(JSON.stringify({ id: i, method, params }));
+  });
   async function ev(expr) {
     const r = await call('Runtime.evaluate', { expression: expr, returnByValue: true });
     if (r.error) return { __error: r.error.message };

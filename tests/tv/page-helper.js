@@ -2,8 +2,8 @@
 // Read-only helpers over the DOM and the app's public modules, a request counter, and fetches of the
 // provider's public "now" list and per-channel guide (the runner's own requests are not counted).
 (function () {
-  if (window.__TT) return;
-  var T = window.__TT = { req: [], api: null, guide: {}, ver: 1 };
+  if (window.__TT && window.__TT.ver === 2) return;
+  var T = window.__TT = { req: [], api: null, guide: {}, ver: 2 };
   var open = XMLHttpRequest.prototype.open;
   XMLHttpRequest.prototype.open = function (m, url) {
     if (!this.__tt) T.req.push({ t: Date.now(), url: String(url).replace(/\/stream\/[^\/]+\//, '/stream/<key>/') });
@@ -21,15 +21,22 @@
   function base() { return OttClub.sourceUrl().replace(/\/api\/channel_now$/, ''); }
   // When the channel menu last closed (its element got the class "hidden"): ties a lagging row to how long
   // the app had no visible menu to refresh.
+  // Installed lazily (watchMenu, called by the runner once the app is up): at injection time the TV's
+  // page may not have its DOM yet, and an exception here used to abort the rest of this helper.
   T.menuClosedAt = Date.now();
-  (function () {
-    var g = document.getElementById('guide'), was = !/(^|\s)hidden(\s|$)/.test(g.className);
+  T.watchMenu = function () {
+    if (T.menuWatched) return 1;
+    var g = document.getElementById('guide');
+    if (!g) return 0;
+    var was = !/(^|\s)hidden(\s|$)/.test(g.className);
     new MutationObserver(function () {
       var open = !/(^|\s)hidden(\s|$)/.test(g.className);
       if (was && !open) T.menuClosedAt = Date.now();
       was = open;
     }).observe(g, { attributes: true, attributeFilter: ['class'] });
-  }());
+    T.menuWatched = true;
+    return 1;
+  };
   // The reference for "on air": the provider's FRESH list. The plain /api/channel_now is served from a
   // cache (max-age 60, often minutes old: up to a third of the channels name a show that has ended);
   // `?t=<seconds>` bypasses it. Each reference records when it was asked and answered, and how many of

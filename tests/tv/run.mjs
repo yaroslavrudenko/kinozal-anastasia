@@ -40,9 +40,14 @@ const started = new Date();
 const rows = [];
 const log = (...a) => console.log(new Date().toTimeString().slice(0, 8), ...a);
 try {
-  await d.ev(fs.readFileSync(path.join(HERE, 'page-helper.js'), 'utf8'));
-  const ready = await C.helpers(d).waitFor('(function(){return Channels.count()>0&&!!Playback.current()&&!!window.__TT})()', 30000, 300);
+  // The app first (its DOM, its list and a playing channel), then the helper, then a check that every
+  // helper function exists: a helper that half-loaded must stop the run, not fail each case obscurely.
+  const ready = await C.helpers(d).waitFor("(function(){return document.readyState==='complete'&&!!window.Channels&&Channels.count()>0&&!!Playback.current()})()", 60000, 300);
   if (!ready) throw new Error('the app never had a channel list and a playing channel');
+  const injected = await d.ev(fs.readFileSync(path.join(HERE, 'page-helper.js'), 'utf8'));
+  if (injected && injected.__error) throw new Error('page helper failed to load: ' + injected.__error);
+  const helperOk = await d.ev("(function(){var t=window.__TT;return !!t&&typeof t.groups==='function'&&typeof t.rows==='function'&&typeof t.st==='function'&&t.watchMenu()===1})()");
+  if (helperOk !== true) throw new Error('page helper incomplete in the app: ' + JSON.stringify(helperOk));
   const info = await d.ev('(function(){return {version:CONFIG.VERSION,build:CONFIG.BUILD,channels:Channels.count()}})()');
   log('app', JSON.stringify(info), 'mode', d.mode);
   const run = {
