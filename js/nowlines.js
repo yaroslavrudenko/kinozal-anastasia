@@ -1,15 +1,20 @@
 // The "now" line of the OTT Club channels shown in the menu or search stays accurate: when a visible row's
 // programme ends and nothing after it is known, the channel list is re-read for the "now" lines only (one
 // request, parsed when the TV is idle; no list rebuild, no reorder, no guide downloads), a few seconds after
-// that end. Never during a zap burst, in the background, or right after a channel starts; aborted by a zap.
+// that end. Never during a zap burst, in the background, or right after a channel starts (except the one re-read
+// of a list that came from the provider's cache, at once after it); aborted by a zap.
 //   hooks: { onUpdate() }    watch(fn): fn() -> ids of the rows on screen (null: nothing watched)
 var NowLines = (function () {
   var req = null, at = 0, timer = null, visible = null, landedAt = 0, hooks = {};
+  var asap = false;            // the channel list came from the provider's cache: re-read it now (DEC 2026-10-26 option b)
 
   function setHooks(h) { hooks = h; }
   function loaded() { at = Date.now(); }                 // the full list just brought fresh "now" lines
-  function cancel() { if (req) { req.abort(); req = null; } }
-  function landed() { cancel(); landedAt = Date.now(); }
+  function cancel() { if (req) { req.abort(); req = null; } asap = false; }
+  // A channel starting frees the bandwidth for its stream, except from the one re-read of a cached list.
+  function landed() { if (!asap) cancel(); landedAt = Date.now(); }
+  // Not counted toward the floor: the fresh answer is asked for right away (one request, parsed at idle).
+  function cachedList() { at = 0; asap = true; clearTimeout(timer); timer = setTimeout(run, 0); }
 
   function watch(fn) { visible = fn; clearTimeout(timer); if (fn) arm(); }
 
@@ -35,12 +40,12 @@ var NowLines = (function () {
   function run() {
     if (Sources.mode() !== 'ott') return;
     if (document.hidden) return;                          // re-armed when the app is visible again (update)
-    if (req || Sources.loading() || Zap.choosing() || Date.now() < landedAt + CONFIG.NOW_AFTER_LANDING_MS) {
+    if (req || Sources.loading() || Zap.choosing() || (!asap && Date.now() < landedAt + CONFIG.NOW_AFTER_LANDING_MS)) {
       timer = setTimeout(run, CONFIG.NOW_BUSY_RETRY_MS);
       return;
     }
     req = Net.get({ url: EPG.servedCached() ? OttClub.freshUrl() : OttClub.sourceUrl(), timeoutMs: CONFIG.LIST_TIMEOUT_MS }, function (err, text) {
-      req = null;
+      req = null; asap = false;
       at = Date.now();
       if (err) { arm(); return; }
       Util.idle(function () {
@@ -54,5 +59,5 @@ var NowLines = (function () {
   // Called after each render of the watched list: the rows on screen may have changed.
   function update() { if (visible) arm(); }
 
-  return { setHooks: setHooks, loaded: loaded, cancel: cancel, landed: landed, watch: watch, update: update };
+  return { setHooks: setHooks, loaded: loaded, cachedList: cachedList, cancel: cancel, landed: landed, watch: watch, update: update };
 }());

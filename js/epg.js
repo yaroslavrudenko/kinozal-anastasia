@@ -19,6 +19,7 @@ var EPG = (function () {
   function setHooks(h) { hooks = h; }
   function setLoader(fn) { loader = fn; }
   // A newer answer is never replaced by an older one (a cached list can be older than the last refresh).
+  // Returns true when this answer came from the provider's cache (named shows ended NOW_STALE_MS before it).
   // nextEnd: the first end among the programmes on air in the answer (when any "now" line goes out of date).
   var nextEnd = Infinity;
   function setSeeds(map) {
@@ -31,6 +32,7 @@ var EPG = (function () {
       if (n.stop > now && n.stop < nextEnd) nextEnd = n.stop;
     }
     seeds = map; seedsAt = now; cached = cached || stale;
+    return stale;
   }
 
   // A full guide first; otherwise the short list kept from an evicted guide when it still covers now

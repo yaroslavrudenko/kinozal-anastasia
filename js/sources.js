@@ -89,7 +89,8 @@ var Sources = (function () {
     Favs.migrate(result.channels);
     Channels.replace(result.channels);
     hooks.onFatal('');
-    if (m === 'ott') { EPG.setSeeds(result.seeds || Util.dict()); if (!fromSaved) NowLines.loaded(); }
+    // A list from the provider's cache does not count as fresh "now" lines: they are re-read at once.
+    if (m === 'ott') { var cachedAnswer = EPG.setSeeds(result.seeds || Util.dict()); if (!fromSaved) { if (cachedAnswer) NowLines.cachedList(); else NowLines.loaded(); } }
     else if (!CONFIG.EPG_URL) xmltvPending = { url: result.epgUrl, channels: result.channels };
     if (!fromSaved) persistPending = { m: m, epgUrl: result.epgUrl || '', channels: result.channels };
     Health.schedule(result.channels, m);

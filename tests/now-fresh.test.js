@@ -87,6 +87,29 @@ test('now fresh (D6): after 40 min on one page, every page scrolled into view sh
   assert.deepEqual(bad, []);
 });
 
+// Owner decision 2026-10-26 (option b): a launch list that came from the provider's cache does not count
+// toward the 60 s floor; the fresh answer is asked for at once, so a menu opened 4 s after launch is current.
+test('now fresh (D6b): a cached launch list is re-read fresh at once, and the menu opened 4 s after it shows what is on air', () => {
+  const app = f.ottApp({ channels: CHANNELS, boot: false });
+  const base = JSON.parse(app.fixture.list.body), ids = Object.keys(base);
+  const body = (t) => { const d = JSON.parse(JSON.stringify(base)); ids.forEach((id, i) => { const p = show(i, t); Object.assign(d[id], { name: p.title, time: p.start / 1000, time_to: p.stop / 1000 }); }); return JSON.stringify(d); };
+  app.net.route((u) => f.isList(u), () => ({ body: body(app.clock.now - CACHE_AGE), delay: 300 }));
+  app.net.route((u) => f.isList(u.split('?')[0]) && u.indexOf('?') > 0, () => ({ body: body(app.clock.now), delay: 3000 }));
+  app.net.route((u) => f.isGuide(u), (req) => {
+    const i = ids.indexOf(f.guideIdOf(req.url)), epg = [];
+    for (let t = app.clock.now - 24 * HOUR; t < app.clock.now + 24 * HOUR; t += HOUR / 2) { const p = show(i, t); epg.push({ name: p.title, descr: '', time: p.start / 1000, time_to: p.stop / 1000 }); }
+    return { body: JSON.stringify({ epg_data: epg }), delay: 50 };
+  });
+  app.boot();
+  app.advanceUntil(() => app.net.requests((r) => f.isList(r.url)).some((r) => r.endedAt), 5000);
+  const listAt = app.clock.now;
+  app.advance(4000);
+  const fresh = app.net.requests((r) => /channel_now\?/.test(r.url));
+  assert.ok(fresh.length && fresh[0].sentAt - listAt < 1000, 'fresh re-read sent ' + (fresh.length ? (fresh[0].sentAt - listAt) + ' ms' : 'never') + ' after the cached list');
+  app.press(KEYS.ENTER, 300);
+  assert.deepEqual(notOnAir(app), []);
+});
+
 test('now fresh (D6, pin): an older answer never replaces a newer "now" line', () => {
   const app = f.ottApp({ channels: 5 });
   f.untilPlaying(app);
