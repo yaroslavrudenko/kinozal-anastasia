@@ -168,5 +168,8 @@ var ListView = (function () {
   }
 
 
-  return { column: column, columns: columns, scrollWithin: scrollWithin, page: page, reset: reset };
+  // { first, count } of the rows completely visible in a column after its last render (or undefined).
+  function shownRows(name) { return shown[name]; }
+
+  return { column: column, columns: columns, scrollWithin: scrollWithin, page: page, reset: reset, shown: shownRows };
 }());

@@ -2,7 +2,7 @@
 // current one, cancels a pending number entry and hides the banner. Keys and desktop clicks go to the
 // open overlay. Each overlay registers { open(arg), close(), onKey(k, e), onClick(el) }.
 var Overlay = (function () {
-  var overlays = {}, mode = 'none', beforeOpen = null;
+  var overlays = {}, mode = 'none', beforeOpen = null, lastKeyAt = 0, quietTimer = null;
 
   function register(name, impl) { overlays[name] = impl; }
   // fn runs before any overlay opens (number entry is cancelled there).
@@ -25,17 +25,27 @@ var Overlay = (function () {
   // true when an overlay took the key.
   function onKey(k, e) {
     if (mode === 'none') return false;
+    lastKeyAt = Date.now();
     overlays[mode].onKey(k, e);
     return true;
   }
   // New data (list, guide, health): the open overlay redraws itself if it shows such data.
   function refresh() { if (mode !== 'none' && overlays[mode].render) overlays[mode].render(); }
+  // The same, but never in the middle of key presses: while keys come in, each key's own render already
+  // shows the new data; the redraw runs once OVERLAY_QUIET_MS have passed without a key.
+  function refreshQuiet() {
+    clearTimeout(quietTimer);
+    var wait = lastKeyAt + CONFIG.OVERLAY_QUIET_MS - Date.now();
+    if (wait > 0) quietTimer = setTimeout(refreshQuiet, wait); else refresh();
+  }
+  // Builds an overlay's screen ahead of time (at idle), if it can.
+  function prepare(name) { if (overlays[name].prepare) overlays[name].prepare(); }
   function onClick(target) {
     if (mode !== 'none' && overlays[mode].onClick) overlays[mode].onClick(target);
   }
 
   return {
-    register: register, onBeforeOpen: onBeforeOpen, open: open, close: close, onKey: onKey, onClick: onClick, refresh: refresh,
+    register: register, onBeforeOpen: onBeforeOpen, open: open, close: close, onKey: onKey, onClick: onClick, refresh: refresh, refreshQuiet: refreshQuiet, prepare: prepare,
     mode: function () { return mode; }, isNone: function () { return mode === 'none'; }
   };
 }());

@@ -18,15 +18,22 @@
   function list() { return EPG.day(c.id, day); }
 
   function render() {
-    var l = list(), now = Date.now(), archive = Catchup.supported(c);
-    if (cursor < 0 || cursor >= l.length) cursor = day === 0 ? Math.min(EPG.indexAt(l, now), Math.max(0, l.length - 1)) : 0;
+    // On air: the programme at now, or the one the channel list names when the guide ends it earlier.
+    var l = list(), now = Date.now(), archive = Catchup.supported(c), cur = day === 0 ? EPG.onAir(c.id, now) : null;
+    var isCur = function (p) { return p.start <= now && p.stop > now || !!cur && p.start === cur.start && p.title === cur.title; };
+    if (cursor < 0 || cursor >= l.length) cursor = day === 0 ? Math.min(onAirIndex(l, now, isCur), Math.max(0, l.length - 1)) : 0;
     UI.panelTitle(c.name + ' — ' + dayName(day));
     var rows = l.length ? l : [{ start: now, stop: now, title: unavailable ? 'Программа передач недоступна, повторю позже' : 'Программа загружается…' }];
     ListView.column('programmes', { total: rows.length, cursor: cursor, active: true, row: function (i) {
-      var p = rows[i], past = p.stop <= now, onAir = p.start <= now && p.stop > now;
+      var p = rows[i], onAir = isCur(p), past = p.stop <= now && !onAir;
       return { num: Util.hhmm(new Date(p.start)), logo: '', title: p.title, past: past,
         sub: onAir ? 'в эфире' : (past && archive ? '● архив' : '') };
     } });
+  }
+
+  function onAirIndex(l, now, isCur) {
+    for (var i = 0; i < l.length; i++) if (isCur(l[i])) return i;
+    return EPG.indexAt(l, now);
   }
 
   function dayName(off) {

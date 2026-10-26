@@ -3,7 +3,7 @@
 var UI = (function () {
   var STICKY = 0;              // toast(text, UI.STICKY): stays until the next toast
   var el = {}, toastTimer = null, bannerTimer = null, scrubBarPx = 0;
-  var IDS = ['banner', 'b-num', 'b-logo', 'b-title', 'b-now', 'b-next', 'b-tech', 'b-progress', 'b-clock', 'toast',
+  var IDS = ['banner', 'b-num', 'b-logo', 'b-title', 'b-state', 'b-now', 'b-next', 'b-tech', 'b-progress', 'b-clock', 'toast',
     'spinner', 'numentry', 'fatal', 'guide', 'prog', 'p-title', 'scrub', 's-title', 's-time', 's-start', 's-end',
     's-delta', 's-played', 's-now', 's-knob', 'about', 'about-table', 'search', 'setup'];
 
@@ -20,7 +20,7 @@ var UI = (function () {
   function show(id, on) { Util.show(el[id], on); }
 
   // m: { num, logo, title, now, next, progress, tech }
-  // holdMs: how long it stays (default BANNER_MS).
+  // holdMs: how long it stays (default BANNER_MS; STICKY: until the next banner or hideBanner).
   function banner(m, holdMs) {
     el['b-num'].textContent = m.num;
     el['b-logo'].style.visibility = m.logo ? 'visible' : 'hidden';
@@ -29,11 +29,12 @@ var UI = (function () {
     el['b-now'].textContent = m.now || '';
     el['b-next'].textContent = m.next || '';
     el['b-tech'].textContent = m.tech || '';
+    el['b-state'].textContent = m.state || '';
     el['b-progress'].style.width = Math.max(0, Math.min(100, m.progress || 0)) + '%';
     el['b-clock'].textContent = Util.hhmm(new Date());
     show('banner', true);
     clearTimeout(bannerTimer);
-    bannerTimer = setTimeout(hideBanner, holdMs || CONFIG.BANNER_MS);
+    if (holdMs !== STICKY) bannerTimer = setTimeout(hideBanner, holdMs || CONFIG.BANNER_MS);
   }
   function bannerTech(text) { el['b-tech'].textContent = text; }
   function hideBanner() { clearTimeout(bannerTimer); show('banner', false); }

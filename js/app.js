@@ -1,6 +1,6 @@
 // Boot, wiring of the modules' hooks, and the remote-control keys while watching.
 (function () {
-  var lastBack = 0, guideNoticeShown = false;
+  var lastBack = 0, guideNoticeShown = false, BAD_KEY = 'Неверный или просроченный ключ — откройте настройки (синяя кнопка)';
 
   // Optional platform setup: a throw is recorded and boot carries on (a TV refusing one of these calls
   // must never leave the screen black).
@@ -11,28 +11,31 @@
     UI.init();
     Overlay.onBeforeOpen(function () { NumEntry.cancel(); Zap.cancel(); });
     Player.init({
-      onBuffering: function (on) { UI.spinner(on); if (on) Playback.quiet(); },
+      // The state line on the banner while there is no picture (not over a zap burst's preview).
+      onBuffering: function (on) { UI.spinner(on); if (!on) Banner.resumed(); else { Playback.quiet(); if (!Zap.choosing()) Banner.connecting(); } },
+      onLoading: function (pct) { if (!Zap.choosing()) Banner.loading(pct); },
       // The picture is up: the banner with this stream's technical line, at once.
       onFirstFrame: function () {
-        UI.spinner(false);
-        Zap.onFirstFrame();
+        UI.spinner(false); Playback.onFirstFrame();
+        Zap.onFirstFrame(); Util.idle(function () { Overlay.prepare('menu'); });   // menu laid out ahead, hidden
         if (!Zap.choosing()) Banner.onFirstFrame();
       },
       onStable: Playback.onStable,
-      // The first three retries (≈3.5 s) are silent: a channel switch or a short hiccup is not "no signal".
-      onError: function (n, delay) { if (n >= 4) UI.toast('Нет сигнала, переподключаюсь… (' + n + ')', delay + 500); },
+      // The first three retries (≈3.5 s) are silent (a channel switch or a short hiccup is not "no signal"); none over a menu.
+      onError: function (n, delay) { if (n >= 4 && Overlay.isNone()) UI.toast('Нет сигнала, переподключаюсь… (' + n + ')', delay + 500); if (!Zap.choosing()) Banner.retrying(n, delay); },
       onEnded: Playback.onEnded,
       onMutedStart: function () { UI.toast('Звук включится после любого нажатия или клика', 6000); },
       retryTarget: Playback.retryTarget
     });
     Playback.setHooks({ onOpened: function () { Banner.show(false); }, onBanner: function () { Banner.show(true); } });
+    NowLines.setHooks({ onUpdate: Overlay.refreshQuiet });
     Sources.setHooks({ onApplied: onListApplied, onFatal: UI.fatal, onSpinner: UI.spinner, onGuide: Overlay.refresh,
       onNotice: function (text) { UI.toast(text, 5000); } });
     Health.setHooks({ onSwept: function (checked, removed) {
       Channels.rebuild();
       Overlay.refresh();
       if (removed) UI.toast('Проверено каналов: ' + checked + ', отключены провайдером: ' + removed, 3500);
-    } });
+    }, onBadKey: function () { Banner.setState(BAD_KEY); UI.toast(BAD_KEY, 10000); } });
     EPG.setHooks({
       onGuide: function () { Banner.onGuide(null); Overlay.refresh(); },
       onXmltvFailed: function () { if (!guideNoticeShown) UI.toast('Программа передач недоступна, повторю позже', 5000); guideNoticeShown = true; }
@@ -42,14 +45,14 @@
       onKey(e);
     });
     document.addEventListener('click', onClick);
-    document.addEventListener('visibilitychange', function () { if (document.hidden) Zap.cancel(); Playback.onVisibility(document.hidden); });
+    document.addEventListener('visibilitychange', onVisibility);
     startSource();
     optional('fit', function () { UI.fitDesktop(); window.addEventListener('resize', UI.fitDesktop); });
     optional('hint', function () {
       UI.toast(window.webapis ? '◀ ▶ — каналы · ▲ — архив · ▼ — программа · OK — меню и поиск' : '← → каналы · ↑ архив · ↓ программа · Enter — меню и поиск', 7000);
     });
     optional('network', Playback.watchNetwork);
-    Util.idle(function () { optional('keys', Keys.register); });   // not needed for the first key press
+    optional('keys', Keys.register);   // right away: CH± and digits pressed in the first seconds must work
   }
 
   // The list loads and the saved channel starts (in its own task right after this one), or setup opens.
@@ -75,6 +78,8 @@
     for (var i = 0; legacy && i < items.length; i++) if (Channels.at(items[i]).url === legacy) pickIdx = items[i];
     if (pickIdx !== undefined) Zap.pick(Channels.at(pickIdx));
   }
+
+  function onVisibility() { if (document.hidden) { Zap.cancel(); NowLines.cancel(); } else NowLines.update(); Playback.onVisibility(document.hidden); }
 
   // ---------- keys ----------
   function onKey(e) {

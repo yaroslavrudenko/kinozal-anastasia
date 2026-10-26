@@ -9,29 +9,46 @@
   function clamp(v, n) { return Math.max(0, Math.min(n - 1, v)); }
   function playingIdx() { var c = Playback.current(); return c ? Channels.indexOfKey(c.key) : -1; }
 
-  function open() {
+  // Group and cursor on the playing channel (its group if it is there, else «Все каналы»), fresh windows.
+  function place() {
     ListView.reset('groups');
     ListView.reset('channels');
     focus = 'channels';
     var playing = playingIdx(), at = group() ? group().items.indexOf(playing) : -1;
     if (at < 0) { Zap.setGroup(Channels.allIdx()); at = Math.max(0, group().items.indexOf(playing)); }
     cursor = at;
+  }
+  function open() {
+    place();
     UI.show('guide', true);
     render();
+    NowLines.watch(visibleIds);
   }
-  function close() { UI.show('guide', false); }
+  // Once, at idle after the first picture, while hidden: the rows are built and laid out as the menu would
+  // open (the first layout of fonts and the ★ ▶ glyphs is paid here), so the first opening is a paint.
+  var prepared = false;
+  function prepare() { if (!prepared && Channels.count() && Overlay.isNone()) { prepared = true; place(); render(); } }
+  function close() { NowLines.watch(null); UI.show('guide', false); }
+
+  // The channel ids of the rows on screen (whose "now" lines must stay current).
+  function visibleIds() {
+    var v = ListView.shown('channels'), g = group(), out = [];
+    for (var i = v ? v.first : 0; v && g && i < v.first + v.count && i < g.items.length; i++) out.push(Channels.at(g.items[i]).id);
+    return out;
+  }
 
   function render() {
     var g = group(), gi = Zap.group();
     if (!g) return;
     cursor = clamp(cursor, g.items.length);            // a refresh may have shortened the group
-    var playing = playingIdx();
+    var playing = playingIdx(), now = Date.now();
     ListView.columns([{ name: 'groups', view: { total: groups().length, cursor: gi, active: focus === 'groups', row: groupRow } },
       { name: 'channels', view: { total: g.items.length, cursor: cursor, active: focus === 'channels', row: function (i) {
-        var c = Channels.at(g.items[i]), on = EPG.upcoming(c.id, 1)[0];
+        var c = Channels.at(g.items[i]), on = EPG.onAir(c.id, now);   // the programme on air: the banner's lookup too
         return { num: c.num, logo: c.logo, title: (Favs.has(c.key) ? '★ ' : '') + c.name + (g.items[i] === playing ? '  ▶' : ''),
           sub: c.dead ? 'отключён провайдером' : (on ? on.title : ''), playing: g.items[i] === playing };
       } } }]);
+    NowLines.update();
   }
   function groupRow(i) {
     var g = groups()[i];
@@ -95,5 +112,5 @@
     else if (col === 'channels') { focus = 'channels'; cursor = i; onKey(K.ENTER, { preventDefault: function () {} }); }
   }
 
-  Overlay.register('menu', { open: open, close: close, onKey: onKey, onClick: onClick, render: render });
+  Overlay.register('menu', { open: open, close: close, onKey: onKey, onClick: onClick, render: render, prepare: prepare });
 }());

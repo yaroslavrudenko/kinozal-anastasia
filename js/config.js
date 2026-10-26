@@ -17,9 +17,20 @@ var CONFIG = {
   LIST_RETRY_MAX_MS: 300000,
   SNAPSHOT_MAX_CHARS: 2500000, // offline copy of the list; bigger lists are not kept
   KEY_CHECK_TIMEOUT_MS: 15000,
+  NOW_SETTLE_MS: 0,            // a visible row's "now" is re-read this long after its programme ends
+  NOW_MIN_INTERVAL_MS: 60000,  // never two "now" refreshes closer than this
+  NOW_MISSING_MS: 300000,      // rows the provider had no current programme for are re-asked at most this often
+  NOW_STALE_MS: 60000,         // an answer naming a show that ended this long before it arrived came from a stale cache
+  NOW_LINGER_MS: 900000,       // the provider still names an ended programme up to this long (seen: 7+ min at 03:00)
+  NOW_AFTER_LANDING_MS: 5000,
+  NOW_BUSY_RETRY_MS: 1000,
+  OVERLAY_QUIET_MS: 1500,      // background data redraws an open menu only after this long without a key     // a refresh held back (zap, list loading) is tried again after this  // no refresh this soon after a channel starts (the stream has the bandwidth)
+  GUIDE_KEEP_AFTER_EVICT: 3,   // programmes kept (from now on) when a full guide leaves the cache
 
   // per-channel guide (OTT Club) and XMLTV (M3U)
   ARCHIVE_DAYS: 7,
+  ARCHIVE_EDGE_MARGIN_MS: 600000,   // nothing older than ARCHIVE_DAYS minus this is opened (or retried)
+  ARCHIVE_SPAN_MS: 14400000,        // one archive request covers at most 4 h (OTT Club answers 404 past 24–48 h); the player continues
   GUIDE_TIMEOUT_MS: 15000,
   GUIDE_FRESH_MS: 3600000,
   GUIDE_RETRY_MIN_MS: 30000,
@@ -60,6 +71,7 @@ var CONFIG = {
   BANNER_MS: 5000,
   TECH_LINE_MS: 5000,          // the stream's technical line shows this long after a channel opens
   TECH_POLL_MS: 500,           // re-read while the player has not described the stream yet
+  TECH_WAIT_MS: 15000,         // «…» waits this long for the player's description; the TECH_LINE_MS window starts when it arrives
   TOAST_MS: 2500,
   NUMBER_ENTRY_MS: 1800,
   EXIT_CONFIRM_MS: 2000,

@@ -1,7 +1,17 @@
 // The channel banner: name, number, what is on, progress and (once the picture is up) the stream's
-// technical line. preview() shows a channel being zapped to before it plays.
+// technical line. preview() shows a channel being zapped to before it plays. From the moment a stream
+// opens until its picture is up (and again during a stall) it stays with a state line, so a black screen
+// always says what is happening: «Подключение…», «Загрузка видео… N%», «Нет сигнала — повтор…».
 var Banner = (function () {
   var techTimer = null, tech = '', techUntil = 0, techSel = -1;   // the latest landing's technical line, its window, its selection
+  var state = '';              // the state line; while set the banner does not hide
+
+  function setState(text) { state = text; if (Overlay.isNone()) show(false); }
+  function connecting() { setState('Подключение…'); }
+  function loading(pct) { setState('Загрузка видео…' + (pct >= 0 ? ' ' + Math.round(pct) + '%' : '')); }
+  function retrying(n, delayMs) { setState('Нет сигнала — повтор через ' + Math.max(1, Math.round(delayMs / 1000)) + ' с (попытка ' + n + ')'); }
+  // Playback is back after a stall: the line goes and the banner hides as usual.
+  function resumed() { if (!state) return; state = ''; if (UI.bannerShown() && Overlay.isNone()) show(false); }
 
   // fetchGuide: also make sure the full guide is loaded (INFO, the first frame); off while zapping.
   // Inside a landing's tech window every redraw keeps that line («…» or the value) and the banner stays
@@ -12,25 +22,31 @@ var Banner = (function () {
     if (fetchGuide) EPG.ensure(c.id, onGuide);
     if (techSel !== Playback.selection()) techUntil = 0;   // a newer choice (zap, archive, pause) ends the window
     var t = Playback.position(), archive = Playback.mode() !== 'live', left = techUntil - Date.now();
-    UI.banner(model(c, { t: t, extra: archive ? 'Архив · ' + Util.hhmm(new Date(t)) : '', tech: left > 0 ? tech : Player.streamInfo(false) }),
-      Math.max(CONFIG.BANNER_MS, left));
+    var m = model(c, { t: t, extra: archive ? 'Архив · ' + Util.hhmm(new Date(t)) : '', tech: state ? '' : left > 0 ? tech : Player.streamInfo(false) });
+    m.state = state;
+    UI.banner(m, state ? UI.STICKY : Math.max(CONFIG.BANNER_MS, left));
   }
 
   // A channel (live or archive) shows its first frame: the banner at once with this stream's technical
-  // line; "…" while the player has not described the stream yet, filled in as soon as it has (a local
-  // read every TECH_POLL_MS, no request); the line goes after TECH_LINE_MS.
+  // line; "…" while the player has not described the stream yet (up to TECH_WAIT_MS), filled in as soon as
+  // it has (a local read every TECH_POLL_MS, no request); the values then stay TECH_LINE_MS, so a stream the
+  // player describes late still shows them (TV run: 232 BCU, 242, 372 had an empty line).
   function onFirstFrame() {
     clearTimeout(techTimer);
     techUntil = 0;
+    state = '';
     if (!Overlay.isNone()) return;
     var sel = techSel = Playback.selection();
     tech = Player.streamInfo(false) || '…';
-    techUntil = Date.now() + CONFIG.TECH_LINE_MS;
+    techUntil = Date.now() + (tech === '…' ? CONFIG.TECH_WAIT_MS : CONFIG.TECH_LINE_MS);
     show(false);
     function tick() {
       if (sel !== Playback.selection()) { techUntil = 0; return; }
       if (Date.now() >= techUntil) { techUntil = 0; UI.bannerTech(''); return; }
-      if (tech === '…') { var info = Player.streamInfo(true); if (info) { tech = info; UI.bannerTech(info); } }
+      if (tech === '…') {
+        var info = Player.streamInfo(true);
+        if (info) { tech = info; techUntil = Date.now() + CONFIG.TECH_LINE_MS; if (Overlay.isNone()) show(false); else UI.bannerTech(info); }
+      }
       techTimer = setTimeout(tick, tech === '…' ? CONFIG.TECH_POLL_MS : techUntil - Date.now());
     }
     techTimer = setTimeout(tick, tech === '…' ? CONFIG.TECH_POLL_MS : CONFIG.TECH_LINE_MS);
@@ -52,5 +68,6 @@ var Banner = (function () {
     };
   }
 
-  return { show: show, preview: preview, onGuide: onGuide, onFirstFrame: onFirstFrame };
+  return { show: show, preview: preview, onGuide: onGuide, onFirstFrame: onFirstFrame, setState: setState, connecting: connecting,
+    loading: loading, retrying: retrying, resumed: resumed };
 }());

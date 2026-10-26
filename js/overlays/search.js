@@ -15,9 +15,11 @@
     UI.show('search', true);
     field.oninput = function () { cursor = 0; filter(); };
     filter();
+    NowLines.watch(visibleIds);
     focusTimer = setTimeout(function () { field.focus(); }, FOCUS_DELAY_MS);
   }
   function close() {
+    NowLines.watch(null);
     clearTimeout(focusTimer);
     var field = input();
     field.oninput = null;
@@ -32,14 +34,15 @@
   }
 
   function render() {
-    var items = result.items, capped = result.total > items.length, cur = Playback.current(), curKey = cur ? cur.key : null;
+    var items = result.items, capped = result.total > items.length, cur = Playback.current(), curKey = cur ? cur.key : null, now = Date.now();
     ListView.column('search', { total: items.length, cursor: cursor, active: inList, row: function (i) {
-      var c = Channels.at(items[i]), on = EPG.upcoming(c.id, 1)[0];
+      var c = Channels.at(items[i]), on = EPG.onAir(c.id, now);
       // A capped result says so on its last row instead of hiding the rest silently.
       var sub = capped && i === items.length - 1 ? 'Показаны первые ' + items.length + ' из ' + result.total + ' — уточните запрос'
         : c.group + (on ? ' · ' + on.title : '');
       return { num: c.num, logo: c.logo, title: c.name, sub: sub, playing: c.key === curKey };
     } });
+    NowLines.update();
   }
 
   function onKey(k, e) {
@@ -61,6 +64,13 @@
     else if (k === K.ENTER) { tune(cursor); return; }
     else if (Keys.isBack(k)) { inList = false; input().focus(); }
     render();
+  }
+
+  // The channel ids of the results on screen.
+  function visibleIds() {
+    var v = ListView.shown('search'), out = [];
+    for (var i = v ? v.first : 0; v && i < v.first + v.count && i < result.items.length; i++) out.push(Channels.at(result.items[i]).id);
+    return out;
   }
 
   function tune(i) { var c = Channels.at(result.items[i]); Overlay.close(); if (c) Zap.pick(c); }

@@ -6,15 +6,18 @@ var Catchup = (function () {
 
   function supported(ch) { return ch.catchupDays > 0 || !!ch.catchup || !!ch.catchupSource; }
   function days(ch) { return ch.catchupDays || CONFIG.ARCHIVE_DAYS; }
-  // The earliest moment the provider keeps for this channel.
-  function earliest(ch, nowMs) { return nowMs - days(ch) * Util.DAY_MS; }
+  // The earliest moment the app opens: the provider's window minus a safety margin (its oldest minutes
+  // are already gone by the time a stream opens — a moment at the very edge never starts, TV test D1).
+  function earliest(ch, nowMs) { return nowMs - days(ch) * Util.DAY_MS + CONFIG.ARCHIVE_EDGE_MARGIN_MS; }
 
-  // startMs: wall-clock moment to play from. durationMs: programme length (0 = open-ended).
+  // startMs: wall-clock moment to play from. durationMs: programme length (0 = unknown: no guide there).
+  // A request never spans more than ARCHIVE_SPAN_MS: a moment with no guide 7 days back once asked for 7 days
+  // up to now, which OTT Club answers with 404 (TV test D1 on 352 Inrating); the player continues at its end.
   function url(ch, startMs, durationMs) {
     var nowMs = Date.now();
     var start = Math.floor(startMs / 1000);
     var now = Math.floor(nowMs / 1000);
-    var dur = Math.floor((durationMs || (nowMs - startMs)) / 1000);
+    var dur = Math.floor(Math.min(durationMs || CONFIG.ARCHIVE_SPAN_MS, CONFIG.ARCHIVE_SPAN_MS) / 1000);
     // Never ask for a recording that ends in the future (a show still on air): the server returns an
     // unfinished recording and the TV player waits on it forever. The player continues at its end.
     if (start + dur > now - 10) dur = Math.max(60, now - 10 - start);

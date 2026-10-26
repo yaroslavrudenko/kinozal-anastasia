@@ -15,9 +15,16 @@ var Diag = (function () {
       .replace(/\/(live|movie|series|timeshift)\/[^\/]+\/[^\/]+\//, '/$1/<user>/<pass>/');
   }
 
+  // The archive moment a URL asks for (OTT Club archive=, shift utc=), or '': the query is dropped by
+  // redact(), and without this a failed recording looked like a failed live stream (TV run: /147.m3u8).
+  function archiveOf(url) {
+    var m = /[?&](?:archive|utc)=(\d{9,})/.exec(String(url || ''));
+    return m ? ' (archive from ' + new Date(+m[1] * 1000).toISOString() + ')' : '';
+  }
+
   // f: { n, gen, reason, url } of one failed playback attempt.
   function fail(f) {
-    var line = new Date().toISOString() + ' #' + f.n + ' ' + f.reason + ' ' + redact(f.url);
+    var line = new Date().toISOString() + ' #' + f.n + ' ' + f.reason + ' ' + redact(f.url) + archiveOf(f.url);
     console.log('[player] fail #' + f.n + ' gen=' + f.gen + ' ' + f.reason);
     pending.push(line);
     recent.push(line);

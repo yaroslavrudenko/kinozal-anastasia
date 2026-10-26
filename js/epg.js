@@ -6,6 +6,8 @@
 // Lookups are binary searches; indexAt is the one definition of "the programme at moment t".
 var EPG = (function () {
   var seeds = Util.dict();     // id -> [one programme] (the "now" line of the channel list)
+  var seedsAt = 0;             // when the provider gave them
+  var cached = false;          // an answer named shows that had ended well before it: the provider serves a cache
   var full = Util.dict();      // id -> sorted [{ start, stop, title }]
   var fullAt = Util.dict();    // id -> when the full guide arrived
   var lru = [];                // ids of per-channel full guides, most recent last
@@ -16,19 +18,41 @@ var EPG = (function () {
 
   function setHooks(h) { hooks = h; }
   function setLoader(fn) { loader = fn; }
-  function setSeeds(map) { seeds = map; }
+  // A record still on air is never replaced by one that has already ended (a cached list can be older than
+  // the last refresh). Otherwise the newest answer wins, even with an earlier start: the provider sometimes
+  // names a placeholder («Нет данных» 06:00–07:00) and later the real programme (05:00–08:10).
+  // Returns true when this answer came from the provider's cache (named shows ended NOW_STALE_MS before it).
+  // nextEnd: the first end among the programmes on air in the answer (when any "now" line goes out of date).
+  var nextEnd = Infinity;
+  function setSeeds(map) {
+    var now = Date.now(), stale = false;
+    nextEnd = Infinity;
+    for (var id in map) {
+      var o = seeds[id] && seeds[id][0], n = map[id][0];
+      if (n.stop <= now - CONFIG.NOW_STALE_MS) stale = true;
+      if (o && o.stop > now && n.stop <= now) n = (map[id] = seeds[id])[0];
+      if (n.stop > now && n.stop < nextEnd) nextEnd = n.stop;
+    }
+    seeds = map; seedsAt = now; cached = cached || stale;
+    return stale;
+  }
 
-  function list(id) { return full[id] || seeds[id] || []; }
+  // A full guide first; otherwise the short list kept from an evicted guide when it still covers now
+  // (it also knows what comes next), else the channel list's "now" line.
+  var kept = Util.dict();      // id -> the few programmes from now on, kept when a full guide is evicted
+  function list(id) {
+    if (full[id]) return full[id];
+    var k = kept[id];
+    if (k && k.length && k[k.length - 1].stop > Date.now()) return k;
+    return seeds[id] || k || [];
+  }
+  // When the last programme known for the channel ends (0: none known).
+  function knownEnd(id) { var l = list(id); return l.length ? l[l.length - 1].stop : 0; }
 
   // First index whose programme has not ended at t (list.length when all have ended).
   function indexAt(l, t) {
     var lo = 0, hi = l.length;
     while (lo < hi) { var mid = (lo + hi) >> 1; if (l[mid].stop > t) hi = mid; else lo = mid + 1; }
-    return lo;
-  }
-  function firstFrom(l, t) {
-    var lo = 0, hi = l.length;
-    while (lo < hi) { var mid = (lo + hi) >> 1; if (l[mid].start >= t) hi = mid; else lo = mid + 1; }
     return lo;
   }
 
@@ -37,21 +61,27 @@ var EPG = (function () {
     var l = list(id), i = indexAt(l, t);
     return i < l.length && l[i].start <= t ? l[i] : null;
   }
+  // The "now" line of a channel (menu, search, banner): the programme at t; else the channel list's own
+  // record (a guide may have a gap). The provider keeps naming a programme for minutes after its end, and
+  // a refresh comes at most once a minute (DEC-2026-10-26-now-refresh), so an ended record still shows
+  // while it is what the provider said last: an answer under NOW_LINGER_MS old, which named it no later
+  // than NOW_LINGER_MS after its end. A row never goes blank for a channel the provider reports on air.
+  function onAir(id, t) {
+    var p = at(id, t), s = seeds[id] && seeds[id][0], L = CONFIG.NOW_LINGER_MS;
+    return p || (s && s.start <= t && (t < s.stop || (t - seedsAt < L && seedsAt - s.stop < L)) ? s : null);
+  }
   // { cur, next }: next only when it follows the current one directly.
   function nowNext(id, t) {
-    var cur = at(id, t);
+    var cur = onAir(id, t);
     return { cur: cur, next: cur ? at(id, cur.stop + 1000) : null };
   }
-  // Up to `count` programmes starting with the current one.
-  function upcoming(id, count) {
-    var l = list(id), i = indexAt(l, Date.now());
-    return l.slice(i, i + count);
-  }
-  // Programmes of one calendar day (0 = today, -1 = yesterday ...), DST-safe.
+  // Programmes overlapping one calendar day (0 = today, -1 = yesterday ...), DST-safe: one that started
+  // before midnight and is still on comes first, with its real start. The programme panel shows the
+  // full guide (or the channel list's "now" line until it arrives), not the few lines kept after eviction.
   function day(id, offset) {
-    var l = list(id), from = Util.addDays(Util.dayStart(Date.now()), offset), to = Util.addDays(from, 1);
+    var l = full[id] || seeds[id] || [], from = Util.addDays(Util.dayStart(Date.now()), offset), to = Util.addDays(from, 1);
     var out = [];
-    for (var i = firstFrom(l, from); i < l.length && l[i].start < to; i++) out.push(l[i]);
+    for (var i = indexAt(l, from); i < l.length && l[i].start < to; i++) out.push(l[i]);
     return out;
   }
 
@@ -85,7 +115,8 @@ var EPG = (function () {
     lru.push(id);
     for (var i = 0; lru.length > CONFIG.GUIDE_CACHE_CHANNELS && i < lru.length; ) {
       if (lru[i] === focusId) { i++; continue; }          // the watched channel is never evicted
-      var old = lru.splice(i, 1)[0];
+      var old = lru.splice(i, 1)[0], from = indexAt(full[old], Date.now());
+      kept[old] = full[old].slice(from, from + CONFIG.GUIDE_KEEP_AFTER_EVICT);   // a few bytes: now and next
       delete full[old]; delete fullAt[old];
     }
   }
@@ -158,7 +189,7 @@ var EPG = (function () {
   }
 
   return {
-    setHooks: setHooks, setLoader: setLoader, setSeeds: setSeeds, ensure: ensure, cancelExcept: cancelExcept,
-    load: load, at: at, nowNext: nowNext, upcoming: upcoming, day: day, indexAt: indexAt
+    setHooks: setHooks, setLoader: setLoader, setSeeds: setSeeds, knownEnd: knownEnd, ensure: ensure, cancelExcept: cancelExcept,
+    load: load, at: at, onAir: onAir, servedCached: function () { return cached; }, nextSeedEnd: function () { return nextEnd; }, nowNext: nowNext, day: day, indexAt: indexAt
   };
 }());

@@ -15,6 +15,7 @@ var Zap = (function () {
     var c = Channels.get(key), now = Date.now(), burst = now - lastStepAt < CONFIG.ZAP_IDLE_MS;
     lastStepAt = now;
     Playback.quiet();
+    NowLines.cancel();
     Health.cancelProbe();
     EPG.cancelExcept(c.id);
     cancel();
@@ -48,6 +49,7 @@ var Zap = (function () {
     clearTimeout(saveTimer);
     clearTimeout(settleTimer);
     EPG.cancelExcept(c.id);
+    NowLines.landed();
     Playback.live(c);
     var sel = Playback.selection();
     // A late answer acts only while this very choice still stands (no archive, pause or zap since).
@@ -55,6 +57,7 @@ var Zap = (function () {
       if (sel !== Playback.selection()) return;
       Channels.rebuild();
       removedToast(c, 3500);
+      Banner.setState('Канал отключён провайдером');
       if (dir) step(dir);
     });
   }

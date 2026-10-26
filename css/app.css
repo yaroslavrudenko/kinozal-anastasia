@@ -39,6 +39,8 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 /* guide: 13 rows of 70 px fill the 910 px column exactly */
 .guide { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: -webkit-flex; display: flex;
   padding: 60px 60px 110px; background: rgba(6,9,15,.97); }
+/* Hidden by visibility, not display: the menu stays laid out (prepared at idle), so opening it is a paint. */
+.guide.hidden { display: -webkit-flex !important; display: flex !important; visibility: hidden; }
 /* List columns: rows wrap, so a column hides (never cuts) the rows that do not fit (ui.js column). */
 .groups { position: relative; overflow: hidden; width: 380px; margin-right: 24px; }
 .channels { position: relative; overflow: hidden; -webkit-flex: 1; flex: 1; }
@@ -79,7 +81,8 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 .setup-err { font-size: 30px; color: #ff6b6b; margin-top: 24px; min-height: 40px; }
 
 /* toast / errors */
-.toast { position: absolute; left: 50%; bottom: 120px; -webkit-transform: translateX(-50%); transform: translateX(-50%);
+/* Toasts at the top: the banner (now up until the picture appears) owns the bottom of the screen. */
+.toast { position: absolute; left: 50%; top: 60px; -webkit-transform: translateX(-50%); transform: translateX(-50%);
   font-size: 34px; padding: 18px 40px; border-radius: 16px; background: rgba(14,18,28,.92); width: -webkit-max-content; max-width: 1600px;
   text-align: center; word-wrap: break-word; }
 .fatal { position: absolute; left: 260px; right: 260px; top: 440px; padding: 40px; text-align: center; font-size: 36px;
@@ -118,6 +121,8 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
   background: #101724; color: #fff; outline: none; margin-bottom: 24px; }
 .search-input:focus { border-color: #8cc2ff; }
 .search-list { position: relative; overflow: hidden; height: 690px; }   /* down to the hint */
+.banner-state { font-size: 30px; margin-top: 6px; color: #ffb74d; word-wrap: break-word; }   /* «Подключение…» etc. */
+.banner-state:empty { display: none; }
 .banner-tech { font-size: 22px; margin-top: 6px; color: #4da3ff; word-wrap: break-word; }
 /* Overlays always above the video layer (hardware video can be composited on top otherwise). */
 .guide, .search, .setup { z-index: 20; }
