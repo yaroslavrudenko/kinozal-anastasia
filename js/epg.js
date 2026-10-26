@@ -18,7 +18,9 @@ var EPG = (function () {
 
   function setHooks(h) { hooks = h; }
   function setLoader(fn) { loader = fn; }
-  // A newer answer is never replaced by an older one (a cached list can be older than the last refresh).
+  // A record still on air is never replaced by one that has already ended (a cached list can be older than
+  // the last refresh). Otherwise the newest answer wins, even with an earlier start: the provider sometimes
+  // names a placeholder («Нет данных» 06:00–07:00) and later the real programme (05:00–08:10).
   // Returns true when this answer came from the provider's cache (named shows ended NOW_STALE_MS before it).
   // nextEnd: the first end among the programmes on air in the answer (when any "now" line goes out of date).
   var nextEnd = Infinity;
@@ -27,8 +29,8 @@ var EPG = (function () {
     nextEnd = Infinity;
     for (var id in map) {
       var o = seeds[id] && seeds[id][0], n = map[id][0];
-      if (o && o.start > n.start) n = (map[id] = seeds[id])[0];
-      else if (n.stop <= now - CONFIG.NOW_STALE_MS) stale = true;
+      if (n.stop <= now - CONFIG.NOW_STALE_MS) stale = true;
+      if (o && o.stop > now && n.stop <= now) n = (map[id] = seeds[id])[0];
       if (n.stop > now && n.stop < nextEnd) nextEnd = n.stop;
     }
     seeds = map; seedsAt = now; cached = cached || stale;

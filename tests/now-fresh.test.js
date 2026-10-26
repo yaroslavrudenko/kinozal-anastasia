@@ -89,6 +89,21 @@ test('now fresh (D6): after 40 min on one page, every page scrolled into view sh
 
 // Owner decision 2026-10-26 (option b): a launch list that came from the provider's cache does not count
 // toward the 60 s floor; the fresh answer is asked for at once, so a menu opened 4 s after launch is current.
+// D7 (dry run 06:32): the list once named a placeholder «Нет данных» 06:00–07:00 for Bridge, later the real
+// «Wake Up Call.» 05:00–08:10; the row kept «Нет данных» for 12+ minutes (an earlier start was taken as older).
+test('now fresh (D7): a later answer naming the real programme replaces a placeholder, even with an earlier start', () => {
+  const app = f.ottApp({ channels: 5 });
+  f.untilPlaying(app);
+  const out = vm.runInContext(`(function () {
+    var id = 'd7-no-guide', t = Date.now(), m = 60000, a = Util.dict(), b = Util.dict();
+    a[id] = [{ start: t - 30 * m, stop: t + 30 * m, title: 'Нет данных' }];
+    b[id] = [{ start: t - 90 * m, stop: t + 100 * m, title: 'Wake Up Call.' }];
+    EPG.setSeeds(a); EPG.setSeeds(b);
+    return EPG.onAir(id, t).title + ' | ' + EPG.onAir(id, t + 40 * m).title;
+  })()`, app.ctx);
+  assert.equal(out, 'Wake Up Call. | Wake Up Call.');
+});
+
 test('now fresh (D6b): a cached launch list is re-read fresh at once, and the menu opened 4 s after it shows what is on air', () => {
   const app = f.ottApp({ channels: CHANNELS, boot: false });
   const base = JSON.parse(app.fixture.list.body), ids = Object.keys(base);
