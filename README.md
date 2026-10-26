@@ -142,6 +142,15 @@ In October 2026 six independent reviewers went through the whole player. The 230
 
 On the TV (2026-10-25/26) the build passes the life-cycle test: close, open, exit and reopen, and Home → another app → back, twice. The heaviest movie channel, Viju+ Megahit at 1080p and 10.9 Mbit/s, plays without stalls. The acceptance plan is in [docs/TESTING.md](docs/TESTING.md).
 
+**TV run of 2026-10-26** (automated runner `tests/tv/run.mjs`, builds f7ccc45 and 84fc43e): 11 channel groups, 349 channels in «Все каналы».
+- **Channel list:** 0 empty «now» cells. The few rows that lagged had changed less than 60 s before (the refresh floor).
+- **Zapping:** first frame on landing 0.7–2.0 s (median 1.0 s); a single zap 0.7–1.3 s; a burst of 10 presses lands right with 0 extra requests.
+- **Archives:** 8 of 8 archive opens on the four heaviest movie channels play. The end of a recording continues within 2 s of the right moment. The 7-day archive edge plays (fixed in 84fc43e).
+- **Stability:** 10 min without a stall; a 60 s pause sends no requests.
+- **Open:** the tech-line check is being re-run, and the 60 s «now» refresh floor awaits the owner's decision.
+
+Details: [docs/TESTING.md](docs/TESTING.md) (results of 2026-10-26).
+
 The numbers below were measured on a desktop (harness and headless Chrome):
 
 - **Zapping:** requests per 10 quick presses 20 → 3; a single press opens the channel after 0 ms instead of 350 ms.

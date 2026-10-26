@@ -19,6 +19,17 @@
     x.send();
   }
   function base() { return OttClub.sourceUrl().replace(/\/api\/channel_now$/, ''); }
+  // When the channel menu last closed (its element got the class "hidden"): ties a lagging row to how long
+  // the app had no visible menu to refresh.
+  T.menuClosedAt = Date.now();
+  (function () {
+    var g = document.getElementById('guide'), was = !/(^|\s)hidden(\s|$)/.test(g.className);
+    new MutationObserver(function () {
+      var open = !/(^|\s)hidden(\s|$)/.test(g.className);
+      if (was && !open) T.menuClosedAt = Date.now();
+      was = open;
+    }).observe(g, { attributes: true, attributeFilter: ['class'] });
+  }());
   // The reference for "on air": the provider's FRESH list. The plain /api/channel_now is served from a
   // cache (max-age 60, often minutes old: up to a third of the channels name a show that has ended);
   // `?t=<seconds>` bypasses it. Each reference records when it was asked and answered, and how many of
@@ -45,7 +56,7 @@
     var g = T.guide[id], l = g ? g.data : [], cur = null, next = null, i;
     for (i = 0; i < l.length; i++) if (l[i].time * 1000 <= t && t < l[i].time_to * 1000) cur = l[i];
     if (cur) for (i = 0; i < l.length; i++) if (l[i].time === cur.time_to) next = l[i];
-    return { cur: cur && cur.name, next: next && next.name, nextStart: next && next.time * 1000 };
+    return { cur: cur && cur.name, curStart: cur && cur.time * 1000, next: next && next.name, nextStart: next && next.time * 1000 };
   };
   function clipOf(el) {
     var top = 0, bottom = window.innerHeight, a;

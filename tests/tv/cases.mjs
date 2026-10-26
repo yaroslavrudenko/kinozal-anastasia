@@ -4,6 +4,9 @@
 const K = { ENTER: 13, BACK: 10009, UP: 38, DOWN: 40, LEFT: 37, RIGHT: 39, PG_DOWN: 34, PG_UP: 33, INFO: 457,
   PLAY_PAUSE: 10252, STOP: 413, YELLOW: 405 };
 const norm = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+// The app shows the tech line for TECH_LINE_MS (5 s) once the player has described the stream, which can
+// take a while after the first frame: it is read right after the first frame, polled up to this long.
+const TECH_WAIT_MS = 15000;
 const hasText = (hay, needle) => norm(hay).indexOf(norm(needle)) >= 0;
 const row = (id, channel, measured, ok) => ({ id, channel, measured, result: ok === null ? 'DRY-SKIP' : ok ? 'PASS' : 'FAIL' });
 
@@ -52,10 +55,13 @@ export async function U0(d, opt, onlyAll) {
   const h = helpers(d, opt), out = [];
   const groups = (await d.ev('__TT.groups()')).filter((g) => !g.special && (!onlyAll || g.name === 'Все каналы'));
   for (const g of groups) {
+    // Sweep start (local clock) and how long the menu had been closed before it.
+    const sweep = await d.ev("(function(){var n=Date.now();return {at:new Date(n).toTimeString().slice(0,8),closed:Math.round((n-__TT.menuClosedAt)/1000),open:!/(^|\\s)hidden(\\s|$)/.test(document.getElementById('guide').className)}})()");
     await h.openGroup(g.i);
     // Each page is compared with a fresh reference asked right after the page was read (≤ 10 s apart).
     const seen = new Map(), refs = [];
     let empty = 0, wrong = 0, noApi = 0, byGuide = 0, badRef = 0, prevRef = null, prev = '';
+    const wrongSince = [];
     const examples = [];
     async function checkPage() {
       const readAt = await d.ev('Date.now()');
@@ -78,7 +84,9 @@ export async function U0(d, opt, onlyAll) {
           await h.waitFor(`__TT.guide[${JSON.stringify(c.id)}]`, 15000);
           const g = await d.ev(`__TT.guideAt(${JSON.stringify(c.id)}, ${readAt})`);
           if (g.cur && hasText(r.sub, g.cur)) { byGuide++; continue; }
-          wrong++; if (examples.length < 4) examples.push(r.num + ' ' + r.title + ': «' + norm(r.sub) + '» ≠ on air «' + a.title + '» (guide: «' + (g.cur || '—') + '»)');
+          // How long ago the show changed: the guide's start of the show on air, else the fresh list's.
+          const since = Math.round((readAt - (g.curStart || a.start)) / 1000);
+          wrong++; wrongSince.push(since); if (examples.length < 30) examples.push(r.num + ' ' + norm(r.title) + ': «' + norm(r.sub) + '» ≠ on air «' + a.title + '» (guide: «' + (g.cur || '—') + '») · changed ' + since + ' s before the read');
         }
       }
       prevRef = await d.ev('(function(){var o={},k,a=__TT.api.data;for(k in a)if(a[k])o[k]=a[k].name;return o})()');
@@ -92,7 +100,7 @@ export async function U0(d, opt, onlyAll) {
     }
     await checkPage();
     const refNote = refs.length ? ` · reference: ${refs.length} fresh fetches (${badRef} failed or > 10 s, those pages not judged), ≤ ${Math.max(...refs.map((x) => x.lag))} ms after each page read, ended shows in it ≤ ${Math.max(...refs.map((x) => x.ended))} · ${byGuide} rows differed from the list API but matched the channel's guide` : '';
-    out.push(row('U0.rows', g.name, `${seen.size}/${g.count} rows seen · empty ${empty} · not on air ${wrong} · no API programme ${noApi}` + refNote + (examples.length ? ' · ' + examples.join(' | ') : ''),
+    out.push(row('U0.rows', g.name, `sweep ${sweep.at}, menu ${sweep.open ? 'already open' : 'closed ' + sweep.closed + ' s before'} · ${seen.size}/${g.count} rows seen · empty ${empty} · not on air ${wrong} (${wrongSince.filter((x) => x < 60).length} of them < 60 s after the show changed) · no API programme ${noApi}` + refNote + (examples.length ? ' · ' + examples.join(' | ') : ''),
       seen.size === g.count && empty === 0 && wrong === 0 && badRef === 0));
     if (!onlyAll || opt.landings) out.push(...await landings(d, opt, g, h));
   }
@@ -115,6 +123,13 @@ async function landings(d, opt, g, h) {
     const t = Date.now();
     await d.key(K.ENTER);
     const ff = await h.firstFrame(t);
+    // The tech line first: it is on screen only for TECH_LINE_MS, so it is read before the slower checks.
+    let tech = '', techDelay = null;
+    if (d.mode === 'tv' && ff >= 0) {
+      const frameAt = t + ff;
+      tech = await h.waitFor(`(function(){var s=__TT.st();return s.bTech&&s.bTech!=='…'?s.bTech:''})()`, TECH_WAIT_MS, 100) || '';
+      if (tech) techDelay = Date.now() - frameAt;
+    }
     // The banner's «Далее» comes with the channel's guide, which the app loads after the first frame.
     await h.waitFor("(function(){var s=__TT.st();return s.bNext?1:0})()", d.mode === 'tv' ? 4000 : 500, 100);
     const s = await h.st();
@@ -138,8 +153,7 @@ async function landings(d, opt, g, h) {
     out.push(row('U0.next', where, `guide next «${gn.next || '—'}» · banner «${norm(s.bNext).slice(0, 60)}»`, d.mode === 'dry' && !norm(s.bNext) ? null : nextOk));
     out.push(row('U0.first-frame', where, ff === null ? 'no picture in dry mode' : ff < 0 ? 'no first frame within 10 s' : ff + ' ms', ff === null ? null : ff >= 0 && ff <= 10000));
     if (d.mode === 'tv') {
-      const tech = await h.waitFor(`(function(){var s=__TT.st();return s.bTech&&s.bTech!=='…'?s.bTech:''})()`, 5000);
-      out.push(row('U0.tech-line', where, tech || 'empty', !!tech));
+      out.push(row('U0.tech-line', where, ff < 0 ? 'no first frame' : tech ? `${tech} · ${techDelay} ms after the first frame` : `empty for ${TECH_WAIT_MS / 1000} s after the first frame`, ff >= 0 && !!tech));
     } else out.push(row('U0.tech-line', where, 'no picture in dry mode', null));
   }
   return out;
@@ -360,12 +374,14 @@ export async function M6(d, opt) {
 export async function menuOpenFreshness(d, minutes) {
   const h = helpers(d), out = [];
   await h.closeAll(); await d.key(K.ENTER); await d.sleep(800);
-  let bad = 0, checks = 0, maxEnded = 0, maxLag = 0, badRefs = 0; const examples = [];
+  let bad = 0, checks = 0, maxEnded = 0, maxLag = 0, badRefs = 0, byGuide = 0; const examples = [], mism = [];
   for (let m = 1; m <= minutes; m++) {
     await d.sleep(60000);
     if ((await h.st()).overlay !== 'menu') { out.push(row('M11.menu-open', '—', 'the menu closed by itself at +' + m + ' min', false)); return out; }
     const readAt = await d.ev('Date.now()');
-    const rows = (await d.ev("__TT.rows('channels')")).filter((r) => r.full);
+    const got = await d.ev("__TT.rows('channels')");
+    if (!Array.isArray(got)) { out.push(row('M11.menu-open', '—', 'the page could not be read at +' + m + ' min: ' + JSON.stringify(got).slice(0, 160), false)); return out; }
+    const rows = got.filter((r) => r.full);
     const ref = await h.api();
     if (!ref || !ref.size || ref.at - readAt > 10000) { badRefs++; continue; }   // no fresh reference this minute
     maxEnded = Math.max(maxEnded, ref.ended); maxLag = Math.max(maxLag, ref.at - readAt);
@@ -373,10 +389,45 @@ export async function menuOpenFreshness(d, minutes) {
       const c = await d.ev(`__TT.chByNum(${JSON.stringify(r.num)})`), a = c && await d.ev(`__TT.apiNow(${JSON.stringify(c.id)})`);
       if (!a) continue;
       checks++;
-      if (!hasText(r.sub, a.title) && Date.now() - a.start > 10000) { bad++; if (examples.length < 5) examples.push('+' + m + ' min ' + r.num + ' ' + norm(r.title) + ': «' + norm(r.sub) + '» ≠ «' + a.title + '»'); }
+      if (!hasText(r.sub, a.title) && Date.now() - a.start > 10000) {
+        // Tie-breaker: the channel's own guide at the read time; elapsed since the show changed.
+        await d.ev(`__TT.guideStart(${JSON.stringify(c.id)})`);
+        await h.waitFor(`__TT.guide[${JSON.stringify(c.id)}]`, 15000);
+        const g = await d.ev(`__TT.guideAt(${JSON.stringify(c.id)}, ${readAt})`);
+        if (g.cur && hasText(r.sub, g.cur)) { byGuide++; continue; }
+        const since = Math.round((readAt - (g.curStart || a.start)) / 1000);
+        bad++; mism.push({ num: r.num, since });
+        if (examples.length < 40) examples.push('+' + m + ' min ' + r.num + ' ' + norm(r.title) + ': «' + norm(r.sub) + '» ≠ «' + a.title + '» (guide «' + (g.cur || '—') + '») · ' + since + ' s');
+      }
     }
   }
   await h.closeAll();
-  out.push(row('M11.menu-open', minutes + ' min', `${checks} row checks · ${bad} not on air · reference fresh, ≤ ${maxLag} ms after each read, ended shows in it ≤ ${maxEnded} · ${badRefs} minutes without a usable reference` + (examples.length ? ' · ' + examples.join(' | ') : ''), bad === 0 && checks > 0));
+  out.push(row('M11.menu-open', minutes + ' min', `${checks} row checks · ${bad} not on air (${mism.filter((x) => x.since < 60).length} of them < 60 s after the show changed) · ${byGuide} resolved by the guide · reference fresh, ≤ ${maxLag} ms after each read, ended shows in it ≤ ${maxEnded} · ${badRefs} minutes without a usable reference` + (examples.length ? ' · ' + examples.join(' | ') : ''), bad === 0 && checks > 0));
   return out;
+}
+
+// ---------- diagnostic: a cold open of 348 Stingray iConcerts, typed as its number ----------
+// Records over 30 s: the AVPlay state and the media clock every 200 ms, spinner (buffering) on/off
+// transitions, the player's rebuffer counter and failure-log lines, and the time to the first frame.
+export async function cold348(d) {
+  const h = helpers(d);
+  await h.closeAll();
+  const c = await d.ev('__TT.chByNum(348)');
+  const before = await d.ev('(function(){var s=Diag.snapshot();return {rebuffer:s.counters.rebuffer||0,fails:s.recent.length}})()');
+  const t = Date.now();
+  for (const k of [51, 52, 56]) { await d.key(k); await d.sleep(150); }    // digits 3 4 8
+  const states = [], spin = [];
+  let lastState = '', lastSpin = null, ff = -1;
+  while (Date.now() - t < 30000) {
+    const s = await d.ev("(function(){var a=window.webapis&&webapis.avplay,st='';try{st=a?a.getState():'html'}catch(e){st='ERR'}var sp=document.getElementById('spinner');return {st:st,media:Player.mediaTimeMs(),spin:!!sp&&!/(^|\\s)hidden(\\s|$)/.test(sp.className),ch:(Playback.current()||{}).num}})()");
+    const at = Date.now() - t;
+    if (s.st !== lastState) { states.push(at + 'ms ' + s.st); lastState = s.st; }
+    if (s.spin !== lastSpin) { spin.push(at + 'ms ' + (s.spin ? 'buffering' : 'clear')); lastSpin = s.spin; }
+    if (ff < 0 && s.st === 'PLAYING' && s.media > 0) ff = at;
+    await d.sleep(200);
+  }
+  const after = await d.ev('(function(){var s=Diag.snapshot();return {rebuffer:s.counters.rebuffer||0,fails:s.recent.length,last:s.recent.slice(-3)}})()');
+  const where = c ? c.num + ' ' + c.name : '348 (not in the list)';
+  const measured = `first frame ${ff < 0 ? 'none in 30 s' : ff + ' ms after the first digit'} · states ${states.join(' → ')} · spinner ${spin.join(', ')} · rebuffers +${after.rebuffer - before.rebuffer} · new failures +${after.fails - before.fails}` + (after.fails > before.fails ? ' · ' + after.last.join(' | ') : '');
+  return [row('M2.cold-348', where, measured, d.mode === 'dry' ? null : ff >= 0)];
 }
