@@ -19,7 +19,21 @@
     x.send();
   }
   function base() { return OttClub.sourceUrl().replace(/\/api\/channel_now$/, ''); }
-  T.apiStart = function () { T.api = null; get(OttClub.sourceUrl(), function (d) { T.api = { at: Date.now(), data: d || {} }; }); return 1; };
+  // The reference for "on air": the provider's FRESH list. The plain /api/channel_now is served from a
+  // cache (max-age 60, often minutes old: up to a third of the channels name a show that has ended);
+  // `?t=<seconds>` bypasses it. Each reference records when it was asked and answered, and how many of
+  // its channels still name an ended show, so a stale reference shows in the results.
+  T.apiStart = function () {
+    var t0 = Date.now();
+    T.api = null;
+    get(OttClub.sourceUrl() + '?t=' + Math.floor(t0 / 1000), function (d) {
+      var at = Date.now(), ended = 0, k;
+      d = d || {};
+      for (k in d) if (d[k] && d[k].time_to && d[k].time_to * 1000 <= at) ended++;
+      T.api = { asked: t0, at: at, data: d, ended: ended, size: Object.keys(d).length };
+    });
+    return 1;
+  };
   T.guideStart = function (id) { T.guide[id] = null; get(base() + '/api/channel/' + id, function (d) { T.guide[id] = { at: Date.now(), data: (d && d.epg_data) || [] }; }); return 1; };
   // The programme the API says is on air now for channel id (from the last apiStart), or null.
   T.apiNow = function (id) {

@@ -23,7 +23,11 @@ export function helpers(d, opt) {
   }
   // The channel's full guide (INFO asks for it; on the TV the first frame does too).
   async function guideLoaded() { await d.key(K.INFO); await d.sleep(2500); }
-  async function api() { await d.ev('__TT.apiStart()'); return waitFor('__TT.api', 20000, 200); }
+  // A fresh "on air" reference (see page-helper apiStart); returns { asked, at, ended, size } (data stays in the page).
+  async function api() {
+    await d.ev('__TT.apiStart()');
+    return waitFor('(function(){var a=__TT.api;return a?{asked:a.asked,at:a.at,ended:a.ended,size:a.size}:null})()', 20000, 200);
+  }
   // Opens the menu on group index g (cursor on its first channel).
   async function openGroup(g) {
     await closeAll();
@@ -48,33 +52,48 @@ export async function U0(d, opt, onlyAll) {
   const h = helpers(d, opt), out = [];
   const groups = (await d.ev('__TT.groups()')).filter((g) => !g.special && (!onlyAll || g.name === 'Все каналы'));
   for (const g of groups) {
-    await h.api();
     await h.openGroup(g.i);
-    const seen = new Map();
-    let prev = '';
+    // Each page is compared with a fresh reference asked right after the page was read (≤ 10 s apart).
+    const seen = new Map(), refs = [];
+    let empty = 0, wrong = 0, noApi = 0, byGuide = 0, badRef = 0, prevRef = null, prev = '';
+    const examples = [];
+    async function checkPage() {
+      const readAt = await d.ev('Date.now()');
+      const rows = (await d.ev("__TT.rows('channels')")).filter((r) => r.full && !seen.has(r.num));
+      if (!rows.length) return;
+      const ref = await h.api();
+      refs.push({ lag: ref ? ref.at - readAt : -1, ended: ref ? ref.ended : -1 });
+      // A reference that failed (timeout, empty) or came too late is not evidence: the page is re-read later.
+      if (!ref || !ref.size || ref.at - readAt > 10000) { badRef++; return; }
+      for (const r of rows) {
+        seen.set(r.num, r);
+        const c = await d.ev(`__TT.chByNum(${JSON.stringify(r.num)})`);
+        const a = c && await d.ev(`__TT.apiNow(${JSON.stringify(c.id)})`);
+        if (!a) { noApi++; continue; }
+        if (!norm(r.sub)) { empty++; if (examples.length < 4) examples.push(r.num + ' ' + r.title + ': empty, on air «' + a.title + '»'); continue; }
+        // A show that began after the page was read: the row may still name the previous one.
+        if (!hasText(r.sub, a.title) && !(a.start > readAt - 10000 && prevRef && prevRef[c.id] && hasText(r.sub, prevRef[c.id]))) {
+          // The list API and the row disagree: the channel's own guide decides what is on air at the read time.
+          await d.ev(`__TT.guideStart(${JSON.stringify(c.id)})`);
+          await h.waitFor(`__TT.guide[${JSON.stringify(c.id)}]`, 15000);
+          const g = await d.ev(`__TT.guideAt(${JSON.stringify(c.id)}, ${readAt})`);
+          if (g.cur && hasText(r.sub, g.cur)) { byGuide++; continue; }
+          wrong++; if (examples.length < 4) examples.push(r.num + ' ' + r.title + ': «' + norm(r.sub) + '» ≠ on air «' + a.title + '» (guide: «' + (g.cur || '—') + '»)');
+        }
+      }
+      prevRef = await d.ev('(function(){var o={},k,a=__TT.api.data;for(k in a)if(a[k])o[k]=a[k].name;return o})()');
+    }
     for (let p = 0; p < 80; p++) {
-      for (const r of await d.ev("__TT.rows('channels')")) if (r.full && !seen.has(r.num)) seen.set(r.num, r);
-      const sig = [...seen.keys()].join(',');
+      await checkPage();
       await d.key(K.PG_DOWN); await d.sleep(250);
       const now = (await d.ev("__TT.rows('channels')")).filter((r) => r.full).map((r) => r.num).join(',');
-      if (now === prev && sig === [...seen.keys()].join(',')) break;
+      if (now === prev) break;
       prev = now;
     }
-    for (const r of await d.ev("__TT.rows('channels')")) if (r.full && !seen.has(r.num)) seen.set(r.num, r);
-    const before = await d.ev('__TT.api'); await h.api();
-    let empty = 0, wrong = 0, noApi = 0; const examples = [];
-    for (const r of seen.values()) {
-      const c = await d.ev(`__TT.chByNum(${JSON.stringify(r.num)})`);
-      const a = c && await d.ev(`__TT.apiNow(${JSON.stringify(c.id)})`);
-      if (!a) { noApi++; continue; }
-      if (!norm(r.sub)) { empty++; if (examples.length < 4) examples.push(r.num + ' ' + r.title + ': empty, on air «' + a.title + '»'); continue; }
-      if (!hasText(r.sub, a.title)) {
-        const b = before && before.data && before.data[c.id];                // a show that changed during the scan
-        if (!(b && hasText(r.sub, b.name))) { wrong++; if (examples.length < 4) examples.push(r.num + ' ' + r.title + ': «' + norm(r.sub) + '» ≠ on air «' + a.title + '»'); }
-      }
-    }
-    out.push(row('U0.rows', g.name, `${seen.size}/${g.count} rows seen · empty ${empty} · not on air ${wrong} · no API programme ${noApi}` + (examples.length ? ' · ' + examples.join(' | ') : ''),
-      seen.size === g.count && empty === 0 && wrong === 0));
+    await checkPage();
+    const refNote = refs.length ? ` · reference: ${refs.length} fresh fetches (${badRef} failed or > 10 s, those pages not judged), ≤ ${Math.max(...refs.map((x) => x.lag))} ms after each page read, ended shows in it ≤ ${Math.max(...refs.map((x) => x.ended))} · ${byGuide} rows differed from the list API but matched the channel's guide` : '';
+    out.push(row('U0.rows', g.name, `${seen.size}/${g.count} rows seen · empty ${empty} · not on air ${wrong} · no API programme ${noApi}` + refNote + (examples.length ? ' · ' + examples.join(' | ') : ''),
+      seen.size === g.count && empty === 0 && wrong === 0 && badRef === 0));
     if (!onlyAll || opt.landings) out.push(...await landings(d, opt, g, h));
   }
   await h.closeAll();
@@ -93,7 +112,6 @@ async function landings(d, opt, g, h) {
     if (!r) { out.push(row('U0.landing', g.name + ' #' + k, 'no highlighted row', false)); continue; }
     const c = await d.ev(`__TT.chByNum(${JSON.stringify(r.num)})`);
     await d.ev(`__TT.guideStart(${JSON.stringify(c.id)})`);
-    await h.api();
     const t = Date.now();
     await d.key(K.ENTER);
     const ff = await h.firstFrame(t);
@@ -101,6 +119,7 @@ async function landings(d, opt, g, h) {
     await h.waitFor("(function(){var s=__TT.st();return s.bNext?1:0})()", d.mode === 'tv' ? 4000 : 500, 100);
     const s = await h.st();
     await h.waitFor(`__TT.guide[${JSON.stringify(c.id)}]`, 15000);
+    const ref = await h.api();                                    // fresh reference, right after the banner was read
     const a = await d.ev(`__TT.apiNow(${JSON.stringify(c.id)})`);
     const gn = await d.ev(`__TT.guideAt(${JSON.stringify(c.id)}, Date.now())`);
     const where = g.name + ' · ' + c.num + ' ' + c.name;
@@ -112,7 +131,7 @@ async function landings(d, opt, g, h) {
     const dryGuideOnly = d.mode === 'dry' && !a && !!gn.cur && !norm(s.bNow);
     out.push(row('U0.banner-fields', where, `num «${s.bNum}» · title «${norm(s.bTitle).slice(0, 50)}» · now «${norm(s.bNow).slice(0, 60)}» · next «${norm(s.bNext).slice(0, 50)}» · clock «${s.bClock}» · shown ${s.banner}`,
       (s.banner && s.bNum === String(c.num) && norm(s.bTitle).indexOf(norm(c.name)) === 0 && (!needNow || /\d\d:\d\d\D{1,3}\d\d:\d\d/.test(s.bNow)) && clockOk) ? true : dryGuideOnly ? null : false));
-    out.push(row('U0.banner==row', where, `menu «${norm(r.sub).slice(0, 60)}» · banner «${norm(s.bNow).slice(0, 60)}» · API on air «${a ? a.title : '—'}»`,
+    out.push(row('U0.banner==row', where, `menu «${norm(r.sub).slice(0, 60)}» · banner «${norm(s.bNow).slice(0, 60)}» · API on air «${a ? a.title : '—'}» (fresh, ${ref.at - s.now} ms after the banner, ${ref.ended} ended in it)`,
       hasText(s.bNow, r.sub) && (!a || hasText(s.bNow, a.title))));
     // Without a first frame (dry mode) the app does not load the guide, so an empty «Далее» proves nothing.
     const nextOk = !gn.next || (hasText(s.bNext, 'Далее') && hasText(s.bNext, gn.next));
@@ -175,6 +194,9 @@ async function panelAcrossMidnight(d, h) {
     await h.guideLoaded();
     await d.key(K.DOWN); await d.sleep(2500);
     const f = (await d.ev("__TT.rows('p-list')")).find((r) => r.focus), title = (await h.st()).progTitle;
+    await h.api();                                                // a fresh reference within seconds of the read
+    const fresh = await d.ev(`__TT.apiNow(${JSON.stringify(c.key.replace(/^ott:/, ''))})`);
+    if (fresh) c.title = fresh.title;
     out.push(row('M4.after-midnight (P8)', c.num + ' ' + c.name, `on air «${c.title}» (started before 00:00) · panel «${title}» cursor ${f ? f.num + ' «' + norm(f.title).slice(0, 40) + '» ' + f.sub : 'none'}`,
       !!f && f.sub === 'в эфире' && hasText(f.title, c.title)));
     await h.closeAll();
@@ -338,12 +360,15 @@ export async function M6(d, opt) {
 export async function menuOpenFreshness(d, minutes) {
   const h = helpers(d), out = [];
   await h.closeAll(); await d.key(K.ENTER); await d.sleep(800);
-  let bad = 0, checks = 0; const examples = [];
+  let bad = 0, checks = 0, maxEnded = 0, maxLag = 0, badRefs = 0; const examples = [];
   for (let m = 1; m <= minutes; m++) {
     await d.sleep(60000);
     if ((await h.st()).overlay !== 'menu') { out.push(row('M11.menu-open', '—', 'the menu closed by itself at +' + m + ' min', false)); return out; }
-    await h.api();
+    const readAt = await d.ev('Date.now()');
     const rows = (await d.ev("__TT.rows('channels')")).filter((r) => r.full);
+    const ref = await h.api();
+    if (!ref || !ref.size || ref.at - readAt > 10000) { badRefs++; continue; }   // no fresh reference this minute
+    maxEnded = Math.max(maxEnded, ref.ended); maxLag = Math.max(maxLag, ref.at - readAt);
     for (const r of rows) {
       const c = await d.ev(`__TT.chByNum(${JSON.stringify(r.num)})`), a = c && await d.ev(`__TT.apiNow(${JSON.stringify(c.id)})`);
       if (!a) continue;
@@ -352,6 +377,6 @@ export async function menuOpenFreshness(d, minutes) {
     }
   }
   await h.closeAll();
-  out.push(row('M11.menu-open', minutes + ' min', `${checks} row checks · ${bad} not on air` + (examples.length ? ' · ' + examples.join(' | ') : ''), bad === 0 && checks > 0));
+  out.push(row('M11.menu-open', minutes + ' min', `${checks} row checks · ${bad} not on air · reference fresh, ≤ ${maxLag} ms after each read, ended shows in it ≤ ${maxEnded} · ${badRefs} minutes without a usable reference` + (examples.length ? ' · ' + examples.join(' | ') : ''), bad === 0 && checks > 0));
   return out;
 }

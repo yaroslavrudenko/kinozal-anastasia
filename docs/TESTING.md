@@ -888,3 +888,418 @@ PASS 87 · FAIL 6 · DRY-SKIP 113 · NOT-RUN 0
 - Result: **0 of 40 runs** had a press with more than 2 layouts. Earlier, without instrumentation, 1 of 20 runs had three such presses (`2,2,0,3,…,3,…,3`), with no channel-list answer during them.
 - Font loading, logo decode, spinner and banner mutations never landed inside a press window in these runs. Not reproduced, so no cause is proven.
 - The earlier sample has a 0 just before the first 3. That suggests one press's layout was sometimes counted in the next press's window (a frame-timing artefact), but this is not proven.
+
+### 2026-10-26 05:42–07:10 — DRY runs against the perf-fixes worktree with a FRESH «on air» reference
+
+**Runner change:** every «on air» reference is now the provider's fresh answer, `/api/channel_now?t=<seconds>`; the plain URL is served from a cache that is often minutes old.
+- Each U0 page is compared with a reference fetched right after the page was read, at most 10 s later (measured: ≤ 5.9 s).
+- A failed, empty or late reference is not judged and is counted.
+- Each result row records the reference's delay and its number of ended shows.
+- Run B adds a tie-breaker: when a row and the list API disagree, the channel's own guide decides what is on air at the read time.
+
+The worktree was being edited during these runs (commit `37e1b5d` plus about 19 changed files).
+
+**Result:** rows still differ from the fresh reference, and in every Run B case the channel's guide agreed with the reference, not with the row.
+- **Run B U0, 9 rows:** Все каналы 2 (1 Channel 9 — the playing channel, row from the guide; 13 Knesset); Украина 3 (58 МТМ, 250 Niki junior, 309 36.6); Кино 1 (231 «… 12 серия» while 13 is on air); Развлекательные 3 (313 ПлюсПлюс, 334 2х2 «118 с.» while 119 is on air, 338 Міледі ТВ). Banner 68 FreeДОМ showed «Спеціальний репортаж» while the reference had «Історичні факти».
+- **M11 with the menu open 30 min (Run B):** 42 of 390 per-minute checks differed. 369 Bridge and 371 Bridge хит showed «Нет данных» for 12+ minutes while the fresh answer had «Wake Up Call»; their guide is empty. After the 30 min, U0 on Все каналы had 4 rows differing.
+- **Run A (before the guide tie-breaker):** Все каналы 1 (236 Fresh Kids). In M11, one minute's reference timed out at 20 s; such minutes are now counted as not judged. After the 30 min, U0 had 19 rows differing while the reference itself still listed up to 48 ended shows, so it was not trustworthy.
+
+#### Run A — 2026-10-26 05:42 (local) — DRY (desktop, headless Chrome, no picture) · tree /Users/yaroslavr/Developer/Projects/AI/kinozal-anastasia-perf · cases U0,M2,M4,M5,M7,M8,M9,M6,C2,M10,M11
+
+PASS 93 · FAIL 2 · DRY-SKIP 111 · NOT-RUN 0
+
+| Case | Channel / group | Measured | Result |
+|---|---|---|---|
+| U0.rows | Все каналы | 372/372 rows seen · empty 0 · not on air 1 · no API programme 0 · reference: 30 fresh fetches, ≤ 4067 ms after each page read, ended shows in it ≤ 1 · 236 Fresh Kids: «Моана» ≠ on air «Монстры на каникулах» | FAIL |
+| U0.banner-fields | Все каналы · 1 Channel 9 (Израиль) | num «1» · title «Channel 9 (Израиль)» · now «05:00⁠–⁠05:45 Т/с "Обручальное кольцо", 697 с.» · next «Далее 05:45 Т/с "Обручальное кольцо", 698 с.» · clock «05:43» · shown true | PASS |
+| U0.banner==row | Все каналы · 1 Channel 9 (Израиль) | menu «Т/с "Обручальное кольцо", 697 с.» · banner «05:00⁠–⁠05:45 Т/с "Обручальное кольцо", 697 с.» · API on air «Т/с "Обручальное кольцо", 697 с.» (fresh, 2459 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Все каналы · 1 Channel 9 (Израиль) | guide next «Т/с "Обручальное кольцо", 698 с.» · banner «Далее 05:45 Т/с "Обручальное кольцо", 698 с.» | PASS |
+| U0.first-frame | Все каналы · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Все каналы · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Все каналы · 186 Кинохит | num «186» · title «Кинохит» · now «05:25⁠–⁠07:35 Х/ф "Вальмон".» · next «» · clock «05:43» · shown true | PASS |
+| U0.banner==row | Все каналы · 186 Кинохит | menu «Х/ф "Вальмон".» · banner «05:25⁠–⁠07:35 Х/ф "Вальмон".» · API on air «Х/ф "Вальмон".» (fresh, 2489 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Все каналы · 186 Кинохит | guide next «Х/ф "Новая Земля".» · banner «» | DRY-SKIP |
+| U0.first-frame | Все каналы · 186 Кинохит | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Все каналы · 186 Кинохит | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Все каналы · 372 Жара | num «372» · title «Жара» · now «03:40⁠–⁠06:00 Мегамикс» · next «» · clock «05:44» · shown true | PASS |
+| U0.banner==row | Все каналы · 372 Жара | menu «Мегамикс» · banner «03:40⁠–⁠06:00 Мегамикс» · API on air «Мегамикс» (fresh, 2837 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Все каналы · 372 Жара | guide next «Музыкальный блок» · banner «» | DRY-SKIP |
+| U0.first-frame | Все каналы · 372 Жара | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Все каналы · 372 Жара | no picture in dry mode | DRY-SKIP |
+| U0.rows | Израиль | 18/18 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 2 fresh fetches, ≤ 2970 ms after each page read, ended shows in it ≤ 0 | PASS |
+| U0.banner-fields | Израиль · 1 Channel 9 (Израиль) | num «1» · title «Channel 9 (Израиль)» · now «05:00⁠–⁠05:45 Т/с "Обручальное кольцо", 697 с.» · next «Далее 05:45 Т/с "Обручальное кольцо", 698 с.» · clock «05:44» · shown true | PASS |
+| U0.banner==row | Израиль · 1 Channel 9 (Израиль) | menu «Т/с "Обручальное кольцо", 697 с.» · banner «05:00⁠–⁠05:45 Т/с "Обручальное кольцо", 697 с.» · API on air «Т/с "Обручальное кольцо", 697 с.» (fresh, 2295 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Израиль · 1 Channel 9 (Израиль) | guide next «Т/с "Обручальное кольцо", 698 с.» · banner «Далее 05:45 Т/с "Обручальное кольцо", 698 с.» | PASS |
+| U0.first-frame | Израиль · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Израиль · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Израиль · 9 HOP! (Израиль) | num «9» · title «HOP! (Израиль)» · now «05:00⁠–⁠07:30 בוקר חיוכים» · next «» · clock «05:44» · shown true | PASS |
+| U0.banner==row | Израиль · 9 HOP! (Израиль) | menu «בוקר חיוכים» · banner «05:00⁠–⁠07:30 בוקר חיוכים» · API on air «בוקר חיוכים» (fresh, 2616 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Израиль · 9 HOP! (Израиль) | guide next «קוקוריקו» · banner «» | DRY-SKIP |
+| U0.first-frame | Израиль · 9 HOP! (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Израиль · 9 HOP! (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Израиль · 18 HOT HBO (Израиль) | num «18» · title «HOT HBO (Израиль)» · now «04:40⁠–⁠08:40 נשוב לשדר ב-09:40» · next «» · clock «05:44» · shown true | PASS |
+| U0.banner==row | Израиль · 18 HOT HBO (Израиль) | menu «נשוב לשדר ב-09:40» · banner «04:40⁠–⁠08:40 נשוב לשדר ב-09:40» · API on air «נשוב לשדר ב-09:40» (fresh, 2290 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Израиль · 18 HOT HBO (Израиль) | guide next «1923» · banner «» | DRY-SKIP |
+| U0.first-frame | Израиль · 18 HOT HBO (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Израиль · 18 HOT HBO (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.rows | Украина | 86/86 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 7 fresh fetches, ≤ 4109 ms after each page read, ended shows in it ≤ 0 | PASS |
+| U0.banner-fields | Украина · 19 Інтер | num «19» · title «Інтер» · now «05:00⁠–⁠06:00 "Єдині новини". Телемарафон.» · next «» · clock «05:45» · shown true | PASS |
+| U0.banner==row | Украина · 19 Інтер | menu «"Єдині новини". Телемарафон.» · banner «05:00⁠–⁠06:00 "Єдині новини". Телемарафон.» · API on air «"Єдині новини". Телемарафон.» (fresh, 2834 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Украина · 19 Інтер | guide next «"Єдині новини". Телемарафон.» · banner «» | DRY-SKIP |
+| U0.first-frame | Украина · 19 Інтер | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Украина · 19 Інтер | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Украина · 258 Sport 1 | num «258» · title «Sport 1» · now «05:00⁠–⁠07:00 Футбол. Чемпіонат Латвії. Вірсліга. РФС - Туку» · next «» · clock «05:45» · shown true | PASS |
+| U0.banner==row | Украина · 258 Sport 1 | menu «Футбол. Чемпіонат Латвії. Вірсліга. РФС - Тукумс 2000.» · banner «05:00⁠–⁠07:00 Футбол. Чемпіонат Латвії. Вірсліга. РФС - Туку» · API on air «Футбол. Чемпіонат Латвії. Вірсліга. РФС - Тукумс 2000.» (fresh, 2438 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Украина · 258 Sport 1 | guide next «Футбол. Чемпіонат Польщі. Екстракласа. Відзев - Гурник.» · banner «» | DRY-SKIP |
+| U0.first-frame | Украина · 258 Sport 1 | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Украина · 258 Sport 1 | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Украина · 366 Viva Latino | num «366» · title «Viva Latino» · now «05:00⁠–⁠13:00 Кліпи.» · next «» · clock «05:45» · shown true | PASS |
+| U0.banner==row | Украина · 366 Viva Latino | menu «Кліпи.» · banner «05:00⁠–⁠13:00 Кліпи.» · API on air «Кліпи.» (fresh, 2513 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Украина · 366 Viva Latino | guide next «Кліпи.» · banner «» | DRY-SKIP |
+| U0.first-frame | Украина · 366 Viva Latino | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Украина · 366 Viva Latino | no picture in dry mode | DRY-SKIP |
+| U0.rows | Национальные | 62/62 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 5 fresh fetches, ≤ 3410 ms after each page read, ended shows in it ≤ 0 | PASS |
+| U0.banner-fields | Национальные · 1 Channel 9 (Израиль) | num «1» · title «Channel 9 (Израиль)» · now «05:45⁠–⁠06:30 Т/с "Обручальное кольцо", 698 с.» · next «Далее 06:30 Т/с "Свидетели", 82 с. "Долгая память"» · clock «05:45» · shown true | PASS |
+| U0.banner==row | Национальные · 1 Channel 9 (Израиль) | menu «Т/с "Обручальное кольцо", 698 с.» · banner «05:45⁠–⁠06:30 Т/с "Обручальное кольцо", 698 с.» · API on air «Т/с "Обручальное кольцо", 698 с.» (fresh, 3673 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Национальные · 1 Channel 9 (Израиль) | guide next «Т/с "Свидетели", 82 с. "Долгая память".» · banner «Далее 06:30 Т/с "Свидетели", 82 с. "Долгая память".» | PASS |
+| U0.first-frame | Национальные · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Национальные · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Национальные · 31 Астана ТВ (Казахстан) | num «31» · title «Астана ТВ (Казахстан)» · now «05:00⁠–⁠06:25 Основание Орхан» · next «» · clock «05:46» · shown true | PASS |
+| U0.banner==row | Национальные · 31 Астана ТВ (Казахстан) | menu «Основание Орхан» · banner «05:00⁠–⁠06:25 Основание Орхан» · API on air «Основание Орхан» (fresh, 4442 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Национальные · 31 Астана ТВ (Казахстан) | guide next «Үздік әзілдер» · banner «» | DRY-SKIP |
+| U0.first-frame | Национальные · 31 Астана ТВ (Казахстан) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Национальные · 31 Астана ТВ (Казахстан) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Национальные · 62 Армія TV | num «62» · title «Армія TV» · now «05:00⁠–⁠06:00 Нет данных» · next «» · clock «05:46» · shown true | PASS |
+| U0.banner==row | Национальные · 62 Армія TV | menu «Нет данных» · banner «05:00⁠–⁠06:00 Нет данных» · API on air «Нет данных» (fresh, 3516 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Национальные · 62 Армія TV | guide next «—» · banner «» | DRY-SKIP |
+| U0.first-frame | Национальные · 62 Армія TV | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Национальные · 62 Армія TV | no picture in dry mode | DRY-SKIP |
+| U0.rows | Новостные | 11/11 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 1 fresh fetches, ≤ 2909 ms after each page read, ended shows in it ≤ 0 | PASS |
+| U0.banner-fields | Новостные · 63 Deutsche Welle | num «63» · title «Deutsche Welle» · now «05:30⁠–⁠06:00 Euromaxx. Culture. Ideas. Europe.» · next «» · clock «05:46» · shown true | PASS |
+| U0.banner==row | Новостные · 63 Deutsche Welle | menu «Euromaxx. Culture. Ideas. Europe.» · banner «05:30⁠–⁠06:00 Euromaxx. Culture. Ideas. Europe.» · API on air «Euromaxx. Culture. Ideas. Europe.» (fresh, 3507 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Новостные · 63 Deutsche Welle | guide next «DW News.» · banner «» | DRY-SKIP |
+| U0.first-frame | Новостные · 63 Deutsche Welle | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Новостные · 63 Deutsche Welle | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Новостные · 68 FreeДОМ | num «68» · title «FreeДОМ» · now «05:30⁠–⁠06:00 Інформаційні сюжети.» · next «» · clock «05:46» · shown true | PASS |
+| U0.banner==row | Новостные · 68 FreeДОМ | menu «Інформаційні сюжети.» · banner «05:30⁠–⁠06:00 Інформаційні сюжети.» · API on air «Інформаційні сюжети.» (fresh, 3136 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Новостные · 68 FreeДОМ | guide next «Наш час.» · banner «» | DRY-SKIP |
+| U0.first-frame | Новостные · 68 FreeДОМ | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Новостные · 68 FreeДОМ | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Новостные · 73 Новини Live | num «73» · title «Новини Live» · now «05:00⁠–⁠06:00 Нет данных» · next «» · clock «05:46» · shown true | PASS |
+| U0.banner==row | Новостные · 73 Новини Live | menu «Нет данных» · banner «05:00⁠–⁠06:00 Нет данных» · API on air «Нет данных» (fresh, 2679 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Новостные · 73 Новини Live | guide next «—» · banner «» | DRY-SKIP |
+| U0.first-frame | Новостные · 73 Новини Live | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Новостные · 73 Новини Live | no picture in dry mode | DRY-SKIP |
+| U0.rows | Познавательные | 64/64 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 6 fresh fetches, ≤ 3436 ms after each page read, ended shows in it ≤ 3 | PASS |
+| U0.banner-fields | Познавательные · 74 National Geographic | num «74» · title «National Geographic» · now «05:45⁠–⁠06:05 Научные глупости ┊ 10» · next «» · clock «05:47» · shown true | PASS |
+| U0.banner==row | Познавательные · 74 National Geographic | menu «Научные глупости ┊ 10» · banner «05:45⁠–⁠06:05 Научные глупости ┊ 10» · API on air «Научные глупости ┊ 10» (fresh, 3015 ms after the banner, 1 ended in it) | PASS |
+| U0.next | Познавательные · 74 National Geographic | guide next «д/с Настоящий суперкар (Саб-Зиро Порше)» · banner «» | DRY-SKIP |
+| U0.first-frame | Познавательные · 74 National Geographic | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Познавательные · 74 National Geographic | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Познавательные · 105 Discovery | num «105» · title «Discovery» · now «05:00⁠–⁠06:00 Грязные богатства, 2 с-н 8 с. Мегазубы для мег» · next «» · clock «05:47» · shown true | PASS |
+| U0.banner==row | Познавательные · 105 Discovery | menu «Грязные богатства, 2 с-н 8 с. Мегазубы для мегабаксов» · banner «05:00⁠–⁠06:00 Грязные богатства, 2 с-н 8 с. Мегазубы для мег» · API on air «Грязные богатства, 2 с-н 8 с. Мегазубы для мегабаксов» (fresh, 3849 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Познавательные · 105 Discovery | guide next «Грязные богатства, 2 с-н 9 с. Заплесневелые сокровища» · banner «» | DRY-SKIP |
+| U0.first-frame | Познавательные · 105 Discovery | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Познавательные · 105 Discovery | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Познавательные · 137 ЗооСвіт | num «137» · title «ЗооСвіт» · now «05:00⁠–⁠06:00 Нет данных» · next «» · clock «05:47» · shown true | PASS |
+| U0.banner==row | Познавательные · 137 ЗооСвіт | menu «Нет данных» · banner «05:00⁠–⁠06:00 Нет данных» · API on air «Нет данных» (fresh, 2484 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Познавательные · 137 ЗооСвіт | guide next «—» · banner «» | DRY-SKIP |
+| U0.first-frame | Познавательные · 137 ЗооСвіт | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Познавательные · 137 ЗооСвіт | no picture in dry mode | DRY-SKIP |
+| U0.rows | Кино | 95/95 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 8 fresh fetches, ≤ 3584 ms after each page read, ended shows in it ≤ 0 | PASS |
+| U0.banner-fields | Кино · 138 KinoKazka | num «138» · title «KinoKazka» · now «04:20⁠–⁠06:15 х/ф Волшебный нос» · next «» · clock «05:48» · shown true | PASS |
+| U0.banner==row | Кино · 138 KinoKazka | menu «х/ф Волшебный нос» · banner «04:20⁠–⁠06:15 х/ф Волшебный нос» · API on air «х/ф Волшебный нос» (fresh, 2766 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Кино · 138 KinoKazka | guide next «м/ф Стрекоза и муравей» · banner «» | DRY-SKIP |
+| U0.first-frame | Кино · 138 KinoKazka | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Кино · 138 KinoKazka | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Кино · 185 Cineman MiniSeries | num «185» · title «Cineman MiniSeries» · now «05:43⁠–⁠06:40 Молодой Папа 1 сезон 3 серия» · next «» · clock «05:48» · shown true | PASS |
+| U0.banner==row | Кино · 185 Cineman MiniSeries | menu «Молодой Папа 1 сезон 3 серия» · banner «05:43⁠–⁠06:40 Молодой Папа 1 сезон 3 серия» · API on air «Молодой Папа 1 сезон 3 серия» (fresh, 2685 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Кино · 185 Cineman MiniSeries | guide next «Молодой Папа 1 сезон 4 серия» · banner «» | DRY-SKIP |
+| U0.first-frame | Кино · 185 Cineman MiniSeries | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Кино · 185 Cineman MiniSeries | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Кино · 232 BCU | num «232» · title «BCU» · now «05:00⁠–⁠06:00 Нет данных» · next «» · clock «05:48» · shown true | PASS |
+| U0.banner==row | Кино · 232 BCU | menu «Нет данных» · banner «05:00⁠–⁠06:00 Нет данных» · API on air «Нет данных» (fresh, 2501 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Кино · 232 BCU | guide next «—» · banner «» | DRY-SKIP |
+| U0.first-frame | Кино · 232 BCU | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Кино · 232 BCU | no picture in dry mode | DRY-SKIP |
+| U0.rows | Детские | 22/22 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 2 fresh fetches, ≤ 3321 ms after each page read, ended shows in it ≤ 0 | PASS |
+| U0.banner-fields | Детские · 233 Nick Jr | num «233» · title «Nick Jr» · now «05:25⁠–⁠05:50 М/с "Мистер Крокодил", 1 сезон, 1 с. "Кому пов» · next «» · clock «05:48» · shown true | PASS |
+| U0.banner==row | Детские · 233 Nick Jr | menu «М/с "Мистер Крокодил", 1 сезон, 1 с. "Кому повезёт, у того и» · banner «05:25⁠–⁠05:50 М/с "Мистер Крокодил", 1 сезон, 1 с. "Кому пов» · API on air «М/с "Мистер Крокодил", 1 сезон, 1 с. "Кому повезёт, у того и крокодил запоёт / Крокодилья ночевка".» (fresh, 2640 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Детские · 233 Nick Jr | guide next «М/с "Барбапапа и семья!", 2 сезон, 3 с. "Летний лагерь".» · banner «» | DRY-SKIP |
+| U0.first-frame | Детские · 233 Nick Jr | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Детские · 233 Nick Jr | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Детские · 243 В гостях у сказки | num «243» · title «В гостях у сказки» · now «05:45⁠–⁠06:00 М/с "Смешарики. ПинКод", 3 сезон, 6 с. "Плохой» · next «» · clock «05:48» · shown true | PASS |
+| U0.banner==row | Детские · 243 В гостях у сказки | menu «М/с "Смешарики. ПинКод", 3 сезон, 6 с. "Плохой хороший Крош"» · banner «05:45⁠–⁠06:00 М/с "Смешарики. ПинКод", 3 сезон, 6 с. "Плохой» · API on air «М/с "Смешарики. ПинКод", 3 сезон, 6 с. "Плохой хороший Крош".» (fresh, 2496 ms after the banner, 4 ended in it) | PASS |
+| U0.next | Детские · 243 В гостях у сказки | guide next «М/с "Смешарики. ПинКод", 3 сезон, 7 с. "Баю бай".» · banner «» | DRY-SKIP |
+| U0.first-frame | Детские · 243 В гостях у сказки | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Детские · 243 В гостях у сказки | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Детские · 254 Nickelodeon | num «254» · title «Nickelodeon» · now «05:23⁠–⁠05:49 Мой шумный дом» · next «» · clock «05:49» · shown true | PASS |
+| U0.banner==row | Детские · 254 Nickelodeon | menu «Мой шумный дом» · banner «05:23⁠–⁠05:49 Мой шумный дом» · API on air «Мой шумный дом» (fresh, 2584 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Детские · 254 Nickelodeon | guide next «Губка Боб Квадратные Штаны» · banner «» | DRY-SKIP |
+| U0.first-frame | Детские · 254 Nickelodeon | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Детские · 254 Nickelodeon | no picture in dry mode | DRY-SKIP |
+| U0.rows | Спорт | 41/41 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 4 fresh fetches, ≤ 2503 ms after each page read, ended shows in it ≤ 0 | PASS |
+| U0.banner-fields | Спорт · 255 Setanta Sports UA | num «255» · title «Setanta Sports UA» · now «05:00⁠–⁠07:00 Футбол. Чемпионат Англии. Чемпионшип. Чарльтон» · next «» · clock «05:49» · shown true | PASS |
+| U0.banner==row | Спорт · 255 Setanta Sports UA | menu «Футбол. Чемпионат Англии. Чемпионшип. Чарльтон Атлетик - Нор» · banner «05:00⁠–⁠07:00 Футбол. Чемпионат Англии. Чемпионшип. Чарльтон» · API on air «Футбол. Чемпионат Англии. Чемпионшип. Чарльтон Атлетик - Норвич Сити.» (fresh, 2624 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Спорт · 255 Setanta Sports UA | guide next «Футбол. Чемпионат Германии. РБ Лейпциг - Эльферсберг.» · banner «» | DRY-SKIP |
+| U0.first-frame | Спорт · 255 Setanta Sports UA | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Спорт · 255 Setanta Sports UA | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Спорт · 275 KHL ТВ | num «275» · title «KHL ТВ» · now «05:00⁠–⁠07:20 ФОНБЕТ Чемпионат КХЛ. "Салават Юлаев" - "Ак Ба» · next «» · clock «05:49» · shown true | PASS |
+| U0.banner==row | Спорт · 275 KHL ТВ | menu «ФОНБЕТ Чемпионат КХЛ. "Салават Юлаев" - "Ак Барс".» · banner «05:00⁠–⁠07:20 ФОНБЕТ Чемпионат КХЛ. "Салават Юлаев" - "Ак Ба» · API on air «ФОНБЕТ Чемпионат КХЛ. "Салават Юлаев" - "Ак Барс".» (fresh, 3632 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Спорт · 275 KHL ТВ | guide next «"Видео дня".» · banner «» | DRY-SKIP |
+| U0.first-frame | Спорт · 275 KHL ТВ | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Спорт · 275 KHL ТВ | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Спорт · 295 ОККО Прайм Спорт | num «295» · title «ОККО Прайм Спорт» · now «04:20⁠–⁠08:00 Футбол. Франция. 1–4 c» · next «» · clock «05:49» · shown true | PASS |
+| U0.banner==row | Спорт · 295 ОККО Прайм Спорт | menu «Футбол. Франция. 1–4 c» · banner «04:20⁠–⁠08:00 Футбол. Франция. 1–4 c» · API on air «Футбол. Франция. 1–4 c» (fresh, 3717 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Спорт · 295 ОККО Прайм Спорт | guide next «Новости спорта» · banner «» | DRY-SKIP |
+| U0.first-frame | Спорт · 295 ОККО Прайм Спорт | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Спорт · 295 ОККО Прайм Спорт | no picture in dry mode | DRY-SKIP |
+| U0.rows | Развлекательные | 52/52 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 5 fresh fetches, ≤ 4469 ms after each page read, ended shows in it ≤ 1 | PASS |
+| U0.banner-fields | Развлекательные · 296 Fashion ONE | num «296» · title «Fashion ONE» · now «05:40⁠–⁠05:54 Неделя моды в Париже. Zuhair Murad Couture. Ос» · next «» · clock «05:50» · shown true | PASS |
+| U0.banner==row | Развлекательные · 296 Fashion ONE | menu «Неделя моды в Париже. Zuhair Murad Couture. Осень-Зима 22-23» · banner «05:40⁠–⁠05:54 Неделя моды в Париже. Zuhair Murad Couture. Ос» · API on air «Неделя моды в Париже. Zuhair Murad Couture. Осень-Зима 22-23 (12+)» (fresh, 2797 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Развлекательные · 296 Fashion ONE | guide next «Модные Показы (12+)» · banner «» | DRY-SKIP |
+| U0.first-frame | Развлекательные · 296 Fashion ONE | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Развлекательные · 296 Fashion ONE | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Развлекательные · 321 Панянка-селянка+ | num «321» · title «Панянка-селянка+» · now «05:00⁠–⁠06:00 Програма відсутня» · next «» · clock «05:50» · shown true | PASS |
+| U0.banner==row | Развлекательные · 321 Панянка-селянка+ | menu «Програма відсутня» · banner «05:00⁠–⁠06:00 Програма відсутня» · API on air «Програма відсутня» (fresh, 3656 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Развлекательные · 321 Панянка-селянка+ | guide next «Програма відсутня» · banner «» | DRY-SKIP |
+| U0.first-frame | Развлекательные · 321 Панянка-селянка+ | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Развлекательные · 321 Панянка-селянка+ | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Развлекательные · 347 Ми - Україна | num «347» · title «Ми - Україна» · now «05:00⁠–⁠06:00 "Єдині новини". Телемарафон.» · next «» · clock «05:50» · shown true | PASS |
+| U0.banner==row | Развлекательные · 347 Ми - Україна | menu «"Єдині новини". Телемарафон.» · banner «05:00⁠–⁠06:00 "Єдині новини". Телемарафон.» · API on air «"Єдині новини". Телемарафон.» (fresh, 3030 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Развлекательные · 347 Ми - Україна | guide next «"Єдині новини". Телемарафон.» · banner «» | DRY-SKIP |
+| U0.first-frame | Развлекательные · 347 Ми - Україна | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Развлекательные · 347 Ми - Україна | no picture in dry mode | DRY-SKIP |
+| U0.rows | Музыкальные | 25/25 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 2 fresh fetches, ≤ 3993 ms after each page read, ended shows in it ≤ 0 | PASS |
+| U0.banner-fields | Музыкальные · 348 Stingray iConcerts | num «348» · title «Stingray iConcerts» · now «05:22⁠–⁠07:00 Queens of the Stone Age: Zenith, Paris. 2013.» · next «» · clock «05:50» · shown true | PASS |
+| U0.banner==row | Музыкальные · 348 Stingray iConcerts | menu «Queens of the Stone Age: Zenith, Paris. 2013.» · banner «05:22⁠–⁠07:00 Queens of the Stone Age: Zenith, Paris. 2013.» · API on air «Queens of the Stone Age: Zenith, Paris. 2013.» (fresh, 4631 ms after the banner, 2 ended in it) | PASS |
+| U0.next | Музыкальные · 348 Stingray iConcerts | guide next «Take That: Wonderland Live from The O2 Arena, London. 2017.» · banner «» | DRY-SKIP |
+| U0.first-frame | Музыкальные · 348 Stingray iConcerts | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Музыкальные · 348 Stingray iConcerts | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Музыкальные · 360 4ever Music | num «360» · title «4ever Music» · now «05:00⁠–⁠13:00 Хіти минулих років.» · next «» · clock «05:51» · shown true | PASS |
+| U0.banner==row | Музыкальные · 360 4ever Music | menu «Хіти минулих років.» · banner «05:00⁠–⁠13:00 Хіти минулих років.» · API on air «Хіти минулих років.» (fresh, 2624 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Музыкальные · 360 4ever Music | guide next «Хіти минулих років.» · banner «» | DRY-SKIP |
+| U0.first-frame | Музыкальные · 360 4ever Music | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Музыкальные · 360 4ever Music | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Музыкальные · 372 Жара | num «372» · title «Жара» · now «03:40⁠–⁠06:00 Мегамикс» · next «» · clock «05:51» · shown true | PASS |
+| U0.banner==row | Музыкальные · 372 Жара | menu «Мегамикс» · banner «03:40⁠–⁠06:00 Мегамикс» · API on air «Мегамикс» (fresh, 2594 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Музыкальные · 372 Жара | guide next «Музыкальный блок» · banner «» | DRY-SKIP |
+| U0.first-frame | Музыкальные · 372 Жара | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Музыкальные · 372 Жара | no picture in dry mode | DRY-SKIP |
+| M2.open-on-playing | 372 Жара | cursor on 372 Жара  ▶ · playing marker true | PASS |
+| M4.cursor-on-air | 372 Жара | 03:40 «Мегамикс» в эфире · API «Мегамикс» | PASS |
+| M4.day-back | 372 Жара | Жара — Вчера | PASS |
+| M4.past-plays | 372 Жара | «Музыкальный блок» → mode archive · banner «Жара · Архив · 00:30» · dry | PASS |
+| M4.after-midnight (P8) | 71 Прямий | on air «Повтори прямих ефірів і передач дня» (started before 00:00) · panel «Прямий — Сегодня» cursor 23:20 «Повтори прямих ефірів і передач дня» в эфире | PASS |
+| M4.after-midnight (P8) | 84 Перший Автомобільний | on air «Мотоспорт. MotoGP. Сезон 2026.» (started before 00:00) · panel «Перший Автомобільний — Сегодня» cursor 23:00 «Мотоспорт. MotoGP. Сезон 2026.» в эфире | PASS |
+| M4.after-midnight (P8) | 266 Беларусь 5 | on air «Перерыв в вещании.» (started before 00:00) · panel «Беларусь 5 — Сегодня» cursor 23:50 «Перерыв в вещании.» в эфире | PASS |
+| M5.scrub-back | 266 Беларусь 5 | knob 05:49:11 · position 05:49:11 · dry | PASS |
+| M5.7-day-edge (D1) | 266 Беларусь 5 | knob 07:04:11 · mode archive · no picture in dry mode | DRY-SKIP |
+| M5.to-live | 266 Беларусь 5 | knob прямой эфир · mode live | PASS |
+| M7.single | 267 Prime Fight | no picture in dry mode | DRY-SKIP |
+| M7.single | 268 Qazsport | no picture in dry mode | DRY-SKIP |
+| M7.single | 269 Матч! Боец | no picture in dry mode | DRY-SKIP |
+| M7.burst | from 269 Матч! Боец | landed 279 Матч! Футбол 3 (expected 279 Матч! Футбол 3) · 2 app requests | PASS |
+| M8.paused | 279 Матч! Футбол 3 | mode paused · 0 requests in 10 s | PASS |
+| M8.resume-in-place | 279 Матч! Футбол 3 | paused at 05:56:27 · resumed at 05:56:27 (archive) | DRY-SKIP |
+| M9.live | 279 Матч! Футбол 3 · simulated hide | live → live · position 05:56:41 → 05:56:45 · dry | PASS |
+| M9.archive | 279 Матч! Футбол 3 · simulated hide | archive → archive · position 05:53:45 → 05:53:45 · dry | PASS |
+| M6.continuation (D2) | — | no picture in dry mode | DRY-SKIP |
+| C2.archive-1d | 197 Viju+ Megahit | «La migliore offerta» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-3d | 197 Viju+ Megahit | «8 femmes» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-1d | 215 Кинокомедия | «х/ф Нереальная любовь» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-3d | 215 Кинокомедия | «х/ф Телохранитель на фрилансе» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-1d | 194 sci-fi | «Х/ф "Малышка на драйве".» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-3d | 194 sci-fi | «Х/ф "Взрывная блондинка".» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-1d | 228 Kinoliving | «х/ф Свистуны» · mode archive · no picture in dry mode | DRY-SKIP |
+| C2.archive-3d | 228 Kinoliving | «т/с Пайрэт Бэй ┊ 5» · mode archive · no picture in dry mode | DRY-SKIP |
+| M10.soak | — | no picture in dry mode | DRY-SKIP |
+| M11.menu-open | 30 min | 348 row checks · 0 not on air · reference fresh, ≤ 20007 ms after each read, ended shows in it ≤ 2 | PASS |
+| M11·U0.rows | Все каналы | 372/372 rows seen · empty 0 · not on air 19 · no API programme 1 · reference: 30 fresh fetches, ≤ 4855 ms after each page read, ended shows in it ≤ 48 · 55 Перший Західний: «Переможний голос віруючого.» ≠ on air «Підсумки тижня.» \| 56 Раі: «Новий погляд.» ≠ on air «Підбірка музичних творів.» \| 59 Перший Міський (Кривий Ріг): «Підсумки тижня.» ≠ on air «Інформаційний блок.» \| 60 Jurnal TV (Молдова): «Asfalt de Moldova» ≠ on air «Patrula Jurnal TV» | FAIL |
+| app-errors | — | failure log lines: 40 | INFO |
+
+#### Run B — 2026-10-26 06:32 (local) — DRY (desktop, headless Chrome, no picture) · tree /Users/yaroslavr/Developer/Projects/AI/kinozal-anastasia-perf · cases U0,M11
+
+PASS 75 · FAIL 7 · DRY-SKIP 96 · NOT-RUN 0
+
+| Case | Channel / group | Measured | Result |
+|---|---|---|---|
+| U0.rows | Все каналы | 372/372 rows seen · empty 0 · not on air 2 · no API programme 0 · reference: 30 fresh fetches (0 failed or > 10 s, those pages not judged), ≤ 5880 ms after each page read, ended shows in it ≤ 1 · 0 rows differed from the list API but matched the channel's guide · 1 Channel 9 (Израиль)  ▶: «Т/с "Обручальное кольцо", 698 с.» ≠ on air «Т/с "Свидетели", 82 с. "Долгая память".» (guide: «Т/с "Свидетели", 82 с. "Долгая память".») \| 13 Knesset Channel (Израиль): «המדריך לבחירות» ≠ on air «סוגרים כנס» (guide: «סוגרים כנס») | FAIL |
+| U0.banner-fields | Все каналы · 1 Channel 9 (Израиль) | num «1» · title «Channel 9 (Израиль)» · now «06:30⁠–⁠07:20 Т/с "Свидетели", 82 с. "Долгая память".» · next «Далее 07:20 Т/с "Невидимки". "Змея и чучело".» · clock «06:34» · shown true | PASS |
+| U0.banner==row | Все каналы · 1 Channel 9 (Израиль) | menu «Т/с "Свидетели", 82 с. "Долгая память".» · banner «06:30⁠–⁠07:20 Т/с "Свидетели", 82 с. "Долгая память".» · API on air «Т/с "Свидетели", 82 с. "Долгая память".» (fresh, 4197 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Все каналы · 1 Channel 9 (Израиль) | guide next «Т/с "Невидимки". "Змея и чучело".» · banner «Далее 07:20 Т/с "Невидимки". "Змея и чучело".» | PASS |
+| U0.first-frame | Все каналы · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Все каналы · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Все каналы · 186 Кинохит | num «186» · title «Кинохит» · now «05:25⁠–⁠07:35 Х/ф "Вальмон".» · next «» · clock «06:34» · shown true | PASS |
+| U0.banner==row | Все каналы · 186 Кинохит | menu «Х/ф "Вальмон".» · banner «05:25⁠–⁠07:35 Х/ф "Вальмон".» · API on air «Х/ф "Вальмон".» (fresh, 2422 ms after the banner, 1 ended in it) | PASS |
+| U0.next | Все каналы · 186 Кинохит | guide next «Х/ф "Новая Земля".» · banner «» | DRY-SKIP |
+| U0.first-frame | Все каналы · 186 Кинохит | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Все каналы · 186 Кинохит | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Все каналы · 372 Жара | num «372» · title «Жара» · now «06:00⁠–⁠07:00 Музыкальный блок» · next «» · clock «06:34» · shown true | PASS |
+| U0.banner==row | Все каналы · 372 Жара | menu «Музыкальный блок» · banner «06:00⁠–⁠07:00 Музыкальный блок» · API on air «Музыкальный блок» (fresh, 4270 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Все каналы · 372 Жара | guide next «Жара новости» · banner «» | DRY-SKIP |
+| U0.first-frame | Все каналы · 372 Жара | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Все каналы · 372 Жара | no picture in dry mode | DRY-SKIP |
+| U0.rows | Израиль | 18/18 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 2 fresh fetches (0 failed or > 10 s, those pages not judged), ≤ 3131 ms after each page read, ended shows in it ≤ 0 · 0 rows differed from the list API but matched the channel's guide | PASS |
+| U0.banner-fields | Израиль · 1 Channel 9 (Израиль) | num «1» · title «Channel 9 (Израиль)» · now «06:30⁠–⁠07:20 Т/с "Свидетели", 82 с. "Долгая память".» · next «Далее 07:20 Т/с "Невидимки". "Змея и чучело".» · clock «06:34» · shown true | PASS |
+| U0.banner==row | Израиль · 1 Channel 9 (Израиль) | menu «Т/с "Свидетели", 82 с. "Долгая память".» · banner «06:30⁠–⁠07:20 Т/с "Свидетели", 82 с. "Долгая память".» · API on air «Т/с "Свидетели", 82 с. "Долгая память".» (fresh, 2949 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Израиль · 1 Channel 9 (Израиль) | guide next «Т/с "Невидимки". "Змея и чучело".» · banner «Далее 07:20 Т/с "Невидимки". "Змея и чучело".» | PASS |
+| U0.first-frame | Израиль · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Израиль · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Израиль · 9 HOP! (Израиль) | num «9» · title «HOP! (Израиль)» · now «05:00⁠–⁠07:30 בוקר חיוכים» · next «» · clock «06:34» · shown true | PASS |
+| U0.banner==row | Израиль · 9 HOP! (Израиль) | menu «בוקר חיוכים» · banner «05:00⁠–⁠07:30 בוקר חיוכים» · API on air «בוקר חיוכים» (fresh, 2897 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Израиль · 9 HOP! (Израиль) | guide next «קוקוריקו» · banner «» | DRY-SKIP |
+| U0.first-frame | Израиль · 9 HOP! (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Израиль · 9 HOP! (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Израиль · 18 HOT HBO (Израиль) | num «18» · title «HOT HBO (Израиль)» · now «04:40⁠–⁠08:40 נשוב לשדר ב-09:40» · next «» · clock «06:35» · shown true | PASS |
+| U0.banner==row | Израиль · 18 HOT HBO (Израиль) | menu «נשוב לשדר ב-09:40» · banner «04:40⁠–⁠08:40 נשוב לשדר ב-09:40» · API on air «נשוב לשדר ב-09:40» (fresh, 3754 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Израиль · 18 HOT HBO (Израиль) | guide next «1923» · banner «» | DRY-SKIP |
+| U0.first-frame | Израиль · 18 HOT HBO (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Израиль · 18 HOT HBO (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.rows | Украина | 88/88 rows seen · empty 0 · not on air 3 · no API programme 0 · reference: 8 fresh fetches (0 failed or > 10 s, those pages not judged), ≤ 2894 ms after each page read, ended shows in it ≤ 0 · 0 rows differed from the list API but matched the channel's guide · 58 МТМ: «На часі. Підсумки.» ≠ on air «Погода.» (guide: «Погода.») \| 250 Niki junior: «М/с "Піратка і Капітан", 39 с. "СОС, пірат у небезпеці".» ≠ on air «М/с "Рафік, Толік та Додік", 51 с. "Пригода "Ігровий майданчик".» (guide: «М/с "Рафік, Толік та Додік", 51 с. "Пригода "Ігровий майданчик".») \| 309 36.6: «До 36 і більше, 25 еп.» ≠ on air «Юля зможе?!, 1 еп.» (guide: «Юля зможе?!, 1 еп.») | FAIL |
+| U0.banner-fields | Украина · 19 Інтер | num «19» · title «Інтер» · now «06:00⁠–⁠07:00 "Єдині новини". Телемарафон.» · next «» · clock «06:35» · shown true | PASS |
+| U0.banner==row | Украина · 19 Інтер | menu «"Єдині новини". Телемарафон.» · banner «06:00⁠–⁠07:00 "Єдині новини". Телемарафон.» · API on air «"Єдині новини". Телемарафон.» (fresh, 2606 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Украина · 19 Інтер | guide next «"Єдині новини". Телемарафон.» · banner «» | DRY-SKIP |
+| U0.first-frame | Украина · 19 Інтер | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Украина · 19 Інтер | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Украина · 258 Sport 1 | num «258» · title «Sport 1» · now «05:00⁠–⁠07:00 Футбол. Чемпіонат Латвії. Вірсліга. РФС - Туку» · next «» · clock «06:35» · shown true | PASS |
+| U0.banner==row | Украина · 258 Sport 1 | menu «Футбол. Чемпіонат Латвії. Вірсліга. РФС - Тукумс 2000.» · banner «05:00⁠–⁠07:00 Футбол. Чемпіонат Латвії. Вірсліга. РФС - Туку» · API on air «Футбол. Чемпіонат Латвії. Вірсліга. РФС - Тукумс 2000.» (fresh, 2575 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Украина · 258 Sport 1 | guide next «Футбол. Чемпіонат Польщі. Екстракласа. Відзев - Гурник.» · banner «» | DRY-SKIP |
+| U0.first-frame | Украина · 258 Sport 1 | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Украина · 258 Sport 1 | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Украина · 366 Viva Latino | num «366» · title «Viva Latino» · now «05:00⁠–⁠13:00 Кліпи.» · next «» · clock «06:36» · shown true | PASS |
+| U0.banner==row | Украина · 366 Viva Latino | menu «Кліпи.» · banner «05:00⁠–⁠13:00 Кліпи.» · API on air «Кліпи.» (fresh, 2672 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Украина · 366 Viva Latino | guide next «Кліпи.» · banner «» | DRY-SKIP |
+| U0.first-frame | Украина · 366 Viva Latino | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Украина · 366 Viva Latino | no picture in dry mode | DRY-SKIP |
+| U0.rows | Национальные | 62/62 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 5 fresh fetches (0 failed or > 10 s, those pages not judged), ≤ 2955 ms after each page read, ended shows in it ≤ 0 · 0 rows differed from the list API but matched the channel's guide | PASS |
+| U0.banner-fields | Национальные · 1 Channel 9 (Израиль) | num «1» · title «Channel 9 (Израиль)» · now «06:30⁠–⁠07:20 Т/с "Свидетели", 82 с. "Долгая память".» · next «Далее 07:20 Т/с "Невидимки". "Змея и чучело".» · clock «06:36» · shown true | PASS |
+| U0.banner==row | Национальные · 1 Channel 9 (Израиль) | menu «Т/с "Свидетели", 82 с. "Долгая память".» · banner «06:30⁠–⁠07:20 Т/с "Свидетели", 82 с. "Долгая память".» · API on air «Т/с "Свидетели", 82 с. "Долгая память".» (fresh, 2668 ms after the banner, 1 ended in it) | PASS |
+| U0.next | Национальные · 1 Channel 9 (Израиль) | guide next «Т/с "Невидимки". "Змея и чучело".» · banner «Далее 07:20 Т/с "Невидимки". "Змея и чучело".» | PASS |
+| U0.first-frame | Национальные · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Национальные · 1 Channel 9 (Израиль) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Национальные · 31 Астана ТВ (Казахстан) | num «31» · title «Астана ТВ (Казахстан)» · now «06:25⁠–⁠07:30 Үздік әзілдер» · next «» · clock «06:36» · shown true | PASS |
+| U0.banner==row | Национальные · 31 Астана ТВ (Казахстан) | menu «Үздік әзілдер» · banner «06:25⁠–⁠07:30 Үздік әзілдер» · API on air «Үздік әзілдер» (fresh, 2601 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Национальные · 31 Астана ТВ (Казахстан) | guide next «Художественный фильм» · banner «» | DRY-SKIP |
+| U0.first-frame | Национальные · 31 Астана ТВ (Казахстан) | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Национальные · 31 Астана ТВ (Казахстан) | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Национальные · 62 Армія TV | num «62» · title «Армія TV» · now «06:00⁠–⁠07:00 Нет данных» · next «» · clock «06:36» · shown true | PASS |
+| U0.banner==row | Национальные · 62 Армія TV | menu «Нет данных» · banner «06:00⁠–⁠07:00 Нет данных» · API on air «Нет данных» (fresh, 3602 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Национальные · 62 Армія TV | guide next «—» · banner «» | DRY-SKIP |
+| U0.first-frame | Национальные · 62 Армія TV | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Национальные · 62 Армія TV | no picture in dry mode | DRY-SKIP |
+| U0.rows | Новостные | 11/11 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 1 fresh fetches (0 failed or > 10 s, those pages not judged), ≤ 2509 ms after each page read, ended shows in it ≤ 0 · 0 rows differed from the list API but matched the channel's guide | PASS |
+| U0.banner-fields | Новостные · 63 Deutsche Welle | num «63» · title «Deutsche Welle» · now «06:15⁠–⁠06:45 Global Us. What connects us all.» · next «» · clock «06:37» · shown true | PASS |
+| U0.banner==row | Новостные · 63 Deutsche Welle | menu «Global Us. What connects us all.» · banner «06:15⁠–⁠06:45 Global Us. What connects us all.» · API on air «Global Us. What connects us all.» (fresh, 4611 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Новостные · 63 Deutsche Welle | guide next «Reporter. On Location.» · banner «» | DRY-SKIP |
+| U0.first-frame | Новостные · 63 Deutsche Welle | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Новостные · 63 Deutsche Welle | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Новостные · 68 FreeДОМ | num «68» · title «FreeДОМ» · now «06:11⁠–⁠06:37 Спеціальний репортаж.» · next «» · clock «06:37» · shown true | PASS |
+| U0.banner==row | Новостные · 68 FreeДОМ | menu «Спеціальний репортаж.» · banner «06:11⁠–⁠06:37 Спеціальний репортаж.» · API on air «Історичні факти.» (fresh, 2385 ms after the banner, 0 ended in it) | FAIL |
+| U0.next | Новостные · 68 FreeДОМ | guide next «Наш час.» · banner «» | DRY-SKIP |
+| U0.first-frame | Новостные · 68 FreeДОМ | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Новостные · 68 FreeДОМ | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Новостные · 73 Новини Live | num «73» · title «Новини Live» · now «06:00⁠–⁠07:00 Нет данных» · next «» · clock «06:37» · shown true | PASS |
+| U0.banner==row | Новостные · 73 Новини Live | menu «Нет данных» · banner «06:00⁠–⁠07:00 Нет данных» · API on air «Нет данных» (fresh, 2669 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Новостные · 73 Новини Live | guide next «—» · banner «» | DRY-SKIP |
+| U0.first-frame | Новостные · 73 Новини Live | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Новостные · 73 Новини Live | no picture in dry mode | DRY-SKIP |
+| U0.rows | Познавательные | 64/64 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 6 fresh fetches (0 failed or > 10 s, those pages not judged), ≤ 2555 ms after each page read, ended shows in it ≤ 0 · 0 rows differed from the list API but matched the channel's guide | PASS |
+| U0.banner-fields | Познавательные · 74 National Geographic | num «74» · title «National Geographic» · now «06:05⁠–⁠06:50 д/с Настоящий суперкар (Саб-Зиро Порше)» · next «» · clock «06:37» · shown true | PASS |
+| U0.banner==row | Познавательные · 74 National Geographic | menu «д/с Настоящий суперкар (Саб-Зиро Порше)» · banner «06:05⁠–⁠06:50 д/с Настоящий суперкар (Саб-Зиро Порше)» · API on air «д/с Настоящий суперкар (Саб-Зиро Порше)» (fresh, 2487 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Познавательные · 74 National Geographic | guide next «д/с Настоящий суперкар (Транспортер Lamborghini)» · banner «» | DRY-SKIP |
+| U0.first-frame | Познавательные · 74 National Geographic | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Познавательные · 74 National Geographic | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Познавательные · 105 Discovery | num «105» · title «Discovery» · now «06:00⁠–⁠07:00 Грязные богатства, 2 с-н 9 с. Заплесневелые со» · next «» · clock «06:37» · shown true | PASS |
+| U0.banner==row | Познавательные · 105 Discovery | menu «Грязные богатства, 2 с-н 9 с. Заплесневелые сокровища» · banner «06:00⁠–⁠07:00 Грязные богатства, 2 с-н 9 с. Заплесневелые со» · API on air «Грязные богатства, 2 с-н 9 с. Заплесневелые сокровища» (fresh, 2474 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Познавательные · 105 Discovery | guide next «Гаражный ремонт, 9 с. Скоростной авторемонт» · banner «» | DRY-SKIP |
+| U0.first-frame | Познавательные · 105 Discovery | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Познавательные · 105 Discovery | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Познавательные · 137 ЗооСвіт | num «137» · title «ЗооСвіт» · now «06:00⁠–⁠07:00 Нет данных» · next «» · clock «06:38» · shown true | PASS |
+| U0.banner==row | Познавательные · 137 ЗооСвіт | menu «Нет данных» · banner «06:00⁠–⁠07:00 Нет данных» · API on air «Нет данных» (fresh, 2492 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Познавательные · 137 ЗооСвіт | guide next «—» · banner «» | DRY-SKIP |
+| U0.first-frame | Познавательные · 137 ЗооСвіт | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Познавательные · 137 ЗооСвіт | no picture in dry mode | DRY-SKIP |
+| U0.rows | Кино | 95/95 rows seen · empty 0 · not on air 1 · no API programme 0 · reference: 8 fresh fetches (0 failed or > 10 s, those pages not judged), ≤ 2954 ms after each page read, ended shows in it ≤ 1 · 0 rows differed from the list API but matched the channel's guide · 231 Cineman Ментовские войны: «Ментовские войны 7 сезон 12 серия» ≠ on air «Ментовские войны 7 сезон 13 серия» (guide: «Ментовские войны 7 сезон 13 серия») | FAIL |
+| U0.banner-fields | Кино · 138 KinoKazka | num «138» · title «KinoKazka» · now «06:30⁠–⁠06:45 м/с Гормити 3 ┊ 59» · next «» · clock «06:38» · shown true | PASS |
+| U0.banner==row | Кино · 138 KinoKazka | menu «м/с Гормити 3 ┊ 59» · banner «06:30⁠–⁠06:45 м/с Гормити 3 ┊ 59» · API on air «м/с Гормити 3 ┊ 59» (fresh, 2513 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Кино · 138 KinoKazka | guide next «м/ф Фелікс рятує день» · banner «» | DRY-SKIP |
+| U0.first-frame | Кино · 138 KinoKazka | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Кино · 138 KinoKazka | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Кино · 185 Cineman MiniSeries | num «185» · title «Cineman MiniSeries» · now «05:43⁠–⁠06:40 Молодой Папа 1 сезон 3 серия» · next «» · clock «06:38» · shown true | PASS |
+| U0.banner==row | Кино · 185 Cineman MiniSeries | menu «Молодой Папа 1 сезон 3 серия» · banner «05:43⁠–⁠06:40 Молодой Папа 1 сезон 3 серия» · API on air «Молодой Папа 1 сезон 3 серия» (fresh, 2551 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Кино · 185 Cineman MiniSeries | guide next «Молодой Папа 1 сезон 4 серия» · banner «» | DRY-SKIP |
+| U0.first-frame | Кино · 185 Cineman MiniSeries | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Кино · 185 Cineman MiniSeries | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Кино · 232 BCU | num «232» · title «BCU» · now «06:00⁠–⁠07:00 Нет данных» · next «» · clock «06:39» · shown true | PASS |
+| U0.banner==row | Кино · 232 BCU | menu «Нет данных» · banner «06:00⁠–⁠07:00 Нет данных» · API on air «Нет данных» (fresh, 3110 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Кино · 232 BCU | guide next «—» · banner «» | DRY-SKIP |
+| U0.first-frame | Кино · 232 BCU | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Кино · 232 BCU | no picture in dry mode | DRY-SKIP |
+| U0.rows | Детские | 22/22 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 2 fresh fetches (0 failed or > 10 s, those pages not judged), ≤ 2890 ms after each page read, ended shows in it ≤ 0 · 0 rows differed from the list API but matched the channel's guide | PASS |
+| U0.banner-fields | Детские · 233 Nick Jr | num «233» · title «Nick Jr» · now «06:35⁠–⁠07:00 М/с "Тим Рекс в космосе", 1 сезон, 3 с. "Ракет» · next «» · clock «06:39» · shown true | PASS |
+| U0.banner==row | Детские · 233 Nick Jr | menu «М/с "Тим Рекс в космосе", 1 сезон, 3 с. "Ракетная гонка / Ма» · banner «06:35⁠–⁠07:00 М/с "Тим Рекс в космосе", 1 сезон, 3 с. "Ракет» · API on air «М/с "Тим Рекс в космосе", 1 сезон, 3 с. "Ракетная гонка / Магия / Родители".» (fresh, 2578 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Детские · 233 Nick Jr | guide next «М/с "Тим Рекс в космосе", 2 сезон, 3 с. "Пляжный сканнер / Уборка / Питмоцы".» · banner «» | DRY-SKIP |
+| U0.first-frame | Детские · 233 Nick Jr | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Детские · 233 Nick Jr | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Детские · 243 В гостях у сказки | num «243» · title «В гостях у сказки» · now «06:30⁠–⁠06:40 М/ф "Впервые на арене".» · next «» · clock «06:39» · shown true | PASS |
+| U0.banner==row | Детские · 243 В гостях у сказки | menu «М/ф "Впервые на арене".» · banner «06:30⁠–⁠06:40 М/ф "Впервые на арене".» · API on air «М/ф "Впервые на арене".» (fresh, 2543 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Детские · 243 В гостях у сказки | guide next «М/ф "Ежик плюс черепаха".» · banner «» | DRY-SKIP |
+| U0.first-frame | Детские · 243 В гостях у сказки | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Детские · 243 В гостях у сказки | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Детские · 254 Nickelodeon | num «254» · title «Nickelodeon» · now «06:23⁠–⁠06:47 Губка Боб Квадратные Штаны» · next «» · clock «06:39» · shown true | PASS |
+| U0.banner==row | Детские · 254 Nickelodeon | menu «Губка Боб Квадратные Штаны» · banner «06:23⁠–⁠06:47 Губка Боб Квадратные Штаны» · API on air «Губка Боб Квадратные Штаны» (fresh, 2485 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Детские · 254 Nickelodeon | guide next «Губка Боб Квадратные Штаны» · banner «» | DRY-SKIP |
+| U0.first-frame | Детские · 254 Nickelodeon | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Детские · 254 Nickelodeon | no picture in dry mode | DRY-SKIP |
+| U0.rows | Спорт | 41/41 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 4 fresh fetches (0 failed or > 10 s, those pages not judged), ≤ 2997 ms after each page read, ended shows in it ≤ 0 · 0 rows differed from the list API but matched the channel's guide | PASS |
+| U0.banner-fields | Спорт · 255 Setanta Sports UA | num «255» · title «Setanta Sports UA» · now «05:00⁠–⁠07:00 Футбол. Чемпионат Англии. Чемпионшип. Чарльтон» · next «» · clock «06:39» · shown true | PASS |
+| U0.banner==row | Спорт · 255 Setanta Sports UA | menu «Футбол. Чемпионат Англии. Чемпионшип. Чарльтон Атлетик - Нор» · banner «05:00⁠–⁠07:00 Футбол. Чемпионат Англии. Чемпионшип. Чарльтон» · API on air «Футбол. Чемпионат Англии. Чемпионшип. Чарльтон Атлетик - Норвич Сити.» (fresh, 4530 ms after the banner, 19 ended in it) | PASS |
+| U0.next | Спорт · 255 Setanta Sports UA | guide next «Футбол. Чемпионат Германии. РБ Лейпциг - Эльферсберг.» · banner «» | DRY-SKIP |
+| U0.first-frame | Спорт · 255 Setanta Sports UA | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Спорт · 255 Setanta Sports UA | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Спорт · 275 KHL ТВ | num «275» · title «KHL ТВ» · now «05:00⁠–⁠07:20 ФОНБЕТ Чемпионат КХЛ. "Салават Юлаев" - "Ак Ба» · next «» · clock «06:40» · shown true | PASS |
+| U0.banner==row | Спорт · 275 KHL ТВ | menu «ФОНБЕТ Чемпионат КХЛ. "Салават Юлаев" - "Ак Барс".» · banner «05:00⁠–⁠07:20 ФОНБЕТ Чемпионат КХЛ. "Салават Юлаев" - "Ак Ба» · API on air «ФОНБЕТ Чемпионат КХЛ. "Салават Юлаев" - "Ак Барс".» (fresh, 3375 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Спорт · 275 KHL ТВ | guide next «"Видео дня".» · banner «» | DRY-SKIP |
+| U0.first-frame | Спорт · 275 KHL ТВ | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Спорт · 275 KHL ТВ | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Спорт · 295 ОККО Прайм Спорт | num «295» · title «ОККО Прайм Спорт» · now «04:20⁠–⁠08:00 Футбол. Франция. 1–4 c» · next «» · clock «06:40» · shown true | PASS |
+| U0.banner==row | Спорт · 295 ОККО Прайм Спорт | menu «Футбол. Франция. 1–4 c» · banner «04:20⁠–⁠08:00 Футбол. Франция. 1–4 c» · API on air «Футбол. Франция. 1–4 c» (fresh, 2686 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Спорт · 295 ОККО Прайм Спорт | guide next «Новости спорта» · banner «» | DRY-SKIP |
+| U0.first-frame | Спорт · 295 ОККО Прайм Спорт | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Спорт · 295 ОККО Прайм Спорт | no picture in dry mode | DRY-SKIP |
+| U0.rows | Развлекательные | 52/52 rows seen · empty 0 · not on air 3 · no API programme 0 · reference: 5 fresh fetches (0 failed or > 10 s, those pages not judged), ≤ 2775 ms after each page read, ended shows in it ≤ 0 · 0 rows differed from the list API but matched the channel's guide · 313 ПлюсПлюс: «Корисні підказки.» ≠ on air «Світ чекає на відкриття.» (guide: «Світ чекає на відкриття.») \| 334 2х2: «М/с "Смешарики", 118 с.» ≠ on air «М/с "Смешарики", 119 с.» (guide: «М/с "Смешарики", 119 с.») \| 338 Міледі ТВ: «Від першої особи з Сергієм Дойком.» ≠ on air «Батьківські збори.» (guide: «Батьківські збори.») | FAIL |
+| U0.banner-fields | Развлекательные · 296 Fashion ONE | num «296» · title «Fashion ONE» · now «06:37⁠–⁠06:46 Модные Показы (12+)» · next «» · clock «06:40» · shown true | PASS |
+| U0.banner==row | Развлекательные · 296 Fashion ONE | menu «Модные Показы (12+)» · banner «06:37⁠–⁠06:46 Модные Показы (12+)» · API on air «Модные Показы (12+)» (fresh, 2489 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Развлекательные · 296 Fashion ONE | guide next «Мода и искусство (12+)» · banner «» | DRY-SKIP |
+| U0.first-frame | Развлекательные · 296 Fashion ONE | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Развлекательные · 296 Fashion ONE | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Развлекательные · 321 Панянка-селянка+ | num «321» · title «Панянка-селянка+» · now «06:00⁠–⁠07:00 Програма відсутня» · next «» · clock «06:40» · shown true | PASS |
+| U0.banner==row | Развлекательные · 321 Панянка-селянка+ | menu «Програма відсутня» · banner «06:00⁠–⁠07:00 Програма відсутня» · API on air «Програма відсутня» (fresh, 2706 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Развлекательные · 321 Панянка-селянка+ | guide next «Програма відсутня» · banner «» | DRY-SKIP |
+| U0.first-frame | Развлекательные · 321 Панянка-селянка+ | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Развлекательные · 321 Панянка-селянка+ | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Развлекательные · 347 Ми - Україна | num «347» · title «Ми - Україна» · now «06:00⁠–⁠07:00 "Єдині новини". Телемарафон.» · next «» · clock «06:41» · shown true | PASS |
+| U0.banner==row | Развлекательные · 347 Ми - Україна | menu «"Єдині новини". Телемарафон.» · banner «06:00⁠–⁠07:00 "Єдині новини". Телемарафон.» · API on air «"Єдині новини". Телемарафон.» (fresh, 2925 ms after the banner, 1 ended in it) | PASS |
+| U0.next | Развлекательные · 347 Ми - Україна | guide next «"Єдині новини". Телемарафон.» · banner «» | DRY-SKIP |
+| U0.first-frame | Развлекательные · 347 Ми - Україна | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Развлекательные · 347 Ми - Україна | no picture in dry mode | DRY-SKIP |
+| U0.rows | Музыкальные | 25/25 rows seen · empty 0 · not on air 0 · no API programme 0 · reference: 2 fresh fetches (0 failed or > 10 s, those pages not judged), ≤ 2561 ms after each page read, ended shows in it ≤ 0 · 0 rows differed from the list API but matched the channel's guide | PASS |
+| U0.banner-fields | Музыкальные · 348 Stingray iConcerts | num «348» · title «Stingray iConcerts» · now «05:22⁠–⁠07:00 Queens of the Stone Age: Zenith, Paris. 2013.» · next «» · clock «06:41» · shown true | PASS |
+| U0.banner==row | Музыкальные · 348 Stingray iConcerts | menu «Queens of the Stone Age: Zenith, Paris. 2013.» · banner «05:22⁠–⁠07:00 Queens of the Stone Age: Zenith, Paris. 2013.» · API on air «Queens of the Stone Age: Zenith, Paris. 2013.» (fresh, 2681 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Музыкальные · 348 Stingray iConcerts | guide next «Take That: Wonderland Live from The O2 Arena, London. 2017.» · banner «» | DRY-SKIP |
+| U0.first-frame | Музыкальные · 348 Stingray iConcerts | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Музыкальные · 348 Stingray iConcerts | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Музыкальные · 360 4ever Music | num «360» · title «4ever Music» · now «05:00⁠–⁠13:00 Хіти минулих років.» · next «» · clock «06:41» · shown true | PASS |
+| U0.banner==row | Музыкальные · 360 4ever Music | menu «Хіти минулих років.» · banner «05:00⁠–⁠13:00 Хіти минулих років.» · API on air «Хіти минулих років.» (fresh, 2771 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Музыкальные · 360 4ever Music | guide next «Хіти минулих років.» · banner «» | DRY-SKIP |
+| U0.first-frame | Музыкальные · 360 4ever Music | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Музыкальные · 360 4ever Music | no picture in dry mode | DRY-SKIP |
+| U0.banner-fields | Музыкальные · 372 Жара | num «372» · title «Жара» · now «06:00⁠–⁠07:00 Музыкальный блок» · next «» · clock «06:41» · shown true | PASS |
+| U0.banner==row | Музыкальные · 372 Жара | menu «Музыкальный блок» · banner «06:00⁠–⁠07:00 Музыкальный блок» · API on air «Музыкальный блок» (fresh, 2534 ms after the banner, 0 ended in it) | PASS |
+| U0.next | Музыкальные · 372 Жара | guide next «Жара новости» · banner «» | DRY-SKIP |
+| U0.first-frame | Музыкальные · 372 Жара | no picture in dry mode | DRY-SKIP |
+| U0.tech-line | Музыкальные · 372 Жара | no picture in dry mode | DRY-SKIP |
+| M11.menu-open | 30 min | 390 row checks · 42 not on air · reference fresh, ≤ 3410 ms after each read, ended shows in it ≤ 21 · 0 minutes without a usable reference · +12 min 369 Bridge: «Нет данных» ≠ «Wake Up Call.» \| +12 min 371 Bridge хит: «Нет данных» ≠ «Wake Up Call.» \| +13 min 369 Bridge: «Нет данных» ≠ «Wake Up Call.» \| +13 min 371 Bridge хит: «Нет данных» ≠ «Wake Up Call.» \| +14 min 369 Bridge: «Нет данных» ≠ «Wake Up Call.» | FAIL |
+| M11·U0.rows | Все каналы | 372/372 rows seen · empty 0 · not on air 4 · no API programme 1 · reference: 30 fresh fetches (0 failed or > 10 s, those pages not judged), ≤ 4490 ms after each page read, ended shows in it ≤ 1 · 0 rows differed from the list API but matched the channel's guide · 15 KAN23 (Израиль): «הנסיך הקטן וחברים - 7. הנוסע השישי» ≠ on air «היכון הכן טוס - 22. קולות רקע» (guide: «היכון הכן טוס - 22. קולות רקע») \| 349 Stingray CMusic: «Нет данных» ≠ on air «Dawn Chorus.» (guide: «—») \| 369 Bridge: «Нет данных» ≠ on air «Wake Up Call.» (guide: «—») \| 371 Bridge хит: «Нет данных» ≠ on air «Wake Up Call.» (guide: «—») | FAIL |
+| app-errors | — | failure log lines: 40 | INFO |
