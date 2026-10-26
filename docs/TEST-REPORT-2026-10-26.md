@@ -106,4 +106,8 @@ File `tests/tv/results/2026-10-26-14-02-tv.md` (14:02–14:46, build `8413f34`):
   - «…no refresh more often than every 5 min» → «…no refresh more often than the open menu's 60 s re-read»
   - «…or that answer is ≥ 5 min old» → «…or that answer is ≥ 60 s old»
 - Two count assertions changed 23 → 119 and 29 → 119 refreshes in 2 h (60 s re-read); the T-flip test now asserts no answer landed between the show end and the flip (the 60 s re-read may run near the end).
-- TV check of this commit: see the result file named in the commit that follows it.
+- TV check of this commit (`tests/tv/results/2026-10-26-15-09-tv.md`, build `00c2f5b`, U0, 15:09–15:20): **PASS 202 · FAIL 7**.
+  - `U0.menu-closed`: 33 of 33 PASS.
+  - Empty rows: 0 in every group; every group swept in full this time (e.g. «Израиль» 11/11, «Национальные» 49/49).
+  - Rows behind the show on air: 4, at 5, 7, 9 and 60 s after the show changed (8413f34: 98 s and 210 s; baseline 37fb286: 7 rows, all < 60 s). No row more than 60 s behind.
+  - The other 3 FAILs are 348 Stingray iConcerts (provider fault: no first frame, so no tech line and no «Далее»).
