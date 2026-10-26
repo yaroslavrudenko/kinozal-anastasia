@@ -1,13 +1,16 @@
 // The "now" line of the OTT Club channels shown in the menu or search stays accurate (DEC-2026-10-26-now-refresh-2):
 //  - a row on screen whose next programme is known here (a full or kept guide) turns over at its end by a
 //    redraw alone, with no request;
-//  - only the rows on screen ask the provider: a row whose programme ended since the last fresh answer was
-//    asked for is due at once; one the provider still named after its end is re-asked NOW_RECHECK_MS after
-//    that answer; one it had nothing for, NOW_MISSING_MS after it. While a menu or search is open the list is
+//  - only the rows on screen ask the provider: a row whose programme ended since the last fresh answer that
+//    NAMED it was asked for is due at once (an answer that leaves a row out confirms nothing for it); one the
+//    provider still named after its end is re-asked NOW_RECHECK_MS after that answer, for as long as it keeps
+//    naming it; one it had nothing for, NOW_MISSING_MS after it. While a menu or search is open the list is
 //    also re-read NOW_MISSING_MS after the last attempt (best effort, under the same gates);
+//  - a row lingering on an ended programme is redrawn when the linger ends (its «(шла до HH:MM)» mark), with
+//    no request, so a long outage marks it on time;
 //  - a refresh is one request for the provider-fresh list (?t=), parsed when the TV is idle (no list rebuild,
 //    no reorder, no guide downloads). A failed, empty or unusable answer changes nothing and is retried
-//    NOW_RECHECK_MS later;
+//    NOW_RECHECK_MS later (due then, not merely allowed);
 //  - gates: NOW_MIN_INTERVAL_MS after the previous answer, NOW_QUIET_MS after the last redraw (keys),
 //    NOW_AFTER_LANDING_MS after a channel starts; never during a zap burst or a list load, never in the
 //    background; a zap aborts it. The one exception: a launch list from the provider's cache is re-read at once.
@@ -15,13 +18,13 @@
 var NowLines = (function () {
   var req = null, timer = null, flipTimer = null, visible = null, hooks = {};
   var at = 0;                  // when the last answer (or failure) came: the floor counts from it
-  var sampleAt = 0;            // when the last usable fresh answer was asked for (0: none; the launch list is not one)
-  var retryAfter = 0;          // after a failed, empty or unusable answer: no request before this
+  var sampled = Util.dict();   // id -> when the last usable fresh answer naming it was asked for (the launch list is not one)
+  var retryAfter = 0;          // after a failed, empty or unusable answer: the next request is due then, not before
   var landedAt = 0, renderAt = 0;
   var asap = false;            // the channel list came from the provider's cache: re-read it now (DEC 2026-10-26 option b)
 
   function setHooks(h) { hooks = h; }
-  function loaded() { at = Date.now(); sampleAt = 0; }   // the full list just brought "now" lines (not a fresh sample)
+  function loaded() { at = Date.now(); sampled = Util.dict(); }   // the full list just brought "now" lines (not a fresh sample)
   function cancel() { if (req) { req.abort(); req = null; } asap = false; }
   // A channel starting frees the bandwidth for its stream, except from the one re-read of a cached list.
   function landed() { if (!asap) cancel(); landedAt = Date.now(); arm(); }
@@ -46,19 +49,20 @@ var NowLines = (function () {
       var p = EPG.at(ids[i], now), end = EPG.knownEnd(ids[i]);
       if (p) { if (EPG.at(ids[i], p.stop + 1000)) flip = Math.min(flip, p.stop); else due = Math.min(due, p.stop + CONFIG.NOW_SETTLE_MS); }
       else if (end > now) flip = Math.min(flip, EPG.nextStart(ids[i], now) || Infinity);   // known only from later on: the provider's gap
-      else due = Math.min(due, ended(end, now));
+      else { due = Math.min(due, ended(ids[i], end, now)); flip = Math.min(flip, EPG.lingerEnd(ids[i], now) || Infinity); }
     }
     if (flip < Infinity) flipTimer = setTimeout(flipRows, Math.max(0, flip - now));
     if (asap || req) return;                               // its answer re-arms
     due = Math.min(due, at + CONFIG.NOW_MISSING_MS);       // the open menu's maintenance re-read
+    if (retryAfter) due = Math.min(due, retryAfter);       // a failed answer is asked again then
     timer = setTimeout(run, Math.max(0, Math.max(due, gate()) - now));
   }
 
   // A row with nothing on air: when it needs the provider (its last known programme ended at `end`; 0: none).
-  function ended(end, now) {
+  function ended(id, end, now) {
     if (!end) return at + CONFIG.NOW_MISSING_MS;                         // the provider had nothing for it
-    if (end > sampleAt) return now;                                       // ended since the last fresh answer was asked for
-    return at + (sampleAt - end < CONFIG.NOW_LINGER_MS ? CONFIG.NOW_RECHECK_MS : CONFIG.NOW_MISSING_MS);   // still named after its end
+    if (end > (sampled[id] || 0)) return now;                             // ended since a fresh answer last named it
+    return at + CONFIG.NOW_RECHECK_MS;                                    // the provider still names the ended show
   }
 
   // A row whose next programme is known turns over with no request (the redraw re-arms).
@@ -78,7 +82,8 @@ var NowLines = (function () {
       Util.idle(function () {
         var seeds = OttClub.seedsOf(text);
         if (!seeds) { failed(); return; }
-        EPG.setSeeds(seeds); sampleAt = sent; retryAfter = 0;
+        EPG.setSeeds(seeds); retryAfter = 0;
+        for (var id in seeds) sampled[id] = sent;           // only the channels it named are confirmed
         if (hooks.onUpdate) hooks.onUpdate();
         arm();
       });

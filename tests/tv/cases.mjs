@@ -47,7 +47,15 @@ export function helpers(d, opt) {
       prevTop = top; await d.key(K.PG_UP); await d.sleep(120);
     }
   }
-  return { st, waitFor, keys, closeAll, firstFrame, api, openGroup, guideLoaded };
+  // After a channel is picked from the menu: the elements with text the viewer can still see under #guide and
+  // #search (computed visibility 'visible', a box on screen). 0 = the menu is gone. Bug present since 88c1860:
+  // rows carried an inline 'visible' that beat the menu's .guide.hidden, so its text stayed over the picture.
+  function menuLeftovers() {
+    return d.ev(`(function(){var o=[],ids=['guide','search'];for(var k=0;k<ids.length;k++){var all=document.getElementById(ids[k]).getElementsByTagName('*');
+      for(var i=0;i<all.length;i++){var e=all[i],r=e.getBoundingClientRect(),t=(e.textContent||'').replace(/\\s+/g,' ').trim();
+      if(t&&r.width>0&&r.height>0&&getComputedStyle(e).visibility==='visible')o.push(ids[k]+' '+e.className+' «'+t.slice(0,30)+'»');}}return o})()`);
+  }
+  return { st, waitFor, keys, closeAll, firstFrame, api, openGroup, guideLoaded, menuLeftovers };
 }
 
 // ---------- U0 / M1 / M11: every group, every row's "now" == on air per the API; banner on landing == row ----------
@@ -125,6 +133,8 @@ async function landings(d, opt, g, h) {
     const t = Date.now();
     await d.key(K.ENTER);
     const ff = await h.firstFrame(t);
+    const left = await h.menuLeftovers();                         // the menu must be gone after the pick (read after the frame: ff unbiased)
+    const leftOk = Array.isArray(left) && left.length === 0;
     // The tech line first: it is on screen only for TECH_LINE_MS, so it is read before the slower checks.
     let tech = '', techDelay = null;
     if (d.mode === 'tv' && ff >= 0) {
@@ -146,6 +156,7 @@ async function landings(d, opt, g, h) {
     // Dry mode has no first frame, so the app never loads this channel's guide: a programme only the guide
     // knows cannot be on the banner yet.
     const dryGuideOnly = d.mode === 'dry' && !a && !!gn.cur && !norm(s.bNow);
+    out.push(row('U0.menu-closed', where, Array.isArray(left) ? `${left.length} visible elements with text under #guide/#search after the pick` + (left.length ? ' · ' + left.slice(0, 3).join(' | ') : '') : 'could not read: ' + JSON.stringify(left).slice(0, 120), leftOk));
     out.push(row('U0.banner-fields', where, `num «${s.bNum}» · title «${norm(s.bTitle).slice(0, 50)}» · now «${norm(s.bNow).slice(0, 60)}» · next «${norm(s.bNext).slice(0, 50)}» · clock «${s.bClock}» · shown ${s.banner}`,
       (s.banner && s.bNum === String(c.num) && norm(s.bTitle).indexOf(norm(c.name)) === 0 && (!needNow || /\d\d:\d\d\D{1,3}\d\d:\d\d/.test(s.bNow)) && clockOk) ? true : dryGuideOnly ? null : false));
     out.push(row('U0.banner==row', where, `menu «${norm(r.sub).slice(0, 60)}» · banner «${norm(s.bNow).slice(0, 60)}» · API on air «${a ? a.title : '—'}» (fresh, ${ref.at - s.now} ms after the banner, ${ref.ended} ended in it)`,

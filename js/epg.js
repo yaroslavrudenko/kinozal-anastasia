@@ -80,6 +80,12 @@ var EPG = (function () {
     var p = at(id, t), s = seeds[id] && started(seeds[id], t), L = CONFIG.NOW_LINGER_MS;
     return p || (s && (t < s.stop || ((t - s.stop < L || t - seedsAt < L) && seedsAt - s.stop < L)) ? s : null);
   }
+  // When the channel list's record lingering on air at t (onAir by the linger, not by its times) stops
+  // counting: from then a row shows it marked «(шла до HH:MM)» (0: no record lingers at t).
+  function lingerEnd(id, t) {
+    var s = !at(id, t) && seeds[id] && started(seeds[id], t);
+    return s && t >= s.stop && onAir(id, t) === s ? Math.max(s.stop, seedsAt) + CONFIG.NOW_LINGER_MS : 0;
+  }
   // What a row (menu, search) and the banner show for a channel at t (DEC-2026-10-26-now-refresh-2, A7):
   // { p, ended } — the programme on air; else the last one the provider named for the channel, ended (kept
   // through outages and partial answers, never blank, never claimed as on air); null when none is known.
@@ -208,7 +214,7 @@ var EPG = (function () {
   }
 
   return {
-    setHooks: setHooks, setLoader: setLoader, setSeeds: setSeeds, prune: prune, knownEnd: knownEnd, nextStart: nextStart, ensure: ensure,
+    setHooks: setHooks, setLoader: setLoader, setSeeds: setSeeds, prune: prune, knownEnd: knownEnd, nextStart: nextStart, lingerEnd: lingerEnd, ensure: ensure,
     cancelExcept: cancelExcept, load: load, at: at, onAir: onAir, shown: shown, label: label, nowNext: nowNext, day: day, indexAt: indexAt
   };
 }());

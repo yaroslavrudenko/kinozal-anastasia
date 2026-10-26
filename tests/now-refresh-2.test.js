@@ -23,6 +23,7 @@ const freshUrl = (u) => u.indexOf('?t=') > 0;
 // A provider whose channel i shows half-hour programmes starting at the half hour plus offset(i, id). The plain
 // list answers from a cache 3 min old (0.3 s), the fresh one (?t=) as of the request (3 s). app.fault breaks
 // the list: '500', 'timeout', 'empty', 'not-json', '{}', 'no-programmes' or { only: Set of ids } (a partial answer).
+// opts.record(i, id, t), when it returns a programme, replaces the one named for channel i (a provider stuck on a show).
 function providerApp(opts) {
   const o = Object.assign({ channels: 40, guide: 'fail', offset: (i) => (i % 30) * MIN }, opts);
   const app = f.ottApp({ channels: o.channels, boot: false, guide: o.guide, config: o.config });
@@ -36,7 +37,7 @@ function providerApp(opts) {
     const d = {};
     ids.forEach((id) => {
       if (app.fault && app.fault.only && !app.fault.only.has(id)) return;
-      const p = show(id, t), r = Object.assign({}, base[id]);
+      const p = (o.record && o.record(ids.indexOf(id), id, t)) || show(id, t), r = Object.assign({}, base[id]);
       if (app.fault === 'no-programmes') { delete r.name; delete r.time; delete r.time_to; } else Object.assign(r, { name: p.title, time: p.start / 1000, time_to: p.stop / 1000 });
       d[id] = r;
     });
@@ -324,4 +325,66 @@ test('now refresh (A1, B1): with a show ending every minute off screen and none 
   // Re-reads at c0 + 5 min, then every 5 min + the 3 s answer: 11 in the hour, each exactly NOW_MISSING_MS after the previous answer.
   assert.equal(r.length, 11, 'requests in 1 h: ' + r.map((x) => new Date(x.sentAt).toISOString().slice(11, 19)).join(' '));
   assert.deepEqual(gaps.filter((g) => g !== 5 * MIN), [], 'gaps other than 5 min');
+});
+
+// ---------- Codex REJECT on f0b31a7, fixed 2026-10-26 (COMMON-DECISION-Q1, A2/A5/A7) ----------
+// (a) A long outage with no key pressed: the playing row (seed only) lingers plainly to E+15 min and is then
+// redrawn by itself with «(шла до HH:MM)» — the failed answers never redrew it on f0b31a7.
+test('now retained (A7, Codex a): during an outage with no key pressed, a row is marked «(шла до HH:MM)» when its linger ends, with no redraw from keys', () => {
+  const app = providerApp({});
+  app.advance(10 * SEC);
+  app.press(KEYS.ENTER, 5000);
+  const id = playingId(app), end = app.show(id, app.clock.now + 2 * MIN).stop, last = app.show(id, end - 1);
+  app.advance(end - MIN - app.clock.now);
+  app.fault = '500';
+  app.advance(end + 14 * MIN - app.clock.now);
+  const at14 = (rowOf(app, id) || { cells: [] }).cells[3];
+  app.advance(end + 15 * MIN + 2 * SEC - app.clock.now);
+  const at15 = (rowOf(app, id) || { cells: [] }).cells[3];
+  assert.equal(at14 + ' | ' + at15, last.title + ' | ' + last.title + ' (шла до ' + hhmm(end) + ')');
+});
+
+// (b) Per-row confirmation: answers that leave out a row on screen whose show ended confirm nothing for it —
+// it stays due and is re-asked after the 10 s floor (E+25 s), not after the 60 s recheck (E+75 s).
+test('now refresh (A2, Codex b): an answer that leaves out an ended row on screen does not confirm it — it is re-asked 10 s after that answer', () => {
+  const E = f.DEFAULT_NOW + 30 * SEC;                       // channel 0 ends at E, the others at E−2 s
+  const app = providerApp({ offset: (i) => (i === 0 ? E : E - 2 * SEC) % HOUR, length: () => HOUR });
+  app.fault = { only: new Set(app.ids.slice(1)) };          // every fresh answer leaves channel 0 out
+  app.advance(7 * SEC);
+  vm.runInContext('NowLines.watch(function () { return ' + JSON.stringify(app.ids) + '; })', app.ctx);
+  const seq = app.seq();
+  app.advance(E + 80 * SEC - app.clock.now);
+  const r = lists(app, seq).map((x) => x.sentAt - E);
+  assert.deepEqual(r.slice(0, 4), [-1000, 12000, 25000, 38000]);
+});
+
+// (c) A failed answer is due again NOW_RECHECK_MS later even when no row on screen needs the provider
+// (f0b31a7 only allowed it then and waited for the 5-min maintenance re-read).
+test('now refresh (A5, Codex c): with nothing ending on screen, a failed list is asked again 60 s after the failure, not 5 min', () => {
+  const app = providerApp({ offset: () => 0, length: () => 24 * HOUR });
+  app.advance(7 * SEC);
+  vm.runInContext('NowLines.watch(function () { return ' + JSON.stringify(app.ids.slice(0, 13)) + '; })', app.ctx);
+  app.fault = '500';
+  const seq = app.seq();
+  app.advance(15 * MIN);
+  const r = lists(app, seq);
+  const gaps = r.slice(1).map((x, i) => x.sentAt - r[i].endedAt);
+  assert.ok(r.length >= 10, 'only ' + r.length + ' attempts in 15 min');
+  assert.deepEqual(gaps.filter((g) => g !== CONFIG_RECHECK), [], 'gaps other than 60 s');
+});
+
+// (d) A provider still naming a show that ended keeps being re-asked every 60 s, also past 15 min after its
+// end (f0b31a7 fell back to 5 min there).
+test('now refresh (A2, Codex d): a row whose show the provider still names 20–40 min after its end is re-asked every 60 s', () => {
+  const E = f.DEFAULT_NOW + MIN;
+  const app = providerApp({ offset: () => 0, length: () => 24 * HOUR, record: (i) => (i === 0 ? { start: E - HALF, stop: E, title: 'Застрявшее шоу' } : null) });
+  app.advance(7 * SEC);
+  vm.runInContext('NowLines.watch(function () { return ' + JSON.stringify([app.ids[0]]) + '; })', app.ctx);
+  app.advance(E + 20 * MIN - app.clock.now);
+  const seq = app.seq();
+  app.advance(20 * MIN);
+  const r = lists(app, seq);
+  const gaps = r.slice(1).map((x, i) => x.sentAt - r[i].endedAt);
+  assert.ok(r.length >= 18, 'only ' + r.length + ' requests in 20 min');
+  assert.deepEqual(gaps.filter((g) => g !== CONFIG_RECHECK), [], 'gaps other than 60 s');
 });

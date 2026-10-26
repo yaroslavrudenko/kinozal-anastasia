@@ -26,7 +26,7 @@ var ListRows = (function () {
       var r = rows[k], idx = start + k;
       if (idx >= view.total) { set(r, 'vis', 'hidden'); set(r, 'cls', r.cls); setLogo(r, ''); continue; }
       var m = view.row(idx);
-      set(r, 'vis', 'visible');
+      set(r, 'vis', 'inherit');           // never 'visible': it would show the row through a menu hidden by visibility
       set(r, 'cls', r.cls + (idx === view.cursor ? (view.active ? ' focus' : ' sel') : '') + (m.past ? ' past' : '') + (m.playing ? ' playing' : ''));
       set(r, 'i', String(idx));            // list index, for mouse clicks in the desktop preview
       set(r, 'num', m.num === undefined ? '' : String(m.num));
@@ -49,11 +49,12 @@ var ListRows = (function () {
     else r.s.textContent = v;
   }
 
-  // The logo sets its own visibility, which would override a hidden row, so it is cleared too.
+  // The logo sets its own visibility: 'hidden' without a picture, else 'inherit' — the row's or the menu's
+  // hidden still hides it (an inline 'visible' overrode the menu's .guide.hidden, so its text stayed on the picture).
   function setLogo(r, src) {
     if (r.last.logo === src) return;
     r.last.logo = src;
-    r.logo.style.visibility = src ? 'visible' : 'hidden';
+    r.logo.style.visibility = src ? 'inherit' : 'hidden';
     if (src) r.logo.src = src; else r.logo.removeAttribute('src');
   }
 

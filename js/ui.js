@@ -23,7 +23,7 @@ var UI = (function () {
   // holdMs: how long it stays (default BANNER_MS; STICKY: until the next banner or hideBanner).
   function banner(m, holdMs) {
     el['b-num'].textContent = m.num;
-    el['b-logo'].style.visibility = m.logo ? 'visible' : 'hidden';
+    el['b-logo'].style.visibility = m.logo ? 'inherit' : 'hidden';   // never 'visible': a hidden banner must hide it
     if (m.logo) el['b-logo'].src = m.logo;
     el['b-title'].textContent = m.title;
     el['b-now'].textContent = m.now || '';

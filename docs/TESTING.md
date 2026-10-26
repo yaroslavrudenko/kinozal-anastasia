@@ -280,6 +280,20 @@ The decision (judges 3/3) and the policy are in [PERFORMANCE.md](PERFORMANCE.md)
 | Keys every 200 ms send nothing; one request 1 s after the last key | `now refresh (A6): …` |
 | Ends off screen alone send nothing but the 5-min re-read | `now refresh (A1, B1): …` |
 
+**2026-10-26, after the Codex REJECT on f0b31a7** — four more pins in `tests/now-refresh-2.test.js` (22 tests now; 4 of 4 red on f0b31a7, each fix removed alone turns its own pin red):
+
+| Rule | Test |
+|---|---|
+| (a) during an outage with no key pressed a row is marked «(шла до HH:MM)» when its 15-min linger ends (a redraw with no answer) | `now retained (A7, Codex a): …` |
+| (b) an answer that leaves out an ended row on screen confirms nothing for it: re-asked 10 s after that answer | `now refresh (A2, Codex b): …` |
+| (c) a failed list is DUE again 60 s after the failure, also with nothing ending on screen | `now refresh (A5, Codex c): …` |
+| (d) a show the provider still names 20–40 min after its end is re-asked every 60 s | `now refresh (A2, Codex d): …` |
+
+**The menu text left over the picture (owner's bug, 2026-10-26).** After a channel was picked from the menu or search, the menu's rows stayed on screen over the video. Present since 88c1860 (menu hidden by `visibility`, `.guide.hidden`): every shown row and logo set an inline `visibility: visible`, which beats a hidden parent. Fixed in `js/listrows.js` (rows and logos use `inherit`; `js/ui.js` banner logo the same). Honest note: the earlier TV and dry checks (U0, M2, M11) read the rows' data and the banner, never what text was actually visible after the menu closed, so none of them could see it.
+- Browser pin `tests/browser/menu-closed.test.mjs` (2 tests, headless Chrome): after a pick from the menu and from search, no element under `#guide` / `#search` has computed visibility `visible` with a box, and the banner is shown. Red on f0b31a7's js (2 of 2); the row mutant (`'visible'` back) red 2 of 2; the logo mutant red 1 of 2.
+- TV runner: `U0.menu-closed` after every landing (first/middle/last channel of every group, TV and `--dry`): the elements with text under `#guide`/`#search` that are visible after the pick; 0 = PASS. Dry run 2026-10-26 13:41 on this tree: 33 of 33 PASS (`tests/tv/results/2026-10-26-13-41-dry.md`; its 6 `U0.rows` FAILs are live rows read 2–47 s after a show changed, the same class as the earlier dry runs). Not yet run on the TV.
+
+
 **Replaced tests (NC-2: the expectation changed under this decision id; none deleted silently):**
 
 | Old name (37fb286) | New name |
