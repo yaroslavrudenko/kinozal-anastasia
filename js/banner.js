@@ -28,8 +28,9 @@ var Banner = (function () {
   }
 
   // A channel (live or archive) shows its first frame: the banner at once with this stream's technical
-  // line; "…" while the player has not described the stream yet, filled in as soon as it has (a local
-  // read every TECH_POLL_MS, no request); the line goes after TECH_LINE_MS.
+  // line; "…" while the player has not described the stream yet (up to TECH_WAIT_MS), filled in as soon as
+  // it has (a local read every TECH_POLL_MS, no request); the values then stay TECH_LINE_MS, so a stream the
+  // player describes late still shows them (TV run: 232 BCU, 242, 372 had an empty line).
   function onFirstFrame() {
     clearTimeout(techTimer);
     techUntil = 0;
@@ -37,12 +38,15 @@ var Banner = (function () {
     if (!Overlay.isNone()) return;
     var sel = techSel = Playback.selection();
     tech = Player.streamInfo(false) || '…';
-    techUntil = Date.now() + CONFIG.TECH_LINE_MS;
+    techUntil = Date.now() + (tech === '…' ? CONFIG.TECH_WAIT_MS : CONFIG.TECH_LINE_MS);
     show(false);
     function tick() {
       if (sel !== Playback.selection()) { techUntil = 0; return; }
       if (Date.now() >= techUntil) { techUntil = 0; UI.bannerTech(''); return; }
-      if (tech === '…') { var info = Player.streamInfo(true); if (info) { tech = info; UI.bannerTech(info); } }
+      if (tech === '…') {
+        var info = Player.streamInfo(true);
+        if (info) { tech = info; techUntil = Date.now() + CONFIG.TECH_LINE_MS; if (Overlay.isNone()) show(false); else UI.bannerTech(info); }
+      }
       techTimer = setTimeout(tick, tech === '…' ? CONFIG.TECH_POLL_MS : techUntil - Date.now());
     }
     techTimer = setTimeout(tick, tech === '…' ? CONFIG.TECH_POLL_MS : CONFIG.TECH_LINE_MS);

@@ -30,6 +30,7 @@ var CONFIG = {
   // per-channel guide (OTT Club) and XMLTV (M3U)
   ARCHIVE_DAYS: 7,
   ARCHIVE_EDGE_MARGIN_MS: 600000,   // nothing older than ARCHIVE_DAYS minus this is opened (or retried)
+  ARCHIVE_SPAN_MS: 14400000,        // one archive request covers at most 4 h (OTT Club answers 404 past 24–48 h); the player continues
   GUIDE_TIMEOUT_MS: 15000,
   GUIDE_FRESH_MS: 3600000,
   GUIDE_RETRY_MIN_MS: 30000,
@@ -70,6 +71,7 @@ var CONFIG = {
   BANNER_MS: 5000,
   TECH_LINE_MS: 5000,          // the stream's technical line shows this long after a channel opens
   TECH_POLL_MS: 500,           // re-read while the player has not described the stream yet
+  TECH_WAIT_MS: 15000,         // «…» waits this long for the player's description; the TECH_LINE_MS window starts when it arrives
   TOAST_MS: 2500,
   NUMBER_ENTRY_MS: 1800,
   EXIT_CONFIRM_MS: 2000,
