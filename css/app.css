@@ -68,6 +68,10 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 .prow .s { -webkit-flex: none; flex: none; color: #4da3ff; font-size: 22px; margin-left: 12px; white-space: nowrap; }
 .prow.past .t { color: #c4ccd8; }
 .sel { background: rgba(255,255,255,.08); }
+/* The group the menu is in, while the channels have the focus (owner 2026-10-26: the remembered group was
+   not visible): a soft blue band and a blue bar on the left, weaker than the focused row. */
+.grow.sel { background: rgba(47,126,232,.26); color: #eef1f6; box-shadow: inset 6px 0 0 #2f7ee8; }
+.grow.sel .s { color: #c9dcf7; }
 .focus { background: #2f7ee8; color: #fff; -webkit-transform: scale(1.02); transform: scale(1.02); }
 .focus .n, .focus .s { color: #e4efff !important; }
 /* The channel on screen: an accent bar and accent name, with or without the cursor on it (no layout change). */
