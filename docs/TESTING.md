@@ -96,6 +96,7 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 | B8 | The list shrinks while the menu is open | A highlighted channel exists; OK tunes it | — | HARNESS menu | P2 |
 | B9 | OK on a channel | The menu closes; the channel plays (U0 landing) | C1 sample | AUTO-TV U0.landing | P0 |
 | B10 | Mouse click (desktop preview only) | A row click tunes; a group click switches | — | MANUAL (desktop) | P2 |
+| B11 | Any group (long, short), every page; search results | Under the column: «▼ ещё N каналов · CH− — дальше» while rows remain below the page (N = the rows after the last one completely visible, plural канал/канала/каналов), «Конец списка» once the last row is on screen; the line covers no row and not the hint, a page of one-line rows still holds 13, it is gone with the menu | C1 | **AUTO-TV U0.list-end** + HARNESS list-end (browser + behaviour) | P1 |
 
 ### S. Search
 | ID | Steps | Expected result | Set | Verified | P |
@@ -257,6 +258,7 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 | Owner: tech line on landing | N3 |
 | Owner: «now» current and correct (refresh, accuracy) | D1, D2, A10, L13 |
 | Owner: U0 basic journey in every group | B2, B3, B9, N1, N4, D1–D3 |
+| Owner 2026-10-26: «неизвестно, он кончается на этой странице или нет» — list-end line under the menu's channel column and the search results | B11, S1 (tests/browser/list-end.test.mjs, tests/list-end.test.js, AUTO-TV U0.list-end) |
 | TV crash: platform call throws error 18 | L15 |
 | D1 (7-day edge never starts) | R3 |
 | D2 (continuation jumps ~50 s) | L7 |

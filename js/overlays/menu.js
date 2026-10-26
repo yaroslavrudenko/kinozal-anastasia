@@ -48,6 +48,7 @@
         return { num: c.num, logo: c.logo, title: (Favs.has(c.key) ? '★ ' : '') + c.name + (g.items[i] === playing ? '  ▶' : ''),
           sub: c.dead ? 'отключён провайдером' : on, playing: g.items[i] === playing };
       } } }]);
+    UI.listEnd('channels-more', ListView.rest('channels'));
     NowLines.update();
   }
   function groupRow(i) {

@@ -5,7 +5,7 @@ var UI = (function () {
   var el = {}, toastTimer = null, bannerTimer = null, scrubBarPx = 0;
   var IDS = ['banner', 'b-num', 'b-logo', 'b-title', 'b-state', 'b-now', 'b-next', 'b-tech', 'b-progress', 'b-clock', 'toast',
     'spinner', 'numentry', 'fatal', 'guide', 'prog', 'p-title', 'scrub', 's-title', 's-time', 's-start', 's-end',
-    's-delta', 's-played', 's-now', 's-knob', 'about', 'about-table', 'search', 'setup'];
+    's-delta', 's-played', 's-now', 's-knob', 'about', 'about-table', 'search', 'setup', 'channels-more', 'search-more'];
 
   // Desktop check only: fit the 1920×1080 TV layout into the browser window.
   function fitDesktop() {
@@ -72,6 +72,14 @@ var UI = (function () {
     node.style.transform = t;
   }
 
+  // The line under a list column: how many rows are still below the page, or that the list ends here.
+  // rest: ListView.rest(column) — null (empty list) leaves the line empty. Written only when it changes.
+  function listEnd(id, rest) {
+    var text = rest === null ? '' : rest > 0
+      ? '▼ ещё ' + rest + ' ' + Util.plural(rest, ['канал', 'канала', 'каналов']) + ' · CH− — дальше' : 'Конец списка';
+    if (el[id].textContent !== text) el[id].textContent = text;
+  }
+
   // rows: [[label, value]]; then the one setting, highlighted because OK toggles it.
   function about(rows, adultOn) {
     var html = '';
@@ -86,6 +94,7 @@ var UI = (function () {
 
   return {
     STICKY: STICKY, init: init, fitDesktop: fitDesktop, show: show, banner: banner, bannerTech: bannerTech, hideBanner: hideBanner, bannerShown: bannerShown,
-    toast: toast, spinner: spinner, numEntry: numEntry, fatal: fatal, panelTitle: panelTitle, scrub: scrub, about: about
+    toast: toast, spinner: spinner, numEntry: numEntry, fatal: fatal, panelTitle: panelTitle, scrub: scrub, about: about,
+    listEnd: listEnd
   };
 }());

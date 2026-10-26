@@ -45,6 +45,12 @@ var Util = (function () {
     el.className = on ? el.className.replace(/(^|\s)hidden(?=\s|$)/g, '').trim() : (el.className ? el.className + ' hidden' : 'hidden');
   }
 
+  // Russian plural: forms = [1, 2–4, 5+] («канал», «канала», «каналов»); 11–14 take the third form.
+  function plural(n, forms) {
+    var d = n % 10, h = n % 100;
+    return forms[d === 1 && h !== 11 ? 0 : d >= 2 && d <= 4 && (h < 12 || h > 14) ? 1 : 2];
+  }
+
   function escChar(c) { return ESC[c]; }
   function esc(s) { return String(s).replace(/[&<>"]/g, escChar); }
 
@@ -73,7 +79,7 @@ var Util = (function () {
 
   return {
     MIN_MS: MIN_MS, DAY_MS: DAY_MS,
-    load: load, save: save, remove: remove, pad2: pad2, hhmm: hhmm, $: $, show: show, esc: esc, dict: dict,
+    load: load, save: save, remove: remove, pad2: pad2, hhmm: hhmm, $: $, show: show, plural: plural, esc: esc, dict: dict,
     idle: idle, dayStart: dayStart, addDays: addDays, backoff: backoff
   };
 }());

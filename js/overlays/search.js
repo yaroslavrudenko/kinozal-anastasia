@@ -42,6 +42,7 @@
         : c.group + (on ? ' · ' + on : '');
       return { num: c.num, logo: c.logo, title: c.name, sub: sub, playing: c.key === curKey };
     } });
+    UI.listEnd('search-more', ListView.rest('search'));
     NowLines.update();
   }
 

@@ -101,8 +101,21 @@ export async function U0(d, opt, onlyAll) {
       }
       prevRef = await d.ev('(function(){var o={},k,a=__TT.api.data;for(k in a)if(a[k])o[k]=a[k].name;return o})()');
     }
+    // The list-end line under the column (owner, 2026-10-26): «▼ ещё N …» with N = the rows after the last one
+    // completely visible, or «Конец списка» when the last row is on screen; checked on every page of the walk.
+    const ends = { pages: 0, bad: [], last: '' };
+    async function checkEnd() {
+      const v = await d.ev("(function(){var col=document.getElementById('channels'),c=col.getBoundingClientRect(),m=-1,r,b,k;" +
+        "for(k=0;k<col.children.length;k++){r=col.children[k];b=r.getBoundingClientRect();if(getComputedStyle(r).visibility!=='hidden'&&b.height>0&&b.top>=c.top-1&&b.bottom<=c.bottom+1)m=Math.max(m,+r.getAttribute('data-i'));}" +
+        "return {last:m,text:document.getElementById('channels-more').textContent}})()");
+      const rest = g.count - (v.last + 1);
+      const ok = v.last >= 0 && (rest > 0 ? new RegExp('^▼ ещё ' + rest + ' канал(а|ов)? · CH− — дальше$').test(v.text) : v.text === 'Конец списка');
+      ends.pages++; ends.last = v.text;
+      if (!ok && ends.bad.length < 5) ends.bad.push('rows to #' + (v.last + 1) + ' of ' + g.count + ': «' + v.text + '»');
+    }
     for (let p = 0; p < 80; p++) {
       await checkPage();
+      await checkEnd();
       await d.key(K.PG_DOWN); await d.sleep(250);
       const now = (await d.ev("__TT.rows('channels')")).filter((r) => r.full).map((r) => r.num).join(',');
       if (now === prev) break;
@@ -112,6 +125,8 @@ export async function U0(d, opt, onlyAll) {
     const refNote = refs.length ? ` · reference: ${refs.length} fresh fetches (${badRef} failed or > 10 s, those pages not judged), ≤ ${Math.max(...refs.map((x) => x.lag))} ms after each page read, ended shows in it ≤ ${Math.max(...refs.map((x) => x.ended))} · ${byGuide} rows differed from the list API but matched the channel's guide` : '';
     out.push(row('U0.rows', g.name, `sweep ${sweep.at}, menu ${sweep.open ? 'already open' : 'closed ' + sweep.closed + ' s before'} · ${seen.size}/${g.count} rows seen · empty ${empty} · not on air ${wrong} (${wrongSince.filter((x) => x < 60).length} of them < 60 s after the show changed) · no API programme ${noApi}` + refNote + (examples.length ? ' · ' + examples.join(' | ') : ''),
       seen.size === g.count && empty === 0 && wrong === 0 && badRef === 0));
+    out.push(row('U0.list-end', g.name, `${ends.pages} pages · last page «${ends.last}»` + (ends.bad.length ? ' · wrong: ' + ends.bad.join(' | ') : ''),
+      ends.pages > 0 && ends.bad.length === 0 && ends.last === 'Конец списка'));
     if (!onlyAll || opt.landings) out.push(...await landings(d, opt, g, h));
   }
   await h.closeAll();

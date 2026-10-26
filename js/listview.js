@@ -4,7 +4,7 @@
 var ListView = (function () {
   var over = {}, last = {};
   var starts = {};             // first row index of each column's window, kept between renders
-  var shown = {};              // { first, count } of the rows completely visible after the last render
+  var shown = {};              // { first, count, total } of the rows completely visible after the last render
   var anchor = {};             // the next render's window, set by page(): { top: idx } or { bottom: idx }
 
   function windowStart(cursor, total, visible) {
@@ -47,7 +47,7 @@ var ListView = (function () {
       if (c.bottom !== undefined) fit = Math.min(fit, c.bottom - c.start + 1);   // a page-up page ends at its anchor
       if (c.h) { ListRows.hideFrom(c.rows, fit); scrollState(c); }
       starts[c.name] = c.start;
-      shown[c.name] = { first: c.start, count: Math.max(1, Math.min(fit, c.view.total - c.start)) };
+      shown[c.name] = { first: c.start, count: Math.max(1, Math.min(fit, c.view.total - c.start)), total: c.view.total };
       last[c.name] = c.view.cursor;
     }
   }
@@ -171,5 +171,12 @@ var ListView = (function () {
   // { first, count } of the rows completely visible in a column after its last render (or undefined).
   function shownRows(name) { return shown[name]; }
 
-  return { column: column, columns: columns, scrollWithin: scrollWithin, page: page, reset: reset, shown: shownRows };
+  // How many rows lie below the last completely visible one after the last render; null for an empty or
+  // never drawn list (the list-end line under the column says nothing then).
+  function rest(name) {
+    var v = shown[name];
+    return v && v.total ? Math.max(0, v.total - v.first - v.count) : null;
+  }
+
+  return { column: column, columns: columns, scrollWithin: scrollWithin, page: page, reset: reset, shown: shownRows, rest: rest };
 }());

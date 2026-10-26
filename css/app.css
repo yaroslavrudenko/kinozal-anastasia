@@ -149,3 +149,7 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
   -webkit-transition: left .15s; transition: left .15s; }
 .switch.on { background: #2f7ee8; }
 .switch.on i { left: 34px; }
+/* The list-end line under a list column (ui.js listEnd): in the gap between the column and the hint, so
+   a page keeps its 13 one-line rows and the line covers neither a row nor the hint. */
+.more { position: absolute; left: 464px; right: 60px; top: 972px; font-size: 24px; line-height: 26px; color: #8d99ad; word-wrap: break-word; }
+.search-more { left: 360px; right: 360px; top: 966px; }
