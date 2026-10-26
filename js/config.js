@@ -20,6 +20,7 @@ var CONFIG = {
   NOW_SETTLE_MS: 0,            // a visible row's "now" is re-read this long after its programme ends
   NOW_MIN_INTERVAL_MS: 60000,  // never two "now" refreshes closer than this
   NOW_MISSING_MS: 300000,      // rows the provider had no current programme for are re-asked at most this often
+  NOW_STALE_MS: 60000,         // an answer naming a show that ended this long before it arrived came from a stale cache
   NOW_LINGER_MS: 900000,       // the provider still names an ended programme up to this long (seen: 7+ min at 03:00)
   NOW_AFTER_LANDING_MS: 5000,
   NOW_BUSY_RETRY_MS: 1000,

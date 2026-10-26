@@ -19,7 +19,7 @@ function staggeredApp(lagMs, stepMs) {
   const tl = (i, t) => timeline(i, t, stepMs);
   const app = f.ottApp({ channels: CHANNELS, boot: false });
   const base = JSON.parse(app.fixture.list.body), ids = Object.keys(base);
-  app.net.route((u) => f.isList(u), () => {
+  app.net.route((u) => f.isList(u.split('?')[0]), () => {   // the plain URL and the provider-fresh one (?t=…) alike
     const data = JSON.parse(JSON.stringify(base));
     ids.forEach((id, i) => {
       let p = tl(i, app.clock.now);

@@ -7,6 +7,7 @@
 var EPG = (function () {
   var seeds = Util.dict();     // id -> [one programme] (the "now" line of the channel list)
   var seedsAt = 0;             // when the provider gave them
+  var cached = false;          // an answer named shows that had ended well before it: the provider serves a cache
   var full = Util.dict();      // id -> sorted [{ start, stop, title }]
   var fullAt = Util.dict();    // id -> when the full guide arrived
   var lru = [];                // ids of per-channel full guides, most recent last
@@ -17,7 +18,20 @@ var EPG = (function () {
 
   function setHooks(h) { hooks = h; }
   function setLoader(fn) { loader = fn; }
-  function setSeeds(map) { seeds = map; seedsAt = Date.now(); }
+  // A newer answer is never replaced by an older one (a cached list can be older than the last refresh).
+  // nextEnd: the first end among the programmes on air in the answer (when any "now" line goes out of date).
+  var nextEnd = Infinity;
+  function setSeeds(map) {
+    var now = Date.now(), stale = false;
+    nextEnd = Infinity;
+    for (var id in map) {
+      var o = seeds[id] && seeds[id][0], n = map[id][0];
+      if (o && o.start > n.start) n = (map[id] = seeds[id])[0];
+      else if (n.stop <= now - CONFIG.NOW_STALE_MS) stale = true;
+      if (n.stop > now && n.stop < nextEnd) nextEnd = n.stop;
+    }
+    seeds = map; seedsAt = now; cached = cached || stale;
+  }
 
   // A full guide first; otherwise the short list kept from an evicted guide when it still covers now
   // (it also knows what comes next), else the channel list's "now" line.
@@ -172,6 +186,6 @@ var EPG = (function () {
 
   return {
     setHooks: setHooks, setLoader: setLoader, setSeeds: setSeeds, knownEnd: knownEnd, ensure: ensure, cancelExcept: cancelExcept,
-    load: load, at: at, onAir: onAir, nowNext: nowNext, day: day, indexAt: indexAt
+    load: load, at: at, onAir: onAir, servedCached: function () { return cached; }, nextSeedEnd: function () { return nextEnd; }, nowNext: nowNext, day: day, indexAt: indexAt
   };
 }());

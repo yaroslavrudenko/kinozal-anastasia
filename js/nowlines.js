@@ -16,6 +16,7 @@ var NowLines = (function () {
   // The next refresh: the earliest end among the visible rows whose next programme is unknown; a row
   // whose programme ended since the last refresh, or that the provider still named after its end (it
   // has not moved on yet, up to NOW_LINGER_MS), is due now; rows it had nothing for wait NOW_MISSING_MS.
+  // Any channel's end also counts (one answer refreshes them all), so a row scrolled into view is current.
   function arm() {
     clearTimeout(timer);
     if (!visible) return;
@@ -25,6 +26,7 @@ var NowLines = (function () {
       if (p) { if (!EPG.at(ids[i], p.stop + 1000)) due = Math.min(due, p.stop + CONFIG.NOW_SETTLE_MS); }
       else due = Math.min(due, end > at - CONFIG.NOW_LINGER_MS ? now : at + CONFIG.NOW_MISSING_MS);
     }
+    due = Math.min(due, EPG.nextSeedEnd());
     if (due === Infinity) return;
     var when = Math.max(due, at + CONFIG.NOW_MIN_INTERVAL_MS, landedAt + CONFIG.NOW_AFTER_LANDING_MS);
     timer = setTimeout(run, Math.max(0, when - now));
@@ -37,7 +39,7 @@ var NowLines = (function () {
       timer = setTimeout(run, CONFIG.NOW_BUSY_RETRY_MS);
       return;
     }
-    req = Net.get({ url: OttClub.sourceUrl(), timeoutMs: CONFIG.LIST_TIMEOUT_MS }, function (err, text) {
+    req = Net.get({ url: EPG.servedCached() ? OttClub.freshUrl() : OttClub.sourceUrl(), timeoutMs: CONFIG.LIST_TIMEOUT_MS }, function (err, text) {
       req = null;
       at = Date.now();
       if (err) { arm(); return; }

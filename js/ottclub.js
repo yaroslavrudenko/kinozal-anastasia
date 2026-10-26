@@ -48,6 +48,10 @@ var OttClub = (function () {
   }
 
   function sourceUrl() { return base() + '/api/channel_now'; }
+  // The same list, past the provider's server cache (which serves the plain URL minutes old): a URL of its
+  // own (to the second) makes the provider build it now. Slower (about 3 s against 0.3 s), so only for the
+  // "now" refreshes, once an answer has shown that the provider serves a cache.
+  function freshUrl() { return sourceUrl() + '?t=' + Math.floor(Date.now() / 1000); }
   function streamUrl(id) { return base() + '/stream/' + key() + '/' + id + '.m3u8'; }
 
   // Text of /api/channel_now -> { channels, seeds, epgUrl: '' }; null when it is not a channel list.
@@ -138,6 +142,6 @@ var OttClub = (function () {
 
   return {
     enabled: enabled, extractKey: extractKey, checkKey: checkKey, saveKey: saveKey, classify: classify,
-    sourceUrl: sourceUrl, streamUrl: streamUrl, parse: parse, seedsOf: seedsOf, guide: guide
+    sourceUrl: sourceUrl, freshUrl: freshUrl, streamUrl: streamUrl, parse: parse, seedsOf: seedsOf, guide: guide
   };
 }());
