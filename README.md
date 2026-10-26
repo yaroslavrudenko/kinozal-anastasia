@@ -220,3 +220,4 @@ The daisy icon appears in your TV's apps.
   <b>Made with love for Настя: a cinema at home, one that simply works.</b><br>
   If it brought your old TV back to life, <a href="https://github.com/yaroslavrudenko/nastin-kinozal">give it a ⭐</a>.
 </p>
+- Test report 2026-10-26: [docs/TEST-REPORT-2026-10-26.md](docs/TEST-REPORT-2026-10-26.md)

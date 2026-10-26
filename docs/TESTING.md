@@ -6,6 +6,8 @@ This file is the complete use-case catalogue: U0 and the test matrix first, then
 
 Each result row records the date, build (commit), channel (name, list position, bitrate) and the measured value. A failed row blocks the release, and the previous working build goes back on the TV.
 
+> Test report for 2026-10-25/26 (what was tested, how, how often, results, what testing missed): [TEST-REPORT-2026-10-26.md](TEST-REPORT-2026-10-26.md).
+
 ## U0. The viewer's basic journey (run FIRST, in EVERY group)
 The owner's own words: "this is what must be tested from the very beginning". Run it in every group: Все каналы, Избранное, Израиль, Украина, and every provider group.
 1. Open the app.
