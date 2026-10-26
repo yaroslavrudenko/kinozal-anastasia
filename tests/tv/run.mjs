@@ -19,7 +19,7 @@ const flag = (n) => args.includes(n);
 const val = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
 const dry = flag('--dry');
 const quick = flag('--quick');
-const ALL = ['U0', 'M2', 'M4', 'M5', 'M7', 'M8', 'M9', 'M6', 'C2', 'M10', 'M11', 'COLD348'];
+const ALL = ['U0', 'M2', 'M4', 'M5', 'M7', 'M8', 'M9', 'M6', 'C2', 'M10', 'M11', 'G1', 'COLD348'];
 const cases = (val('--cases', '') || ALL.join(',')).split(',');
 const opt = {
   soakMin: +val('--soak-min', 10), m11Min: +val('--m11-min', dry ? 0 : 30),
@@ -52,7 +52,7 @@ try {
   log('app', JSON.stringify(info), 'mode', d.mode);
   const run = {
     U0: () => C.U0(d, opt, quick), M2: () => C.M2(d, opt), M4: () => C.M4(d, opt), M5: () => C.M5(d, opt), M7: () => C.M7(d, opt),
-    M8: () => C.M8(d, opt), COLD348: () => C.cold348(d), M9: () => C.M9(d, opt), M6: () => C.M6(d, opt), C2: () => C.C2archive(d, opt), M10: () => C.M10(d, opt),
+    M8: () => C.M8(d, opt), COLD348: () => C.cold348(d), M9: () => C.M9(d, opt), M6: () => C.M6(d, opt), C2: () => C.C2archive(d, opt), M10: () => C.M10(d, opt), G1: () => C.G1(d),
     M11: async () => { if (!opt.m11Min) return [{ id: 'M11', channel: '—', measured: 'skipped (--m11-min 0)', result: 'NOT-RUN' }];
       const open = await C.menuOpenFreshness(d, opt.m11Min);         // the menu left open the whole time
       return open.concat((await C.U0(d, Object.assign({}, opt, { landings: false }), true)).map((r) => Object.assign(r, { id: 'M11·' + r.id }))); }

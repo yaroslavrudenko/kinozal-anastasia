@@ -1,21 +1,23 @@
-// The channel menu: groups on the left, channels on the right. The group browsed here is the group
-// ◀ ▶ zap through afterwards (Zap.group).
+// The channel menu: groups on the left, channels on the right. Browsing groups changes nothing until a
+// channel is picked: the group it is picked in becomes the group ◀ ▶ zap through (Zap.group).
 (function () {
-  var focus = 'channels', cursor = 0;
+  var focus = 'channels', cursor = 0, browsed = '';    // browsed: the group shown, by identity
 
   function groups() { return Channels.groups(); }
-  function group() { return groups()[clampGroup()]; }
-  function clampGroup() { var g = clamp(Zap.group(), groups().length); Zap.setGroup(g); return g; }
+  function groupIdx() { return Channels.groupOrAll(browsed); }
+  function group() { return groups()[groupIdx()]; }
+  function browse(i) { var g = groups()[i]; browsed = g ? g.key : ''; }
   function clamp(v, n) { return Math.max(0, Math.min(n - 1, v)); }
   function playingIdx() { var c = Playback.current(); return c ? Channels.indexOfKey(c.key) : -1; }
 
-  // Group and cursor on the playing channel (its group if it is there, else «Все каналы»), fresh windows.
+  // The zap group and the cursor on the playing channel (else «Все каналы»), fresh windows.
   function place() {
     ListView.reset('groups');
     ListView.reset('channels');
     focus = 'channels';
+    browse(Zap.group());
     var playing = playingIdx(), at = group() ? group().items.indexOf(playing) : -1;
-    if (at < 0) { Zap.setGroup(Channels.allIdx()); at = Math.max(0, group().items.indexOf(playing)); }
+    if (at < 0) { browse(Channels.allIdx()); at = group() ? Math.max(0, group().items.indexOf(playing)) : 0; }
     cursor = at;
   }
   function open() {
@@ -38,7 +40,7 @@
   }
 
   function render() {
-    var g = group(), gi = Zap.group();
+    var g = group(), gi = groupIdx();
     if (!g) return;
     cursor = clamp(cursor, g.items.length);            // a refresh may have shortened the group
     var playing = playingIdx(), now = Date.now();
@@ -75,7 +77,7 @@
     else if (k === K.RIGHT) { if (focus === 'groups' && openSpecial(g)) return; focus = 'channels'; }
     else if (k === K.ENTER) {
       if (focus === 'groups') { if (openSpecial(g)) return; focus = 'channels'; cursor = 0; }
-      else { var c = Channels.at(g.items[cursor]); Overlay.close(); if (c) Zap.pick(c); return; }
+      else { var c = Channels.at(g.items[cursor]), gi = groupIdx(); Overlay.close(); if (c) Zap.pick(c, gi); return; }
     }
     else if (k === K.YELLOW || k === K.F || k === K.PLAY_PAUSE) toggleFav();
     else if (k === K.BLUE) { Overlay.open('setup', { changingKey: true }); return; }
@@ -91,7 +93,7 @@
   }
 
   function move(d) {
-    if (focus === 'groups') { Zap.setGroup(clamp(Zap.group() + d, groups().length)); cursor = 0; }
+    if (focus === 'groups') { browse(clamp(groupIdx() + d, groups().length)); cursor = 0; }
     else cursor = clamp(cursor + d, group().items.length);
   }
 
@@ -100,7 +102,7 @@
     var g = group(), c = Channels.at(g.items[cursor]);
     if (!c) return;
     var on = Favs.toggle(c.key);
-    Channels.rebuild();                  // the browsed group is kept by identity (Zap.group)
+    Channels.rebuild();                  // the browsed group is kept by identity
     var at = group().items.indexOf(Channels.indexOfKey(c.key));
     cursor = at >= 0 ? at : clamp(cursor, group().items.length);
     UI.toast(on ? 'Добавлено в избранное' : 'Убрано из избранного');
@@ -109,7 +111,7 @@
   // Desktop preview: a click selects a group or tunes a channel.
   function onClick(row) {
     var i = +row.getAttribute('data-i'), col = row.parentNode.id;
-    if (col === 'groups') { focus = 'groups'; Zap.setGroup(i); cursor = 0; render(); }
+    if (col === 'groups') { focus = 'groups'; browse(i); cursor = 0; render(); }
     else if (col === 'channels') { focus = 'channels'; cursor = i; onKey(K.ENTER, { preventDefault: function () {} }); }
   }
 

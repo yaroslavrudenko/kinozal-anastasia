@@ -36,7 +36,9 @@ export function helpers(d, opt) {
     await closeAll();
     await d.key(K.ENTER); await d.sleep(400);
     await d.key(K.LEFT); await d.sleep(150);
-    const cur = (await st()).group;
+    // The group highlighted in the menu (not Zap.group(): the menu may show «Все каналы» instead of it).
+    const shownName = ((await d.ev("__TT.rows('groups')")).find((r) => r.focus) || {}).title;
+    const cur = (await d.ev('__TT.groups()')).findIndex((x) => x.name === shownName);
     await keys(g > cur ? K.DOWN : K.UP, Math.abs(g - cur), 80);
     await d.key(K.RIGHT); await d.sleep(300);
     // When the group did not change, the cursor stays where it was (the playing channel): page up to the top.
@@ -297,6 +299,29 @@ export async function M7(d, opt) {
   const s = await h.st(), urls = await d.ev(`__TT.reqListSince(${t0})`);
   out.push(row('M7.burst', `from ${s0.ch.num} ${s0.ch.name}`, `landed ${s.ch.num} ${s.ch.name} (expected ${expected}) · ${urls.length} app requests`, s.ch.num + ' ' + s.ch.name === expected && urls.length <= 3));
   return out;
+}
+
+// ---------- G1: the menu reopens on the group the channel was picked in, cursor on that channel ----------
+export async function G1(d) {
+  const h = helpers(d);
+  const groups = (await d.ev('__TT.groups()')).filter((x) => !x.special && x.name !== 'Все каналы' && x.name !== '★ Избранное' && x.count > 1);
+  const g = groups[groups.length - 1];                 // the last provider group
+  if (!g) return [row('G1.reopen', '—', 'no provider group with 2+ channels', false)];
+  await h.openGroup(g.i);
+  await d.key(K.DOWN); await d.sleep(150);
+  const t = Date.now();
+  await d.key(K.ENTER);
+  await h.firstFrame(t);
+  await d.sleep(1500);
+  await h.closeAll();
+  const s = await h.st();
+  await d.key(K.ENTER); await d.sleep(400);
+  const shown = ((await d.ev("__TT.rows('groups')")).find((r) => r.focus) || {}).title;
+  const cur = (await d.ev("__TT.rows('channels')")).find((r) => r.focus) || {};
+  await h.closeAll();
+  const ok = !!s.ch && norm(shown) === norm(g.name) && cur.playing === true && norm(cur.num) === String(s.ch.num);
+  return [row('G1.reopen', s.ch ? s.ch.num + ' ' + s.ch.name : '—',
+    `picked in «${g.name}» · the menu reopened on «${norm(shown)}», cursor ${norm(cur.num)} ${norm(cur.title)}${cur.playing ? ' (playing)' : ''}`, ok)];
 }
 
 // ---------- M8: pause — no requests while paused, resumes in place ----------

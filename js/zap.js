@@ -3,7 +3,8 @@
 // landing channel gets a guide request (once the zapping has settled and its picture is up) and a probe;
 // everything started for the channels passed is aborted, and the background check stops while zapping.
 var Zap = (function () {
-  var groupKey = '';           // the group last browsed in the menu (by identity): zapping stays inside it
+  var GROUP_STORE = 'zapGroup';
+  var groupKey = savedGroup(); // the group the viewer last picked a channel in (by identity): zapping stays inside it
   var pending = null, timer = null, lastStepAt = 0, prevKey = null, saveTimer = null, settleTimer = null;
 
   function removedToast(c, ms) { UI.toast('Канал «' + c.name + '» отключён провайдером', ms); }
@@ -33,12 +34,30 @@ var Zap = (function () {
   // A pending zap is dropped: an overlay opened, the app went to the background, or a new step.
   function cancel() { clearTimeout(timer); timer = null; pending = null; }
 
-  // A direct choice (menu, search, number, PREV, the programme panel).
-  function pick(c) {
+  // A direct choice (menu, search, number, PREV, the programme panel, the saved channel at start).
+  // groupIdx: the menu group it was picked in; omitted elsewhere.
+  function pick(c, groupIdx) {
     cancel();
     if (c.dead) { removedToast(c); return; }
+    remember(c, groupIdx);
     land(c, 0);
   }
+
+  // The group a channel is picked in is remembered across restarts. Picked outside the menu, the
+  // remembered group stays when the channel is in it, else «Все каналы»; a list not loaded yet (or a
+  // remembered group missing from it) changes nothing, and Zap.group() falls back to «Все каналы».
+  function remember(c, groupIdx) {
+    if (groupIdx === undefined) {
+      var g = Channels.groups()[Channels.groupIndex(groupKey)], i = Channels.indexOfKey(c.key);
+      if (!g || i < 0 || g.items.indexOf(i) >= 0) return;
+      groupIdx = Channels.allIdx();
+    }
+    var picked = Channels.groups()[groupIdx], key = picked ? picked.key : '';
+    if (key === groupKey) return;
+    groupKey = key;
+    Util.save(GROUP_STORE, key);
+  }
+  function savedGroup() { var k = Util.load(GROUP_STORE); return typeof k === 'string' ? k : ''; }
 
   // dir: +1 / -1 when zapping (a channel found removed is stepped over in that direction), 0 otherwise.
   function land(c, dir) {
@@ -85,11 +104,10 @@ var Zap = (function () {
   }
 
   // The zap group as an index into Channels.groups() (it survives rebuilds that add or remove groups).
-  function group() { var g = Channels.groupIndex(groupKey); return g < 0 ? Channels.allIdx() : g; }
-  function setGroup(i) { var g = Channels.groups()[i]; groupKey = g ? g.key : ''; }
+  function group() { return Channels.groupOrAll(groupKey); }
 
   // true while a burst of presses is still choosing (the banner shows the channel being passed).
   function choosing() { return !!timer; }
 
-  return { step: step, cancel: cancel, choosing: choosing, pick: pick, previous: previous, onFirstFrame: onFirstFrame, group: group, setGroup: setGroup };
+  return { step: step, cancel: cancel, choosing: choosing, pick: pick, previous: previous, onFirstFrame: onFirstFrame, group: group };
 }());

@@ -7,7 +7,7 @@ var CONFIG = {
   OTT_KEY: '__OTT_KEY__',
   PLAYLIST_URL: '__PLAYLIST_URL__',
   EPG_URL: '',                 // empty = use url-tvg from the playlist header
-  VERSION: '1.8.0',            // must equal config.xml's version
+  VERSION: '1.8.1',            // must equal config.xml's version
   BUILD: '__BUILD__',          // filled by build.sh: commit and date
 
   // channel list

@@ -170,3 +170,110 @@ test('eligibility (pin): an adult channel is not listed, not found by search and
   const opened = app.av.calls.filter((c) => c.fn === 'open').map((c) => f.streamIdOf(c.args[0]));
   assert.ok(opened.indexOf(adult) < 0, 'zapped to the adult channel');
 });
+
+// ---------- the remembered group (owner bug 2026-10-26: the group and the channel pointer are lost) ----------
+// The fixture's «Кино» holds list positions 0, 6, 12, 18, 24: «Дом Кино», «Кино ТВ», «Euronews», «ТНТ», «ICTV».
+const inKino = (app, id) => f.ottRecord(app, id).category.name === 'Кино';
+// Tunes the 2nd channel of «Кино» («Кино ТВ») from the menu and lets it play long enough to be remembered.
+function pickInKino() {
+  const app = f.untilPlaying(f.ottApp({ channels: 30 }));
+  app.advance(2000);
+  browseGroup(app, 'Кино');
+  tuneFromGroup(app, 1);
+  app.advance(2000);
+  assert.ok(inKino(app, playingId(app)), 'the picked channel is not in «Кино»');
+  return app;
+}
+// The app launched again on the same TV (same storage), e.g. after a power cycle or a return from another app.
+function relaunch(app, opts) {
+  const again = f.untilPlaying(f.ottApp(Object.assign({ channels: 30, storage: Object.fromEntries(app.storage.raw) }, opts)));
+  again.advance(2000);
+  return again;
+}
+// Opens the menu and checks it shows `group` with the cursor on the playing channel (a row on screen); closes it.
+function assertMenuOn(app, group, where) {
+  app.press(KEYS.ENTER, 50);
+  const g = app.cursorRow('groups') || '', prefix = { num: app.text('b-num'), name: playingName(app) };
+  const cur = app.rowsDetailed('channels').find((r) => r.classes.indexOf('focus') >= 0);
+  app.press(KEYS.BACK, 50);
+  assert.ok(g.indexOf(group) === 0, where + ': the menu opened on «' + g + '», expected «' + group + '»');
+  assert.ok(cur && isPlayingRow(prefix)(cur), where + ': cursor on "' + (cur && cur.text) + '", playing ' + JSON.stringify(prefix));
+}
+
+// The channel title one row below the cursor of the menu as it opens (the channel ▶ should go to next).
+function nextInMenu(app) {
+  app.press(KEYS.ENTER, 50);
+  app.press(KEYS.DOWN, 10);
+  const cur = app.rowsDetailed('channels').find((r) => r.classes.indexOf('focus') >= 0);
+  app.press(KEYS.BACK, 50);
+  return cur.cells[2].replace(/^★ /, '').replace(/\s+▶$/, '');
+}
+
+test('remembered group: after a restart the menu opens in the group the channel was picked in, on that channel', () => {
+  const first = pickInKino();
+  const app = relaunch(first);
+  assert.equal(playingId(app), playingId(first), 'the last channel was not restored');
+  assertMenuOn(app, 'Кино', 'after a restart');
+});
+
+test('remembered group: after a restart ▶ zaps inside that group and the menu opens on the new channel there', () => {
+  const app = relaunch(pickInKino());
+  const before = playingId(app);
+  app.press(KEYS.RIGHT, 3000);
+  const after = playingId(app);
+  assert.notEqual(after, before, '▶ stayed on the same channel');
+  assert.ok(inKino(app, after), '▶ left «Кино» for ' + f.ottRecord(app, after).channel_name);
+  assertMenuOn(app, 'Кино', 'after ▶');
+});
+
+test('remembered group: browsing another group and closing the menu without a pick keeps the group and the channel', () => {
+  const app = pickInKino();
+  browseGroup(app, 'Новостные');                     // the playing channel is not in this group
+  app.press(KEYS.BACK, 50);
+  assertMenuOn(app, 'Кино', 'after browsing «Новостные»');
+  browseGroup(app, 'Детские');
+  app.press(KEYS.RIGHT, 50);                         // into the channel column (cursor on its first row), no pick
+  app.press(KEYS.BACK, 50);
+  app.press(KEYS.RIGHT, 3000);
+  assert.ok(inKino(app, playingId(app)), '▶ after browsing went to ' + playingName(app));
+});
+
+test('remembered group: a channel found by search that is in the group keeps the group', () => {
+  const app = pickInKino();
+  browseGroup(app, '🔍 Поиск');
+  app.press(KEYS.RIGHT, 300);
+  app.type('search-input', 'euronews');
+  app.press(KEYS.ENTER, 50);                         // into the results
+  app.press(KEYS.ENTER, 3000);                       // tune the first result
+  assert.equal(playingName(app), 'Euronews');
+  assertMenuOn(app, 'Кино', 'after a search pick inside the group');
+});
+
+test('remembered group: a channel tuned by number that is not in the group switches to «Все каналы» (menu and ▶)', () => {
+  const app = pickInKino();
+  app.press(48 + 1, 100);                            // channel number 17: «Інтер», the channel just before «Кино» (18–22)
+  app.press(48 + 7, 3000);
+  assert.equal(app.text('b-num'), '17');
+  assert.ok(!inKino(app, playingId(app)), 'channel 17 is in «Кино»: ' + playingName(app));
+  // ▶ walks «Все каналы» by number (the menu is not opened first), also past a «Кино» channel on the way.
+  let passedKino = false;
+  for (let n = 18; n <= 23; n++) {
+    app.press(KEYS.RIGHT, 1500);
+    assert.equal(app.text('b-num'), String(n), '▶ did not go to channel ' + n + ' of «Все каналы»: ' + playingName(app));
+    passedKino = passedKino || inKino(app, playingId(app));
+  }
+  assert.ok(passedKino, 'the walk passed no «Кино» channel: the test cannot tell the groups apart');
+  assertMenuOn(app, 'Все каналы', 'after a number pick outside the group and ▶');
+});
+
+test('remembered group: a group that no longer exists after a restart falls back to «Все каналы» without errors', () => {
+  const first = pickInKino();
+  const data = JSON.parse(first.fixture.list.body);
+  for (const id of Object.keys(data)) if (data[id].category.name === 'Кино') data[id].category = { class: 'c3', name: 'Новостные' };
+  const app = relaunch(first, { list: { body: JSON.stringify(data), ids: Object.keys(data) } });
+  assertMenuOn(app, 'Все каналы', 'with «Кино» gone');
+  const next = nextInMenu(app);
+  app.press(KEYS.RIGHT, 3000);
+  assert.equal(playingName(app), next, '▶ did not go to the next channel of «Все каналы»');
+  assert.deepEqual(app.errors.map((e) => e.label + ': ' + e.error.message), []);
+});

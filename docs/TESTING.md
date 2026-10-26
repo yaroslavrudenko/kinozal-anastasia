@@ -97,6 +97,9 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 | B9 | OK on a channel | The menu closes; the channel plays (U0 landing) | C1 sample | AUTO-TV U0.landing | P0 |
 | B10 | Mouse click (desktop preview only) | A row click tunes; a group click switches | — | MANUAL (desktop) | P2 |
 | B11 | Any group (long, short), every page; search results | In the list, right under the last completely visible row (the slot of one row: a page holds one row fewer — 12 one-line rows, was 13): «▼ ещё N каналов · CH− — дальше» while rows remain below the page (N = the rows after the last one completely visible, plural канал/канала/каналов), «Конец списка» once the last row is on screen; it covers no row; the hint bar is a separate band (its own soft ground, a faint rule) ≥ 8 px from the line, the list and the groups column; the groups column has its own slightly lighter ground and a faint divider before the channel list — gentle steps (≤ 10 % lightness), every text ≥ 4.5:1, the highlighted row the strongest; the line is gone with the menu | C1 | **AUTO-TV U0.list-end** + HARNESS list-end (browser + behaviour) | P1 |
+| B12 | Pick a channel in a group (e.g. «Кино»), then: reopen the menu; restart the app or come back from another app; browse other groups and close the menu without a pick; ◀ ▶ | The menu reopens on that group with the cursor on the playing channel, its row on screen; ◀ ▶ stay inside that group; browsing without a pick changes nothing | C1 | **AUTO-TV G1** (reopen) + HARNESS menu «remembered group» (restart, browse without a pick, ▶) | P0 |
+| B13 | A channel chosen outside the menu (search, number, PREV, programme panel) | In the remembered group: the group stays; not in it: the menu and ◀ ▶ use «Все каналы» | — | HARNESS menu «remembered group» (search, number) | P1 |
+| B14 | The remembered group is gone (list changed, adult switch) | The menu opens on «Все каналы» on the playing channel; ◀ ▶ walk «Все каналы»; no error | — | HARNESS menu «remembered group» (group gone) | P2 |
 
 ### S. Search
 | ID | Steps | Expected result | Set | Verified | P |
@@ -222,6 +225,7 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 
 ### Counts
 86 use cases plus the key map (O6, 11 keys × 7 states): **P0 26 · P1 38 · P2 22**. Verification: **28 fully AUTO-TV**, 6 AUTO-TV with a MANUAL part, 52 MANUAL or HARNESS only (a person at the TV is needed for acceptance). Of the 26 P0 cases, 20 have AUTO-TV coverage; the other P0 cases (A1, A2, A5, N2, L11, L15) are MANUAL on the TV.
+2026-10-26 (1.8.1): + B12 (P0, AUTO-TV G1 with a HARNESS part), B13 (P1), B14 (P2) — 89 use cases: **P0 27 · P1 39 · P2 23**.
 
 ## Traceability: change → use cases that verify it
 | Change (docs/PERFORMANCE.md change log / owner request) | Use cases |
@@ -265,6 +269,7 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 | D2 (continuation jumps ~50 s) | L7 |
 | D4 (dry run 2026-10-26: ▼ after midnight has no programme on air) | P8 |
 | DEC-2026-10-26-now-refresh-2 («now» refresh policy, retained last programme «(шла до HH:MM)») | U0, D1, D2, X4b, M11, Q1-TV1 … Q1-TV6 below |
+| Owner 2026-10-26 (1.8.1): «указатель на группу и указатель на канал не сохраняются, теряются» — the group a channel is picked in is remembered (`zapGroup` in storage) and is the menu's and ◀ ▶'s group; browsing groups no longer changes it | B12, B13, B14 (tests/menu.test.js «remembered group» ×6, AUTO-TV G1) |
 
 ## DEC-2026-10-26-now-refresh-2 — «now» lines: desktop pins and TV acceptance cases (2026-10-26)
 

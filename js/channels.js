@@ -48,6 +48,8 @@ var Channels = (function () {
   function allGroups() { return groups; }
   function groupIndex(key) { for (var g = 0; g < groups.length; g++) if (groups[g].key === key) return g; return -1; }
   function allIdx() { for (var g = 0; g < groups.length; g++) if (groups[g].all) return g; return 0; }
+  // The group with this key, or «Все каналы» when it is not in the list (any more, or not yet).
+  function groupOrAll(key) { var g = groupIndex(key); return g < 0 ? allIdx() : g; }
 
   // The next eligible channel after `fromKey` in group `groupIdx` (or in «Все каналы» when that group
   // does not hold it). A bounded loop: null when no eligible channel exists at all.
@@ -95,7 +97,7 @@ var Channels = (function () {
 
   return {
     replace: replace, rebuild: rebuild, at: at, count: count, indexOfKey: indexOfKey, get: get, byNum: byNum,
-    groups: allGroups, groupIndex: groupIndex, allIdx: allIdx, isEligible: isEligible, adultAllowed: adultAllowed, nextVisible: nextVisible,
+    groups: allGroups, groupIndex: groupIndex, allIdx: allIdx, groupOrAll: groupOrAll, isEligible: isEligible, adultAllowed: adultAllowed, nextVisible: nextVisible,
     search: search, setShowAdult: setShowAdult, showAdult: adultShown, providerGroupCount: providerGroupCount, stats: stats
   };
 }());
