@@ -1,8 +1,8 @@
 'use strict';
 // D5 (overnight dry run, 2026-10-26): a channel the provider reports as on air must never show an empty
 // «now» in the menu, and the banner must say what the menu row says. Programmes end at staggered times
-// (channel i's hour-long shows are shifted by (i mod 7) × 23 s), so a row often ends less than the 60 s
-// refresh floor (DEC-2026-10-26-now-refresh) after the previous refresh; rows scrolled into view may have
+// (channel i's hour-long shows are shifted by (i mod 7) × 23 s), so a row often ends less than the refresh
+// floor (60 s when written; 10 s since DEC-2026-10-26-now-refresh-2) after the previous refresh; rows scrolled into view may have
 // ended since the last answer; and the provider may keep answering with an ended show for a few seconds.
 const test = require('node:test');
 const assert = require('node:assert/strict');

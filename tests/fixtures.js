@@ -120,7 +120,9 @@ function xmltvUnclosed(count, opts) {
   return parts.join('\n');
 }
 
-const isList = (u) => u === OTT + '/api/channel_now';
+// The plain list and the provider-fresh one (?t=<seconds>, DEC-2026-10-26-now-refresh-2) alike; a test that
+// needs to tell them apart checks the query itself.
+const isList = (u) => u.split('?')[0] === OTT + '/api/channel_now';
 const isGuide = (u) => u.indexOf(OTT + '/api/channel/') === 0;
 const isStream = (u) => u.indexOf(OTT + '/stream/') === 0;
 const streamIdOf = (u) => (/\/stream\/[^/]+\/([^/.]+)\.m3u8/.exec(u) || [])[1];

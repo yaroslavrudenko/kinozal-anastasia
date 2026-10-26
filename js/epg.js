@@ -5,9 +5,8 @@
 //   M3U: one XMLTV file (load), parsed by XMLTV in slices; only listed channels and the archive window.
 // Lookups are binary searches; indexAt is the one definition of "the programme at moment t".
 var EPG = (function () {
-  var seeds = Util.dict();     // id -> [one programme] (the "now" line of the channel list)
-  var seedsAt = 0;             // when the provider gave them
-  var cached = false;          // an answer named shows that had ended well before it: the provider serves a cache
+  var seeds = Util.dict();     // id -> [programme] or [last, next] (the "now" line of the channel list)
+  var seedsAt = 0;             // when the provider last gave them
   var full = Util.dict();      // id -> sorted [{ start, stop, title }]
   var fullAt = Util.dict();    // id -> when the full guide arrived
   var lru = [];                // ids of per-channel full guides, most recent last
@@ -18,23 +17,33 @@ var EPG = (function () {
 
   function setHooks(h) { hooks = h; }
   function setLoader(fn) { loader = fn; }
-  // A record still on air is never replaced by one that has already ended (a cached list can be older than
-  // the last refresh). Otherwise the newest answer wins, even with an earlier start: the provider sometimes
-  // names a placeholder («Нет данных» 06:00–07:00) and later the real programme (05:00–08:10).
+  // An answer's "now" lines are merged in (DEC-2026-10-26-now-refresh-2): a channel the answer leaves out
+  // keeps its line, and an empty answer changes nothing. For a channel it names, a record still on air is
+  // never replaced by one that has already ended (a cached list can be older than the last refresh), and a
+  // record that has started is never replaced by one that has not (the provider's gap: the later one is kept
+  // after it when they do not overlap). Otherwise the newest answer wins, even with an earlier start: the
+  // provider sometimes names a placeholder («Нет данных» 06:00–07:00) and later the real programme (05:00–08:10).
   // Returns true when this answer came from the provider's cache (named shows ended NOW_STALE_MS before it).
-  // nextEnd: the first end among the programmes on air in the answer (when any "now" line goes out of date).
-  var nextEnd = Infinity;
   function setSeeds(map) {
     var now = Date.now(), stale = false;
-    nextEnd = Infinity;
     for (var id in map) {
-      var o = seeds[id] && seeds[id][0], n = map[id][0];
+      var o = seeds[id] && started(seeds[id], now), n = map[id][0];
       if (n.stop <= now - CONFIG.NOW_STALE_MS) stale = true;
-      if (o && o.stop > now && n.stop <= now) n = (map[id] = seeds[id])[0];
-      if (n.stop > now && n.stop < nextEnd) nextEnd = n.stop;
+      seeds[id] = o && o.stop > now && n.stop <= now ? seeds[id] : o && n.start > now ? (o.stop <= n.start ? [o, n] : [o]) : map[id];
+      seedsAt = now;
     }
-    seeds = map; seedsAt = now; cached = cached || stale;
     return stale;
+  }
+  // Only a channel that left the catalog loses its line (never one an answer merely left out).
+  function prune(channels) {
+    var keep = Util.dict();
+    for (var i = 0; i < channels.length; i++) keep[channels[i].id] = true;
+    for (var id in seeds) if (!keep[id]) delete seeds[id];
+  }
+  // The last of a few programmes that has started at t, or null.
+  function started(l, t) {
+    for (var i = l.length - 1; i >= 0; i--) if (l[i].start <= t) return l[i];
+    return null;
   }
 
   // A full guide first; otherwise the short list kept from an evicted guide when it still covers now
@@ -48,6 +57,8 @@ var EPG = (function () {
   }
   // When the last programme known for the channel ends (0: none known).
   function knownEnd(id) { var l = list(id); return l.length ? l[l.length - 1].stop : 0; }
+  // When the first programme known to start after t starts (0: none known).
+  function nextStart(id, t) { var l = list(id), i = indexAt(l, t); return i < l.length && l[i].start > t ? l[i].start : 0; }
 
   // First index whose programme has not ended at t (list.length when all have ended).
   function indexAt(l, t) {
@@ -61,19 +72,27 @@ var EPG = (function () {
     var l = list(id), i = indexAt(l, t);
     return i < l.length && l[i].start <= t ? l[i] : null;
   }
-  // The "now" line of a channel (menu, search, banner): the programme at t; else the channel list's own
-  // record (a guide may have a gap). The provider keeps naming a programme for minutes after its end, and
-  // a refresh comes at most once a minute (DEC-2026-10-26-now-refresh), so an ended record still shows
-  // while it is what the provider said last: an answer under NOW_LINGER_MS old, which named it no later
-  // than NOW_LINGER_MS after its end. A row never goes blank for a channel the provider reports on air.
+  // The programme on air at t: the guide's; else the channel list's own record (a guide may have a gap). The
+  // provider keeps naming a programme for minutes after its end, so an ended record still counts while it
+  // ended, or the provider last answered, under NOW_LINGER_MS ago, and the provider named it no later than
+  // NOW_LINGER_MS after its end. The programme panel's «в эфире» uses this.
   function onAir(id, t) {
-    var p = at(id, t), s = seeds[id] && seeds[id][0], L = CONFIG.NOW_LINGER_MS;
-    return p || (s && s.start <= t && (t < s.stop || (t - seedsAt < L && seedsAt - s.stop < L)) ? s : null);
+    var p = at(id, t), s = seeds[id] && started(seeds[id], t), L = CONFIG.NOW_LINGER_MS;
+    return p || (s && (t < s.stop || ((t - s.stop < L || t - seedsAt < L) && seedsAt - s.stop < L)) ? s : null);
   }
-  // { cur, next }: next only when it follows the current one directly.
+  // What a row (menu, search) and the banner show for a channel at t (DEC-2026-10-26-now-refresh-2, A7):
+  // { p, ended } — the programme on air; else the last one the provider named for the channel, ended (kept
+  // through outages and partial answers, never blank, never claimed as on air); null when none is known.
+  function shown(id, t) {
+    var p = onAir(id, t), s = !p && seeds[id] && started(seeds[id], t);
+    return p ? { p: p, ended: false } : s ? { p: s, ended: true } : null;
+  }
+  // The one text of a shown programme: its title, and for an ended one «(шла до HH:MM)» with its own end.
+  function label(sh) { return !sh ? '' : sh.p.title + (sh.ended ? ' (шла до ' + Util.hhmm(new Date(sh.p.stop)) + ')' : ''); }
+  // { cur, next, shown } for the banner: next only when it follows a programme on air directly.
   function nowNext(id, t) {
-    var cur = onAir(id, t);
-    return { cur: cur, next: cur ? at(id, cur.stop + 1000) : null };
+    var sh = shown(id, t), cur = sh && sh.p;
+    return { cur: cur, next: sh && !sh.ended ? at(id, cur.stop + 1000) : null, shown: sh };
   }
   // Programmes overlapping one calendar day (0 = today, -1 = yesterday ...), DST-safe: one that started
   // before midnight and is still on comes first, with its real start. The programme panel shows the
@@ -189,7 +208,7 @@ var EPG = (function () {
   }
 
   return {
-    setHooks: setHooks, setLoader: setLoader, setSeeds: setSeeds, knownEnd: knownEnd, ensure: ensure, cancelExcept: cancelExcept,
-    load: load, at: at, onAir: onAir, servedCached: function () { return cached; }, nextSeedEnd: function () { return nextEnd; }, nowNext: nowNext, day: day, indexAt: indexAt
+    setHooks: setHooks, setLoader: setLoader, setSeeds: setSeeds, prune: prune, knownEnd: knownEnd, nextStart: nextStart, ensure: ensure,
+    cancelExcept: cancelExcept, load: load, at: at, onAir: onAir, shown: shown, label: label, nowNext: nowNext, day: day, indexAt: indexAt
   };
 }());

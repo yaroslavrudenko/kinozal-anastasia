@@ -50,7 +50,7 @@ var OttClub = (function () {
   function sourceUrl() { return base() + '/api/channel_now'; }
   // The same list, past the provider's server cache (which serves the plain URL minutes old): a URL of its
   // own (to the second) makes the provider build it now. Slower (about 3 s against 0.3 s), so only for the
-  // "now" refreshes, once an answer has shown that the provider serves a cache.
+  // "now" refreshes (every one of them, DEC-2026-10-26-now-refresh-2).
   function freshUrl() { return sourceUrl() + '?t=' + Math.floor(Date.now() / 1000); }
   function streamUrl(id) { return base() + '/stream/' + key() + '/' + id + '.m3u8'; }
 
@@ -78,12 +78,12 @@ var OttClub = (function () {
   // The programme on air now for one record (the API gives no "next"), or null.
   function seedOf(rec) { return rec.name && rec.time ? [{ start: rec.time * 1000, stop: rec.time_to * 1000, title: rec.name }] : null; }
 
-  // The same answer read for the "now" lines only (no channels built): dict id -> [programme], or null.
+  // The same answer read for the "now" lines only (no channels built): dict id -> [programme], or null when
+  // it names no programme at all (an unusable answer changes nothing).
   function seedsOf(text) {
-    var recs = records(text), seeds = Util.dict();
-    if (!recs) return null;
-    for (var i = 0; i < recs.length; i++) { var s = seedOf(recs[i]); if (s) seeds[recs[i].ch_id] = s; }
-    return seeds;
+    var recs = records(text), seeds = Util.dict(), n = 0;
+    for (var i = 0; recs && i < recs.length; i++) { var s = seedOf(recs[i]); if (s) { seeds[recs[i].ch_id] = s; n++; } }
+    return n ? seeds : null;
   }
 
   // Same order as the official app: Israeli channels first by the number in the name, then group rank,

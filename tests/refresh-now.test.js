@@ -1,8 +1,8 @@
 'use strict';
-// "What is on now" stays current (owner feature; Sources.refreshNow): the channel list's "now" line comes
-// from /api/channel_now, so the app re-asks it — one request per refresh, never per channel, never
-// during a zap burst or in the background, never more often than every 5 minutes — when the data went
-// stale and the viewer looks (menu / search), and as soon as the network returns after an offline start.
+// "What is on now" stays current (owner feature; NowLines): the channel list's "now" line comes from
+// /api/channel_now, so the app re-asks it — one request per refresh, never per channel, never during a zap
+// burst or in the background — when a row on screen needs it (its show ended) or the open menu's data is
+// 5 min old (DEC-2026-10-26-now-refresh-2), and as soon as the network returns after an offline start.
 // A refresh never reorders the channels or the groups.
 //
 // The provider fake answers every request with the shows on air at that moment (hourly, titled
@@ -78,20 +78,39 @@ function twoHoursOpen() {
     guides: app.net.requests((r) => r.sendSeq > fromSeq && f.isGuide(r.url) && f.guideIdOf(r.url) !== playing) };
 }
 
+// DEC-2026-10-26-now-refresh-2 (NC-2; replaces the lower bound «≥ 2 in 2 hours»): every show here ends on
+// the hour, so the refreshes are the open menu's re-read 5 min after each answer (17:05 … 18:55: 23), the
+// 18:00 end falling on one of them; never per-channel guide requests.
 test('now line: a refresh is one /api/channel_now request and never per-channel guide requests', () => {
   const { lists, guides } = twoHoursOpen();
-  assert.ok(lists.length >= 2, 'the "now" data was refreshed only ' + lists.length + ' times in 2 hours');
+  assert.equal(lists.length, 23, 'refreshes in 2 hours: ' + lists.map((r) => new Date(r.sentAt).toISOString().slice(11, 19)).join(' '));
   assert.ok(lists.every((r, i) => i === 0 || r.sentAt - lists[i - 1].sentAt > 1000), 'two channel_now requests for one refresh');
   assert.deepEqual(guides.map((r) => r.url), [], 'per-channel guide requests');
 });
 
-// Decision DEC-2026-10-26-now-refresh (NC-2; replaces "refreshes at least 5 minutes apart"): the end of
-// a programme may trigger a refresh sooner than 5 min. The floor is 1 min; without an ended programme
-// there is no refresh more often than every 5 min; every refresh is justified by one or the other.
-test('now line: refreshes are never closer than 60 s (send to send)', () => {
-  const { lists } = twoHoursOpen();
-  const gaps = lists.slice(1).map((r, i) => r.sentAt - lists[i].sentAt);
-  assert.ok(gaps.every((g) => g >= MIN), 'refreshes closer than 60 s: ' + gaps.filter((g) => g < MIN).map((g) => g + ' ms').join(', '));
+// DEC-2026-10-26-now-refresh-2 (NC-2; replaces «refreshes are never closer than 60 s (send to send)»): the
+// floor is 10 s from the previous answer to the next request, and every refresh asks the provider-fresh
+// list (?t=). Here a show on screen ends every 2 s (one-minute shows, channel i shifted by (i mod 30) × 2 s),
+// so the floor is what spaces the requests.
+test('now line (DEC-2026-10-26-now-refresh-2): every refresh asks the provider-fresh list and is sent ≥ 10 s after the previous answer, also with a show on screen ending every 2 s', () => {
+  const app = f.ottApp({ channels: CHANNELS, boot: false });
+  const base = JSON.parse(app.fixture.list.body), ids = Object.keys(base);
+  const minute = (i, t) => { const ph = (i % 30) * 2000, start = Math.floor((t - ph) / MIN) * MIN + ph; return { start, stop: start + MIN, title: 'Минутка ' + (1001 + i) + ' ' + start }; };
+  app.net.route((u) => f.isList(u), () => {
+    const data = JSON.parse(JSON.stringify(base));
+    ids.forEach((id, i) => { const p = minute(i, app.clock.now); Object.assign(data[id], { name: p.title, time: p.start / 1000, time_to: p.stop / 1000 }); });
+    return { body: JSON.stringify(data), delay: 100 };
+  });
+  app.boot();
+  f.untilPlaying(app);
+  const fromSeq = app.seq();
+  app.press(KEYS.ENTER, 100);
+  app.advance(10 * MIN);
+  const lists = listRequests(app).filter((r) => r.sendSeq > fromSeq);
+  const gaps = lists.slice(1).map((r, i) => r.sentAt - lists[i].endedAt);
+  assert.deepEqual(lists.filter((r) => !/\?t=\d+$/.test(r.url)).map((r) => r.url), [], 'a refresh of the plain (cached) list');
+  assert.deepEqual(gaps.filter((g) => g < 10000), [], 'sent sooner than 10 s after the previous answer');
+  assert.ok(lists.length >= 50, 'only ' + lists.length + ' refreshes in 10 min with a show ending every 2 s: the floor is not what spaces them');
 });
 
 test('now line: with no programme ending, there is no refresh more often than every 5 min', () => {
@@ -123,7 +142,9 @@ test('now line: every refresh is justified — a programme in the last answer en
     const ended = earliestEnd(prev.sentAt) <= t, old = t - prev.endedAt >= 5 * MIN - 1000;
     if (!ended && !old) unjustified.push(Math.round((t - prev.sentAt) / 1000) + ' s after the previous one');
   }
-  assert.ok(lists.length >= 10, 'only ' + lists.length + ' refreshes in 2 hours with a show ending every 12 min');
+  // DEC-2026-10-26-now-refresh-2 (NC-2; replaces the lower bound «≥ 10»): a show on screen ends every 12 min
+  // (9 ends: 17:12 … 18:48), each followed by the 5-min re-reads at +5 and +10 min, plus 17:05 and 17:10: 29.
+  assert.equal(lists.length, 29, 'refreshes in 2 hours: ' + lists.map((r) => new Date(r.sentAt).toISOString().slice(11, 19)).join(' '));
   assert.deepEqual(unjustified, []);
 });
 

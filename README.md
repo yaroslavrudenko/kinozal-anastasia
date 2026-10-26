@@ -148,6 +148,7 @@ On the TV (2026-10-25/26) the build passes the life-cycle test: close, open, exi
 - **Archives:** 8 of 8 archive opens on the four heaviest movie channels play. The end of a recording continues within 2 s of the right moment. The 7-day archive edge plays (fixed in 84fc43e).
 - **Stability:** 10 min without a stall; a 60 s pause sends no requests.
 - **Open:** the tech-line check is being re-run, and the 60 s «now» refresh floor awaits the owner's decision.
+- **Update, later on 2026-10-26:** the «now» refresh was redesigned (DEC-2026-10-26-now-refresh-2): only rows on screen ask the provider, the guide-known row turns over at its end with no request, a 10 s floor, and a row never goes blank — past 15 min without news it keeps the last programme marked «(шла до HH:MM)». Verified on the desktop; the TV run is pending ([docs/PERFORMANCE.md](docs/PERFORMANCE.md)).
 
 Details: [docs/TESTING.md](docs/TESTING.md) (results of 2026-10-26).
 

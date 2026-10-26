@@ -17,14 +17,17 @@ var CONFIG = {
   LIST_RETRY_MAX_MS: 300000,
   SNAPSHOT_MAX_CHARS: 2500000, // offline copy of the list; bigger lists are not kept
   KEY_CHECK_TIMEOUT_MS: 15000,
-  NOW_SETTLE_MS: 0,            // a visible row's "now" is re-read this long after its programme ends
-  NOW_MIN_INTERVAL_MS: 60000,  // never two "now" refreshes closer than this
-  NOW_MISSING_MS: 300000,      // rows the provider had no current programme for are re-asked at most this often
+  // "now" lines (DEC-2026-10-26-now-refresh-2)
+  NOW_SETTLE_MS: 1000,         // a visible row's "now" is re-read this long after its programme ends
+  NOW_MIN_INTERVAL_MS: 10000,  // from one "now" answer (or failure) to the next request
+  NOW_RECHECK_MS: 60000,       // an ended show the provider still named, or a failed answer, is re-asked after this
+  NOW_QUIET_MS: 1000,          // no "now" request until the menu has not been redrawn (keys) for this long
+  NOW_MISSING_MS: 300000,      // rows the provider had nothing for, and the open menu's whole list, are re-asked after this
   NOW_STALE_MS: 60000,         // an answer naming a show that ended this long before it arrived came from a stale cache
   NOW_LINGER_MS: 900000,       // the provider still names an ended programme up to this long (seen: 7+ min at 03:00)
-  NOW_AFTER_LANDING_MS: 5000,
-  NOW_BUSY_RETRY_MS: 1000,
-  OVERLAY_QUIET_MS: 1500,      // background data redraws an open menu only after this long without a key     // a refresh held back (zap, list loading) is tried again after this  // no refresh this soon after a channel starts (the stream has the bandwidth)
+  NOW_AFTER_LANDING_MS: 5000,  // no refresh this soon after a channel starts (the stream has the bandwidth)
+  NOW_BUSY_RETRY_MS: 1000,     // a refresh held back (zap, list loading) is tried again after this
+  OVERLAY_QUIET_MS: 1500,      // background data redraws an open menu only after this long without a key
   GUIDE_KEEP_AFTER_EVICT: 3,   // programmes kept (from now on) when a full guide leaves the cache
 
   // per-channel guide (OTT Club) and XMLTV (M3U)

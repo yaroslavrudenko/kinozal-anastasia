@@ -53,42 +53,53 @@ test('now fresh (D6): with the provider serving the plain list minutes old, the 
   assert.deepEqual(notOnAir(app), []);
 });
 
-test('now fresh (D6): with the menu open for 1 hour, a row is never more than 70 s behind the show on air', () => {
+// Visible rows more than `ms` behind the show on air (a row that is not a «Передача» line counts too).
+function lateRows(app, ms) {
+  return app.rowsDetailed('channels').filter((r) => {
+    const m = /^Передача (\d+) /.exec(r.cells[3] || ''), cur = m && show(Number(m[1]) - 1001, app.clock.now);
+    return !cur || (r.cells[3] !== cur.title && app.clock.now - cur.start > ms);
+  }).map((r) => r.cells[2] + ' «' + r.cells[3] + '»');
+}
+
+// DEC-2026-10-26-now-refresh-2 (NC-2; replaces «a row is never more than 70 s behind», which encoded the
+// 60 s floor): a row on screen is re-read NOW_SETTLE_MS (1 s) after its end from the provider-fresh list
+// (3 s here), so it is never more than 5 s behind.
+test('now fresh (DEC-2026-10-26-now-refresh-2): with the menu open for 1 hour, a row is never more than 5 s behind the show on air', () => {
   const app = cachedApp();
   app.advance(2 * MIN);
   app.press(KEYS.ENTER, 5000);
   const bad = [];
-  for (let s = 10; s <= 3600; s += 10) {
-    app.advance(10 * SEC);
-    const late = app.rowsDetailed('channels').filter((r) => {
-      const m = /^Передача (\d+) /.exec(r.cells[3] || ''), cur = m && show(Number(m[1]) - 1001, app.clock.now);
-      return !cur || (r.cells[3] !== cur.title && app.clock.now - cur.start > 70 * SEC);
-    });
-    if (late.length) bad.push('+' + s + ' s: ' + late.map((r) => r.cells[2] + ' «' + r.cells[3] + '»').join(', '));
+  for (let s = 1; s <= 3600; s++) {
+    app.advance(SEC);
+    const late = lateRows(app, 5 * SEC);
+    if (late.length) bad.push('+' + s + ' s: ' + late.join(', '));
   }
   assert.deepEqual(bad.slice(0, 5), [], bad.length + ' late samples');
 });
 
-// A show that ended within the last 70 s may still be shown: refreshes are at least 60 s apart (DEC-2026-10-26-now-refresh).
-test('now fresh (D6): after 40 min on one page, every page scrolled into view shows what is on air at once (≤ 70 s behind)', () => {
+// DEC-2026-10-26-now-refresh-2 (NC-2; replaces «every page scrolled into view shows what is on air at once
+// (≤ 70 s behind)»): the ends of shows off screen no longer bring refreshes, so rows paged into view may be
+// up to one maintenance interval old; while the keys repeat nothing is sent, the one fresh request goes
+// NOW_QUIET_MS after the last key, and the page shown is on air as soon as its answer is painted.
+test('now fresh (DEC-2026-10-26-now-refresh-2): after 40 min on one page, paging at 200 ms sends nothing until the keys rest; one fresh request goes 1 s after the last key and the page is on air within 5 s of it', () => {
   const app = cachedApp();
   app.advance(2 * MIN);
   app.press(KEYS.ENTER, 5000);
   app.advance(40 * MIN + 30 * SEC);                         // no end within the next few seconds
-  const bad = [];
-  for (let page = 0; page < 3; page++) {
-    app.press(KEYS.CH_DOWN, 200);
-    const late = app.rowsDetailed('channels').filter((r) => {
-      const m = /^Передача (\d+) /.exec(r.cells[3] || ''), cur = m && show(Number(m[1]) - 1001, app.clock.now);
-      return !cur || (r.cells[3] !== cur.title && app.clock.now - cur.start > 70 * SEC);
-    });
-    bad.push(...late.map((r) => 'page ' + (page + 1) + ': ' + r.cells[2] + ' «' + r.cells[3] + '»'));
-  }
-  assert.deepEqual(bad, []);
+  const seq = app.seq();
+  for (let page = 0; page < 3; page++) app.press(KEYS.CH_DOWN, 200);
+  const lastKey = app.clock.now - 200;
+  const during = app.net.requests((r) => r.sendSeq > seq && f.isList(r.url)).map((r) => r.sentAt - lastKey);
+  app.advance(5 * SEC - 200);
+  const sent = app.net.requests((r) => r.sendSeq > seq && f.isList(r.url));
+  assert.deepEqual(during, [], 'requests while the keys repeated');
+  assert.deepEqual(sent.map((r) => [r.sentAt - lastKey, /\?t=/.test(r.url)]), [[1000, true]]);
+  assert.deepEqual(lateRows(app, 0), []);
 });
 
 // Owner decision 2026-10-26 (option b): a launch list that came from the provider's cache does not count
-// toward the 60 s floor; the fresh answer is asked for at once, so a menu opened 4 s after launch is current.
+// toward the refresh floor (10 s since DEC-2026-10-26-now-refresh-2); the fresh answer is asked for at once,
+// so a menu opened 4 s after launch is current.
 // D7 (dry run 06:32): the list once named a placeholder «Нет данных» 06:00–07:00 for Bridge, later the real
 // «Wake Up Call.» 05:00–08:10; the row kept «Нет данных» for 12+ minutes (an earlier start was taken as older).
 test('now fresh (D7): a later answer naming the real programme replaces a placeholder, even with an earlier start', () => {

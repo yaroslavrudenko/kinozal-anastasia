@@ -215,6 +215,7 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 | X2 | Zapping / pause | No background requests | — | AUTO-TV M7 (burst count), M8 (pause count) | P2 |
 | X3 | Guide on 30 channels | ≤ 24 guides kept, no descriptions | — | HARNESS guide | P2 |
 | X4 | «now» refresh | One request per refresh, ≥ 60 s apart, ≥ 5 min without an ended programme | — | HARNESS refresh-now | P2 |
+| X4b | «now» refresh (DEC-2026-10-26-now-refresh-2; supersedes X4's 60 s) | One `?t=` request per refresh, sent ≥ 10 s after the previous answer and ≥ 1 s after the last key; only rows on screen cause one (plus a re-read 5 min after the last attempt while a menu is open); menu open 60 min ≤ 30 list requests/h on the TV | — | HARNESS now-refresh-2, refresh-now + AUTO-TV M11 (request count) | P1 |
 
 ### Counts
 86 use cases plus the key map (O6, 11 keys × 7 states): **P0 26 · P1 38 · P2 22**. Verification: **28 fully AUTO-TV**, 6 AUTO-TV with a MANUAL part, 52 MANUAL or HARNESS only (a person at the TV is needed for acceptance). Of the 26 P0 cases, 20 have AUTO-TV coverage; the other P0 cases (A1, A2, A5, N2, L11, L15) are MANUAL on the TV.
@@ -258,6 +259,49 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 | D1 (7-day edge never starts) | R3 |
 | D2 (continuation jumps ~50 s) | L7 |
 | D4 (dry run 2026-10-26: ▼ after midnight has no programme on air) | P8 |
+| DEC-2026-10-26-now-refresh-2 («now» refresh policy, retained last programme «(шла до HH:MM)») | U0, D1, D2, X4b, M11, Q1-TV1 … Q1-TV6 below |
+
+## DEC-2026-10-26-now-refresh-2 — «now» lines: desktop pins and TV acceptance cases (2026-10-26)
+
+The decision (judges 3/3) and the policy are in [PERFORMANCE.md](PERFORMANCE.md) («Now» lines: the refresh policy). The owner: «Я хочу тебя предостеречь от регрессии. В прошлый раз ты улучшал производительность, в итоге потерял данные.» Nothing ships while any row below is red; a row worse than the 11:58 TV baseline (`tests/tv/results/2026-10-26-11-58-tv.md`) means the fix is reverted, never patched on top.
+
+**Desktop pins** (`tests/now-refresh-2.test.js`, 18 tests; 15 are red on 37fb286; every one was mutation-proven: the mutant applied to a copy of the app via `KINOZAL_ROOT`, shown by `diff`, red, restored, `diff` clean, green):
+
+| Must not lose | Test |
+|---|---|
+| No empty row during a provider outage — HTTP 500, timeout, empty body, not JSON, `{}`, records with no programme — at E+14/+16/+30/+60 min; retried every 60 s, never faster, never stopping; the first good answer clears every mark | `now retained (…): list answers «<fault>» for 60 min …` (6 tests) |
+| No row lost on a partial answer (50 of 389, none on screen) | `now retained (…): every answer names only 50 of 389 channels …`, `now retained (B2): an answer naming 50 of 389 channels …` |
+| D7: the placeholder never becomes the retained title | `now retained (D7): after «Нет данных» was replaced …` |
+| A record that started is never erased by a later-only one; only a channel leaving the catalog loses its line | `now retained (B2): an answer naming only a later programme …`, `now retained (B2): a list reload that drops a channel …` |
+| The ▼ panel never marks a retained, ended programme «в эфире» | `now retained (A7): during an outage the programme panel …` |
+| No mark in the healthy case; 0 empty rows; every group filled after 30/40/60 min | `now healthy (…): the menu open 60 min … a key every 2 s …`, `now healthy (…): after 30, 40 and 60 min … every group …` |
+| The playing row turns over at its end with no request | `now refresh (A3): the playing row …` |
+| A request that crossed the end (sent E−1 s, answered E+2 s) re-asks at E+12 s, not E+62 s | `now refresh (A2): …` |
+| Keys every 200 ms send nothing; one request 1 s after the last key | `now refresh (A6): …` |
+| Ends off screen alone send nothing but the 5-min re-read | `now refresh (A1, B1): …` |
+
+**Replaced tests (NC-2: the expectation changed under this decision id; none deleted silently):**
+
+| Old name (37fb286) | New name |
+|---|---|
+| now fresh (D6): with the menu open for 1 hour, a row is never more than 70 s behind the show on air | now fresh (DEC-2026-10-26-now-refresh-2): with the menu open for 1 hour, a row is never more than 5 s behind the show on air |
+| now fresh (D6): after 40 min on one page, every page scrolled into view shows what is on air at once (≤ 70 s behind) | now fresh (DEC-2026-10-26-now-refresh-2): after 40 min on one page, paging at 200 ms sends nothing until the keys rest; one fresh request goes 1 s after the last key and the page is on air within 5 s of it |
+| now line: refreshes are never closer than 60 s (send to send) | now line (DEC-2026-10-26-now-refresh-2): every refresh asks the provider-fresh list and is sent ≥ 10 s after the previous answer, also with a show on screen ending every 2 s |
+| now line: a refresh is one /api/channel_now request and never per-channel guide requests (bound «≥ 2») | same name; exactly 23 refreshes in 2 h |
+| now line: every refresh is justified … (bound «≥ 10») | same name; exactly 29 refreshes in 2 h |
+
+Existing pins kept unchanged: D5 banner == row (`now never empty …`, `now line accuracy: the landing banner …`), D6 (`now fresh (D6, pin)`), D6b, D7, «Прямий», D1 archive cap (`tests/tv-run-fixes.test.js`). List-request fixtures accept `?t=`; the cache tests still tell the plain URL from the fresh one.
+
+**TV acceptance cases (not run yet — results to be recorded here):**
+
+| ID | Steps | Expected result |
+|---|---|---|
+| Q1-TV1 | U0 in every group, covering **all** rows (an unseen row is not green) | 0 empty rows; 0 rows more than 10 s late after a change; banner == row |
+| Q1-TV2 | M11: menu open 60 min, list requests counted from the network log | ≤ 30 list requests/h; every one with `?t=` |
+| Q1-TV3 | Fast page flipping (CH± held) through «Все каналы», requests counted | no request while the keys repeat; one ≈ 1 s after they stop; rows on air within ≈ 5 s |
+| Q1-TV4 | Network cut 2 min during M11 | 0 empty rows; no mark (inside the 15-min linger); recovery at the next attempt |
+| Q1-TV5 | Network cut 20 min during M11 | 0 empty rows; rows past the linger marked «(шла до HH:MM)», banner the same; marks gone after the first good answer |
+| Q1-TV6 | Healthy soak on one stream, before/after, a real buffering counter (`Diag` `rebuffer`) | 0 rebuffers |
 
 ## Channels to use (never only the default one)
 - Two channels from the middle and two from the second half of «Все каналы» (positions ~150, ~250, last).
