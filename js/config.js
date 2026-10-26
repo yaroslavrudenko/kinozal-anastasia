@@ -20,6 +20,7 @@ var CONFIG = {
   NOW_SETTLE_MS: 0,            // a visible row's "now" is re-read this long after its programme ends
   NOW_MIN_INTERVAL_MS: 60000,  // never two "now" refreshes closer than this
   NOW_MISSING_MS: 300000,      // rows the provider had no current programme for are re-asked at most this often
+  NOW_LINGER_MS: 900000,       // the provider still names an ended programme up to this long (seen: 7+ min at 03:00)
   NOW_AFTER_LANDING_MS: 5000,
   NOW_BUSY_RETRY_MS: 1000,
   OVERLAY_QUIET_MS: 1500,      // background data redraws an open menu only after this long without a key     // a refresh held back (zap, list loading) is tried again after this  // no refresh this soon after a channel starts (the stream has the bandwidth)

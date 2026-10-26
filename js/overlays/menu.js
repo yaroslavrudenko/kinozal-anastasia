@@ -44,7 +44,7 @@
     var playing = playingIdx(), now = Date.now();
     ListView.columns([{ name: 'groups', view: { total: groups().length, cursor: gi, active: focus === 'groups', row: groupRow } },
       { name: 'channels', view: { total: g.items.length, cursor: cursor, active: focus === 'channels', row: function (i) {
-        var c = Channels.at(g.items[i]), on = EPG.at(c.id, now);   // the programme on air: the banner's lookup too
+        var c = Channels.at(g.items[i]), on = EPG.onAir(c.id, now);   // the programme on air: the banner's lookup too
         return { num: c.num, logo: c.logo, title: (Favs.has(c.key) ? '★ ' : '') + c.name + (g.items[i] === playing ? '  ▶' : ''),
           sub: c.dead ? 'отключён провайдером' : (on ? on.title : ''), playing: g.items[i] === playing };
       } } }]);

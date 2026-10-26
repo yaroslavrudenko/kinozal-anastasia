@@ -36,7 +36,7 @@
   function render() {
     var items = result.items, capped = result.total > items.length, cur = Playback.current(), curKey = cur ? cur.key : null, now = Date.now();
     ListView.column('search', { total: items.length, cursor: cursor, active: inList, row: function (i) {
-      var c = Channels.at(items[i]), on = EPG.at(c.id, now);
+      var c = Channels.at(items[i]), on = EPG.onAir(c.id, now);
       // A capped result says so on its last row instead of hiding the rest silently.
       var sub = capped && i === items.length - 1 ? 'Показаны первые ' + items.length + ' из ' + result.total + ' — уточните запрос'
         : c.group + (on ? ' · ' + on.title : '');

@@ -6,6 +6,7 @@
 // Lookups are binary searches; indexAt is the one definition of "the programme at moment t".
 var EPG = (function () {
   var seeds = Util.dict();     // id -> [one programme] (the "now" line of the channel list)
+  var seedsAt = 0;             // when the provider gave them
   var full = Util.dict();      // id -> sorted [{ start, stop, title }]
   var fullAt = Util.dict();    // id -> when the full guide arrived
   var lru = [];                // ids of per-channel full guides, most recent last
@@ -16,7 +17,7 @@ var EPG = (function () {
 
   function setHooks(h) { hooks = h; }
   function setLoader(fn) { loader = fn; }
-  function setSeeds(map) { seeds = map; }
+  function setSeeds(map) { seeds = map; seedsAt = Date.now(); }
 
   // A full guide first; otherwise the short list kept from an evicted guide when it still covers now
   // (it also knows what comes next), else the channel list's "now" line.
@@ -42,9 +43,18 @@ var EPG = (function () {
     var l = list(id), i = indexAt(l, t);
     return i < l.length && l[i].start <= t ? l[i] : null;
   }
+  // The "now" line of a channel (menu, search, banner): the programme at t; else the channel list's own
+  // record (a guide may have a gap). The provider keeps naming a programme for minutes after its end, and
+  // a refresh comes at most once a minute (DEC-2026-10-26-now-refresh), so an ended record still shows
+  // while it is what the provider said last: an answer under NOW_LINGER_MS old, which named it no later
+  // than NOW_LINGER_MS after its end. A row never goes blank for a channel the provider reports on air.
+  function onAir(id, t) {
+    var p = at(id, t), s = seeds[id] && seeds[id][0], L = CONFIG.NOW_LINGER_MS;
+    return p || (s && s.start <= t && (t < s.stop || (t - seedsAt < L && seedsAt - s.stop < L)) ? s : null);
+  }
   // { cur, next }: next only when it follows the current one directly.
   function nowNext(id, t) {
-    var cur = at(id, t);
+    var cur = onAir(id, t);
     return { cur: cur, next: cur ? at(id, cur.stop + 1000) : null };
   }
   // Programmes overlapping one calendar day (0 = today, -1 = yesterday ...), DST-safe: one that started
@@ -162,6 +172,6 @@ var EPG = (function () {
 
   return {
     setHooks: setHooks, setLoader: setLoader, setSeeds: setSeeds, knownEnd: knownEnd, ensure: ensure, cancelExcept: cancelExcept,
-    load: load, at: at, nowNext: nowNext, day: day, indexAt: indexAt
+    load: load, at: at, onAir: onAir, nowNext: nowNext, day: day, indexAt: indexAt
   };
 }());

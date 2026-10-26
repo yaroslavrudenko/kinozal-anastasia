@@ -14,8 +14,8 @@ var NowLines = (function () {
   function watch(fn) { visible = fn; clearTimeout(timer); if (fn) arm(); }
 
   // The next refresh: the earliest end among the visible rows whose next programme is unknown; a row
-  // whose programme ended since the last refresh is due now; rows the provider had nothing for wait
-  // NOW_MISSING_MS.
+  // whose programme ended since the last refresh, or that the provider still named after its end (it
+  // has not moved on yet, up to NOW_LINGER_MS), is due now; rows it had nothing for wait NOW_MISSING_MS.
   function arm() {
     clearTimeout(timer);
     if (!visible) return;
@@ -23,7 +23,7 @@ var NowLines = (function () {
     for (var i = 0; i < ids.length; i++) {
       var p = EPG.at(ids[i], now), end = EPG.knownEnd(ids[i]);
       if (p) { if (!EPG.at(ids[i], p.stop + 1000)) due = Math.min(due, p.stop + CONFIG.NOW_SETTLE_MS); }
-      else due = Math.min(due, end > at ? now : at + CONFIG.NOW_MISSING_MS);
+      else due = Math.min(due, end > at - CONFIG.NOW_LINGER_MS ? now : at + CONFIG.NOW_MISSING_MS);
     }
     if (due === Infinity) return;
     var when = Math.max(due, at + CONFIG.NOW_MIN_INTERVAL_MS, landedAt + CONFIG.NOW_AFTER_LANDING_MS);
