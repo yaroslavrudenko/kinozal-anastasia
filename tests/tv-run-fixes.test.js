@@ -54,3 +54,16 @@ test('tech line (TV run): a stream the player describes 12 s after it opens stil
   const at16 = app.text('b-tech');
   assert.ok(/1920×1080/.test(at13) && /1920×1080/.test(at16), 'tech line at +13 s «' + at13 + '», at +16.5 s «' + at16 + '»');
 });
+
+// TV run: Diag showed «buffering timeout 30 s …/147.m3u8» five times; it was the 7-day-edge archive (D1), but
+// the log drops the query, so it read like a failed live stream.
+test('diag (TV run): a failed archive says which moment it asked for, without the key or the query', () => {
+  const app = f.ottApp({ channels: 5 });
+  f.untilPlaying(app);
+  const line = vm.runInContext(`(function () {
+    Diag.fail({ n: 1, gen: 1, reason: 'buffering timeout 30 s', url: 'http://myott.top/stream/SECRETKEY123/147.m3u8?archive=1760855280&archive_end=1760859480' });
+    var r = Diag.snapshot().recent; return r[r.length - 1];
+  })()`, app.ctx);
+  assert.ok(/\/stream\/<key>\/147\.m3u8 \(archive from 2025-10-19T06:28:00\.000Z\)$/.test(line), line);
+  assert.ok(line.indexOf('SECRETKEY123') < 0 && line.indexOf('archive_end') < 0, line);
+});
