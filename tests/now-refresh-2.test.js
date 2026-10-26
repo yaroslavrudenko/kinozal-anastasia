@@ -275,7 +275,8 @@ test('now refresh (A3): the playing row, whose next programme the guide knows, t
     if ((rowOf(app, id).cells[3] || '') === 'Гид ' + hhmm(boundary)) flippedAt = app.clock.now;
   }
   assert.ok(flippedAt !== null && flippedAt - boundary <= 1000, 'flipped ' + (flippedAt === null ? 'not within 10 s' : (flippedAt - boundary) + ' ms') + ' after the end');
-  assert.deepEqual(lists(app, seq).filter((r) => r.sentAt <= flippedAt).map((r) => hhmm(r.sentAt)), [], 'a list request before the flip');
+  // The open menu's 60 s re-read (NOW_OPEN_REREAD_MS) may run near the end; the flip must not come from an answer.
+  assert.deepEqual(lists(app, seq).filter((r) => r.endedAt >= boundary && r.endedAt <= flippedAt).map((r) => hhmm(r.sentAt)), [], 'a list answer landed between the end and the flip');
 });
 
 // A2 crossing (Codex): a request sent at E−1 s is answered at E+2 s — it sampled before E, so the row
@@ -310,8 +311,8 @@ test('now refresh (A6): while keys repeat every 200 ms no list request is sent; 
 });
 
 // A1 + B1: ends of shows off screen send nothing; with nothing ending on screen the only refresh is the
-// maintenance re-read, NOW_MISSING_MS after the previous answer.
-test('now refresh (A1, B1): with a show ending every minute off screen and none on screen, the only requests are one every 5 min', () => {
+// open menu's re-read, NOW_OPEN_REREAD_MS (60 s, owner 2026-10-26) after the previous answer.
+test('now refresh (A1, B1): with a show ending every minute off screen and none on screen, the only requests are the open menu\'s re-read every 60 s', () => {
   const st = { vis: null }, onScreen = (id) => !!st.vis && st.vis.has(id);
   const app = providerApp({ channels: 100, offset: (i, id) => (onScreen(id) ? 0 : (i * MIN) % HALF), length: (i, id) => (onScreen(id) ? 24 * HOUR : HALF) });
   app.advance(10 * SEC);
@@ -322,9 +323,9 @@ test('now refresh (A1, B1): with a show ending every minute off screen and none 
   app.advance(c0 + HOUR - app.clock.now);
   const r = lists(app).filter((x) => x.sentAt > c0);
   const gaps = r.map((x, i) => x.sentAt - (i ? r[i - 1] : all[all.length - 1]).endedAt);
-  // Re-reads at c0 + 5 min, then every 5 min + the 3 s answer: 11 in the hour, each exactly NOW_MISSING_MS after the previous answer.
-  assert.equal(r.length, 11, 'requests in 1 h: ' + r.map((x) => new Date(x.sentAt).toISOString().slice(11, 19)).join(' '));
-  assert.deepEqual(gaps.filter((g) => g !== 5 * MIN), [], 'gaps other than 5 min');
+  // Re-reads every 60 s + the 3 s answer: 57 in the hour (3600 / 63), each exactly NOW_OPEN_REREAD_MS after the previous answer.
+  assert.equal(r.length, 57, 'requests in 1 h: ' + r.map((x) => new Date(x.sentAt).toISOString().slice(11, 19)).join(' '));
+  assert.deepEqual(gaps.filter((g) => g !== MIN), [], 'gaps other than 60 s');
 });
 
 // ---------- Codex REJECT on f0b31a7, fixed 2026-10-26 (COMMON-DECISION-Q1, A2/A5/A7) ----------
@@ -387,4 +388,26 @@ test('now refresh (A2, Codex d): a row whose show the provider still names 20–
   const gaps = r.slice(1).map((x, i) => x.sentAt - r[i].endedAt);
   assert.ok(r.length >= 18, 'only ' + r.length + ' requests in 20 min');
   assert.deepEqual(gaps.filter((g) => g !== CONFIG_RECHECK), [], 'gaps other than 60 s');
+});
+
+// ---------- paging (owner 2026-10-26: «да, исправляй») ----------
+// TV run 2026-10-26-14-02 on 8413f34: a row scrolled into view showed a show that had ended 98 s and 210 s
+// before, because off-screen rows were re-read only every 5 min. While the menu is open the whole list is
+// re-read every NOW_OPEN_REREAD_MS (60 s), so a row scrolled into view is at most ~63 s old (60 s + the 3 s
+// answer) before its own request lands.
+test('now paging: a row scrolled into view never shows a show that ended more than 65 s before, with no key for minutes before the scroll', () => {
+  const app = providerApp({ channels: 100, offset: (i) => (i * 37 * SEC) % HALF });
+  app.advance(10 * SEC);
+  app.press(KEYS.ENTER, 0);
+  const late = [];
+  for (let k = 0; k < 12; k++) {
+    app.advance(4 * MIN + 17 * SEC);                       // no key: only the open menu's re-reads keep the rows
+    app.press(KEYS.CH_DOWN, 0);                            // CH−: the next page of rows comes into view
+    const t = app.clock.now;
+    for (const id of visibleIds(app)) {
+      const r = rowOf(app, id), on = app.show(id, t);
+      if (r && (r.cells[3] || '').indexOf(on.title) < 0 && t - on.start > 65 * SEC) late.push(nameOf(app, id) + ' «' + r.cells[3] + '» ≠ «' + on.title + '» ' + Math.round((t - on.start) / 1000) + ' s');
+    }
+  }
+  assert.deepEqual(late, []);
 });

@@ -22,6 +22,7 @@ var CONFIG = {
   NOW_MIN_INTERVAL_MS: 10000,  // from one "now" answer (or failure) to the next request
   NOW_RECHECK_MS: 60000,       // an ended show the provider still named, or a failed answer, is re-asked after this
   NOW_QUIET_MS: 1000,          // no "now" request until the menu has not been redrawn (keys) for this long
+  NOW_OPEN_REREAD_MS: 60000,  // while a menu or search is open the whole list is re-read this often, so a row scrolled into view is never older (owner 2026-10-26: accuracy over the 5-min saving)
   NOW_MISSING_MS: 300000,      // rows the provider had nothing for, and the open menu's whole list, are re-asked after this
   NOW_STALE_MS: 60000,         // an answer naming a show that ended this long before it arrived came from a stale cache
   NOW_LINGER_MS: 900000,       // the provider still names an ended programme up to this long (seen: 7+ min at 03:00)

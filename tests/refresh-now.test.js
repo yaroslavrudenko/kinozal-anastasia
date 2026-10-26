@@ -83,7 +83,9 @@ function twoHoursOpen() {
 // 18:00 end falling on one of them; never per-channel guide requests.
 test('now line: a refresh is one /api/channel_now request and never per-channel guide requests', () => {
   const { lists, guides } = twoHoursOpen();
-  assert.equal(lists.length, 23, 'refreshes in 2 hours: ' + lists.map((r) => new Date(r.sentAt).toISOString().slice(11, 19)).join(' '));
+  // Owner 2026-10-26 (accuracy when paging): the open menu re-reads every 60 s after the 100 ms answer —
+  // 2 h / 60.1 s = 119 refreshes; the hourly ends fall on re-reads.
+  assert.equal(lists.length, 119, 'refreshes in 2 hours: ' + lists.map((r) => new Date(r.sentAt).toISOString().slice(11, 19)).join(' '));
   assert.ok(lists.every((r, i) => i === 0 || r.sentAt - lists[i - 1].sentAt > 1000), 'two channel_now requests for one refresh');
   assert.deepEqual(guides.map((r) => r.url), [], 'per-channel guide requests');
 });
@@ -113,7 +115,7 @@ test('now line (DEC-2026-10-26-now-refresh-2): every refresh asks the provider-f
   assert.ok(lists.length >= 50, 'only ' + lists.length + ' refreshes in 10 min with a show ending every 2 s: the floor is not what spaces them');
 });
 
-test('now line: with no programme ending, there is no refresh more often than every 5 min', () => {
+test('now line: with no programme ending, there is no refresh more often than the open menu\'s 60 s re-read', () => {
   const app = f.ottApp({ channels: CHANNELS, boot: false });
   const t0 = app.clock.now;
   const data = JSON.parse(f.ottChannelList(CHANNELS, { now: t0, padChars: 0 }).body);
@@ -126,10 +128,10 @@ test('now line: with no programme ending, there is no refresh more often than ev
   app.advance(2 * HOUR);
   const lists = listRequests(app).filter((r) => r.sendSeq > fromSeq);
   const gaps = lists.slice(1).map((r, i) => r.sentAt - lists[i].sentAt);
-  assert.ok(gaps.every((g) => g >= 5 * MIN), 'refreshes closer than 5 min with nothing ending: ' + gaps.filter((g) => g < 5 * MIN).map((g) => g + ' ms').join(', '));
+  assert.ok(gaps.every((g) => g >= MIN), 'refreshes closer than 60 s with nothing ending: ' + gaps.filter((g) => g < MIN).map((g) => g + ' ms').join(', '));
 });
 
-test('now line: every refresh is justified — a programme in the last answer ended, or that answer is ≥ 5 min old', () => {
+test('now line: every refresh is justified — a programme in the last answer ended, or that answer is ≥ 60 s old', () => {
   const app = accurateApp();
   const fromSeq = app.seq();
   app.press(KEYS.ENTER, 100);
@@ -139,12 +141,13 @@ test('now line: every refresh is justified — a programme in the last answer en
   const unjustified = [];
   for (let k = 1; k < lists.length; k++) {
     const prev = lists[k - 1], t = lists[k].sentAt;
-    const ended = earliestEnd(prev.sentAt) <= t, old = t - prev.endedAt >= 5 * MIN - 1000;
+    const ended = earliestEnd(prev.sentAt) <= t, old = t - prev.endedAt >= MIN - 1000;
     if (!ended && !old) unjustified.push(Math.round((t - prev.sentAt) / 1000) + ' s after the previous one');
   }
   // DEC-2026-10-26-now-refresh-2 (NC-2; replaces the lower bound «≥ 10»): a show on screen ends every 12 min
   // (9 ends: 17:12 … 18:48), each followed by the 5-min re-reads at +5 and +10 min, plus 17:05 and 17:10: 29.
-  assert.equal(lists.length, 29, 'refreshes in 2 hours: ' + lists.map((r) => new Date(r.sentAt).toISOString().slice(11, 19)).join(' '));
+  // Owner 2026-10-26: the 60 s re-read dominates; the 12-min ends fall on re-reads: 119 in 2 hours.
+  assert.equal(lists.length, 119, 'refreshes in 2 hours: ' + lists.map((r) => new Date(r.sentAt).toISOString().slice(11, 19)).join(' '));
   assert.deepEqual(unjustified, []);
 });
 

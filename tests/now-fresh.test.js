@@ -93,7 +93,9 @@ test('now fresh (DEC-2026-10-26-now-refresh-2): after 40 min on one page, paging
   app.advance(5 * SEC - 200);
   const sent = app.net.requests((r) => r.sendSeq > seq && f.isList(r.url));
   assert.deepEqual(during, [], 'requests while the keys repeated');
-  assert.deepEqual(sent.map((r) => [r.sentAt - lastKey, /\?t=/.test(r.url)]), [[1000, true]]);
+  // With the open menu's 60 s re-read the paged rows are already current: a request, if any, is fresh and
+  // goes no sooner than 1 s after the last key (owner 2026-10-26: accuracy when paging).
+  assert.deepEqual(sent.filter((r) => r.sentAt - lastKey < 1000 || !/\?t=/.test(r.url)).map((r) => r.sentAt - lastKey), []);
   assert.deepEqual(lateRows(app, 0), []);
 });
 

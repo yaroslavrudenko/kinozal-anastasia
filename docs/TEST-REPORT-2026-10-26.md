@@ -94,5 +94,16 @@ File `tests/tv/results/2026-10-26-14-02-tv.md` (14:02–14:46, build `8413f34`):
 ## 7. Open after this report
 
 - 348 Stingray iConcerts does not play: provider fault (stream 404/429), no code change; its banner also shows no «Далее».
-- **Regression (paging):** rows scrolled into view can show a show that ended 1–4 min ago until the refresh after the keys rest lands (§5: 98 s and 210 s; baseline 0 rows > 60 s). To be fixed with a red→green TV case before the next release.
+- ~~Regression (paging)~~ — fixed in the next commit, see §8.
 - TV acceptance cases of the refresh policy not yet run on the TV: 20-min network cut, fast page-flipping stress, rebuffer counter soak, requests per hour with the menu open 60 min (`docs/TESTING.md` Q1-TV1…6).
+
+## 8. Paging fix after the final run (owner: «да, исправляй и пушь»)
+
+- Change: the open menu re-reads the whole list every 60 s (`NOW_OPEN_REREAD_MS`) instead of 5 min.
+- New red→green test `now paging: a row scrolled into view never shows a show that ended more than 65 s before…`: on 8413f34 it fails (rows 71 s and 95 s behind), with the fix it passes.
+- Suite: 217 tests, 217 pass. By name vs 8413f34: 0 newly failing; 3 renamed (the 5-min cadence tests):
+  - «…the only requests are one every 5 min» → «…the only requests are the open menu's re-read every 60 s»
+  - «…no refresh more often than every 5 min» → «…no refresh more often than the open menu's 60 s re-read»
+  - «…or that answer is ≥ 5 min old» → «…or that answer is ≥ 60 s old»
+- Two count assertions changed 23 → 119 and 29 → 119 refreshes in 2 h (60 s re-read); the T-flip test now asserts no answer landed between the show end and the flip (the 60 s re-read may run near the end).
+- TV check of this commit: see the result file named in the commit that follows it.

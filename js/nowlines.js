@@ -5,7 +5,7 @@
 //    NAMED it was asked for is due at once (an answer that leaves a row out confirms nothing for it); one the
 //    provider still named after its end is re-asked NOW_RECHECK_MS after that answer, for as long as it keeps
 //    naming it; one it had nothing for, NOW_MISSING_MS after it. While a menu or search is open the list is
-//    also re-read NOW_MISSING_MS after the last attempt (best effort, under the same gates);
+//    also re-read NOW_OPEN_REREAD_MS after the last attempt (best effort, under the same gates);
 //  - a row lingering on an ended programme is redrawn when the linger ends (its «(шла до HH:MM)» mark), with
 //    no request, so a long outage marks it on time;
 //  - a refresh is one request for the provider-fresh list (?t=), parsed when the TV is idle (no list rebuild,
@@ -53,7 +53,7 @@ var NowLines = (function () {
     }
     if (flip < Infinity) flipTimer = setTimeout(flipRows, Math.max(0, flip - now));
     if (asap || req) return;                               // its answer re-arms
-    due = Math.min(due, at + CONFIG.NOW_MISSING_MS);       // the open menu's maintenance re-read
+    due = Math.min(due, at + CONFIG.NOW_OPEN_REREAD_MS);   // the open menu's re-read: rows scrolled into view are never older
     if (retryAfter) due = Math.min(due, retryAfter);       // a failed answer is asked again then
     timer = setTimeout(run, Math.max(0, Math.max(due, gate()) - now));
   }
