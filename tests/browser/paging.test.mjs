@@ -1,7 +1,8 @@
 // Decision DEC-2026-10-25-paging (owner): CH+ / CH− (page keys) move by the number of rows completely
 // visible on the page. With wrapped names a page holds fewer rows, so repeated page-down visits every
 // channel (each one completely visible on some page, none skipped unseen); page-up mirrors it. With
-// one-line rows a page is still 13.
+// one-line rows a page is 12: owner 2026-10-26, one row fewer, the list-end line in its slot (was 13; test renamed
+// «…a page is still 13 channels» → «…a page is 12 channels and the list-end line takes the 13th slot»).
 // The page is the set of rows completely visible; the cursor is only required to be on the new page
 // (DEC-2026-10-25-paging governs how far the PAGE moves, not where in it the cursor lands).
 import test from 'node:test';
@@ -69,7 +70,7 @@ test('paging: with long wrapped names, page-up from the bottom mirrors it — ev
   });
 });
 
-test('paging (pin): with one-line rows a page is still 13 channels', async () => {
+test('paging (pin): with one-line rows a page is 12 channels and the list-end line takes the 13th slot', async () => {
   const now = Date.now();
   const data = JSON.parse(f.ottChannelList(CHANNELS, { now, padChars: 0 }).body);
   Object.values(data).forEach((c) => { c.name = 'Новости'; });
@@ -78,8 +79,8 @@ test('paging (pin): with one-line rows a page is still 13 channels', async () =>
     const before = (await columnView(app.page, 'channels')).fully.map(Number);
     await app.key(K.PG_DOWN); await app.settle();
     const after = await columnView(app.page, 'channels');
-    assert.equal(before.length, 13, 'one-line rows on a page: ' + before.length);
-    assert.deepEqual([first(after.fully.map(Number)), after.fully.length], [14, 13], 'page after page-down: ' + after.fully.join(','));
+    assert.equal(before.length, 12, 'one-line rows on a page: ' + before.length);
+    assert.deepEqual([first(after.fully.map(Number)), after.fully.length], [13, 12], 'page after page-down: ' + after.fully.join(','));
     assert.ok(after.fully.indexOf(after.focusNum) >= 0, 'the highlighted channel is not on the new page');
   });
 });

@@ -72,12 +72,16 @@ var UI = (function () {
     node.style.transform = t;
   }
 
-  // The line under a list column: how many rows are still below the page, or that the list ends here.
-  // rest: ListView.rest(column) — null (empty list) leaves the line empty. Written only when it changes.
-  function listEnd(id, rest) {
-    var text = rest === null ? '' : rest > 0
+  // The list-end line, in the list right after its last completely visible row (owner 2026-10-26: «вместо
+  // последнего элемента списка»): how many rows are still below the page, or that the list ends here.
+  // rest: ListView.rest(column) — null (empty list) leaves the line empty; at: ListView.end(column), px from
+  // the column's top (null without a layout). Moved by a transform (no layout); written only when it changes.
+  function listEnd(id, rest, at) {
+    var e = el[id], text = rest === null ? '' : rest > 0
       ? '▼ ещё ' + rest + ' ' + Util.plural(rest, ['канал', 'канала', 'каналов']) + ' · CH− — дальше' : 'Конец списка';
-    if (el[id].textContent !== text) el[id].textContent = text;
+    var t = 'translateY(' + (at || 0) + 'px)';
+    if (e.textContent !== text) e.textContent = text;
+    if (e.style.transform !== t) { e.style.webkitTransform = t; e.style.transform = t; }
   }
 
   // rows: [[label, value]]; then the one setting, highlighted because OK toggles it.

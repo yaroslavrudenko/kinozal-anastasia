@@ -36,14 +36,22 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 .numentry { position: absolute; right: 90px; top: 70px; font-size: 110px; font-weight: 700; padding: 10px 40px;
   border-radius: 20px; background: rgba(14,18,28,.88); color: #4da3ff; }
 
-/* guide: 13 rows of 70 px fill the 910 px column exactly */
+/* guide: a 910 px column box = 12 rows of 70 px + the list-end line's slot (.list-wrap) */
 .guide { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: -webkit-flex; display: flex;
   padding: 60px 60px 110px; background: rgba(6,9,15,.97); }
 /* Hidden by visibility, not display: the menu stays laid out (prepared at idle), so opening it is a paint. */
 .guide.hidden { display: -webkit-flex !important; display: flex !important; visibility: hidden; }
 /* List columns: rows wrap, so a column hides (never cuts) the rows that do not fit (ui.js column). */
-.groups { position: relative; overflow: hidden; width: 380px; margin-right: 24px; }
-.channels { position: relative; overflow: hidden; -webkit-flex: 1; flex: 1; }
+/* The groups column on its own, slightly lighter ground and a faint divider before the channel list (owner 2026-10-26:
+   «для группы background-цвет сделать отличным … слабо видимую линию»); widths unchanged, the highlight stays strongest. */
+.groups { position: relative; overflow: hidden; width: 380px; margin-right: 24px; background: #0b1019; border-radius: 14px; }
+.list-wrap:before { content: ''; position: absolute; left: -13px; top: 0; bottom: 0; width: 1px; background: rgba(141,153,173,.16); }
+.list-wrap { position: relative; -webkit-flex: 1; flex: 1; }
+/* One row fewer, the list-end line in its slot (owner 2026-10-26: «сделать список максимально на один элемент
+   меньше и вместо него подставлять эту подсказку»): the list column ends one row slot (70 px) above its box and the
+   line is drawn right under the last completely visible row, so the list is set apart from the hint bar. One-line
+   rows on a page: 12 (was 13). */
+.channels, .search-list { position: absolute; left: 0; right: 0; top: 0; bottom: 70px; overflow: hidden; }
 .row, .grow, .prow { min-height: 70px; cursor: pointer; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center;
   padding: 8px 22px; border-radius: 14px; font-size: 30px; line-height: 36px; word-wrap: break-word; }   /* text wraps, never cut */
 .row .n { -webkit-flex: none; flex: none; width: 76px; color: #8d99ad; font-size: 26px; white-space: nowrap; }
@@ -67,7 +75,10 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 .row.playing .t { color: #4da3ff; }
 .row.playing.focus { box-shadow: inset 6px 0 0 #fff; }
 .row.playing.focus .t { color: #fff; }
-.hint { position: absolute; left: 60px; bottom: 40px; font-size: 26px; color: #8d99ad; }
+/* The hint bar is its own band (owner 2026-10-26: «отделена и не слепаться ни с чем», «бэкграунд цвет сделать
+   отличным»): its own ground, a rule on top, and at least 20 px between it and the columns over it. */
+.hint { position: absolute; left: 60px; right: 60px; bottom: 24px; padding: 10px 22px; border-top: 1px solid rgba(141,153,173,.18);
+  border-radius: 12px; background: #121927; font-size: 26px; color: #b4bfd0; word-wrap: break-word; }
 
 /* first-run setup */
 .setup { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: -webkit-flex; display: flex;
@@ -112,7 +123,8 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 .prog-title { -webkit-flex: none; flex: none; font-size: 36px; font-weight: 700; line-height: 44px; padding: 10px 22px; word-wrap: break-word; }
 .prog-list { position: relative; overflow: hidden; -webkit-flex: 1; flex: 1; margin-bottom: 50px; }   /* above the hint */
 .prog-hint, .search-hint { position: absolute; left: 50px; bottom: 26px; font-size: 24px; color: #8d99ad; }
-.search-hint { left: 360px; bottom: 50px; }
+.search-hint { left: 360px; right: 360px; bottom: 30px; padding: 10px 22px; border-top: 1px solid rgba(141,153,173,.18);
+  border-radius: 12px; background: #121927; color: #b4bfd0; }
 
 /* search */
 .search { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; padding: 70px 360px; background: rgba(6,9,15,.95); }
@@ -120,7 +132,7 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 .search-input { width: 1200px; height: 86px; font-size: 40px; padding: 0 28px; border-radius: 16px; border: 3px solid #2f7ee8;
   background: #101724; color: #fff; outline: none; margin-bottom: 24px; }
 .search-input:focus { border-color: #8cc2ff; }
-.search-list { position: relative; overflow: hidden; height: 690px; }   /* down to the hint */
+.search-wrap { height: 690px; }   /* the results and their list-end line, above the hint */
 .banner-state { font-size: 30px; margin-top: 6px; color: #ffb74d; word-wrap: break-word; }   /* «Подключение…» etc. */
 .banner-state:empty { display: none; }
 .banner-tech { font-size: 22px; margin-top: 6px; color: #4da3ff; word-wrap: break-word; }
@@ -149,7 +161,5 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
   -webkit-transition: left .15s; transition: left .15s; }
 .switch.on { background: #2f7ee8; }
 .switch.on i { left: 34px; }
-/* The list-end line under a list column (ui.js listEnd): in the gap between the column and the hint, so
-   a page keeps its 13 one-line rows and the line covers neither a row nor the hint. */
-.more { position: absolute; left: 464px; right: 60px; top: 972px; font-size: 24px; line-height: 26px; color: #8d99ad; word-wrap: break-word; }
-.search-more { left: 360px; right: 360px; top: 966px; }
+/* The list-end line (ui.js listEnd): placed at the column's top and moved under the last visible row by a transform. */
+.more { position: absolute; left: 22px; right: 0; top: 4px; font-size: 24px; line-height: 26px; color: #8d99ad; word-wrap: break-word; }

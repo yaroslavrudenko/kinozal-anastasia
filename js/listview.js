@@ -4,7 +4,8 @@
 var ListView = (function () {
   var over = {}, last = {};
   var starts = {};             // first row index of each column's window, kept between renders
-  var shown = {};              // { first, count, total } of the rows completely visible after the last render
+  var shown = {};              // { first, count, total, bottom } of the rows completely visible after the last render
+                               // (bottom: px from the column's top to the last one's bottom; null without a layout)
   var anchor = {};             // the next render's window, set by page(): { top: idx } or { bottom: idx }
 
   function windowStart(cursor, total, visible) {
@@ -47,7 +48,8 @@ var ListView = (function () {
       if (c.bottom !== undefined) fit = Math.min(fit, c.bottom - c.start + 1);   // a page-up page ends at its anchor
       if (c.h) { ListRows.hideFrom(c.rows, fit); scrollState(c); }
       starts[c.name] = c.start;
-      shown[c.name] = { first: c.start, count: Math.max(1, Math.min(fit, c.view.total - c.start)), total: c.view.total };
+      shown[c.name] = { first: c.start, count: Math.max(1, Math.min(fit, c.view.total - c.start)), total: c.view.total,
+        bottom: c.h && c.box.length ? Math.min(c.h, c.box[Math.min(fit, c.box.length) - 1].bottom) : null };
       last[c.name] = c.view.cursor;
     }
   }
@@ -76,7 +78,7 @@ var ListView = (function () {
   // CH± / PG± (DEC-2026-10-25-paging): the page turns by the rows completely visible now. Down: the new
   // page starts with the first row not shown, and the cursor lands on it. Up: the new page ends with the
   // row right before the first one shown, and the cursor lands on that row. Every row is completely
-  // visible on some page; with one-line rows a page is 13.
+  // visible on some page; with one-line rows a page is 12 (owner 2026-10-26: one row fewer, the list-end line in its slot).
   // at: { cursor, total } of the list being paged.
   function page(name, dir, at) {
     var v = shown[name], cursor = at.cursor, total = at.total;
@@ -178,5 +180,9 @@ var ListView = (function () {
     return v && v.total ? Math.max(0, v.total - v.first - v.count) : null;
   }
 
-  return { column: column, columns: columns, scrollWithin: scrollWithin, page: page, reset: reset, shown: shownRows, rest: rest };
+  // Where the last completely visible row ends, in px from the column's top (null without a layout): the
+  // list-end line is drawn right below it, in the room the column leaves under itself (css .list-wrap).
+  function end(name) { var v = shown[name]; return v ? v.bottom : null; }
+
+  return { column: column, columns: columns, scrollWithin: scrollWithin, page: page, reset: reset, shown: shownRows, rest: rest, end: end };
 }());

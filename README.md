@@ -100,7 +100,7 @@ The player works with the basic Samsung Smart Remote. No number or colour keys a
 | OK | the channel menu with 🔍 Search | watch the channel or the show (the channel already on screen is not restarted) |
 | ⏯ | pause / play | add or remove a favourite |
 | ⏪ ⏩ | archive slider, big steps | — |
-| CH+ / CH− | next / previous channel | archive day, or page through channels; the line under the list says how many channels are still below («▼ ещё N каналов») or «Конец списка» |
+| CH+ / CH− | next / previous channel | archive day, or page through channels; the last line of the list says how many channels are still below («▼ ещё N каналов») or «Конец списка» |
 | Back | back to live; press twice to exit | close |
 | 0–9 · Red · Green · Blue | channel number · audio track · picture mode · stream info | — |
 

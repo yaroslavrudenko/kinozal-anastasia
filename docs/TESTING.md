@@ -96,7 +96,7 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 | B8 | The list shrinks while the menu is open | A highlighted channel exists; OK tunes it | — | HARNESS menu | P2 |
 | B9 | OK on a channel | The menu closes; the channel plays (U0 landing) | C1 sample | AUTO-TV U0.landing | P0 |
 | B10 | Mouse click (desktop preview only) | A row click tunes; a group click switches | — | MANUAL (desktop) | P2 |
-| B11 | Any group (long, short), every page; search results | Under the column: «▼ ещё N каналов · CH− — дальше» while rows remain below the page (N = the rows after the last one completely visible, plural канал/канала/каналов), «Конец списка» once the last row is on screen; the line covers no row and not the hint, a page of one-line rows still holds 13, it is gone with the menu | C1 | **AUTO-TV U0.list-end** + HARNESS list-end (browser + behaviour) | P1 |
+| B11 | Any group (long, short), every page; search results | In the list, right under the last completely visible row (the slot of one row: a page holds one row fewer — 12 one-line rows, was 13): «▼ ещё N каналов · CH− — дальше» while rows remain below the page (N = the rows after the last one completely visible, plural канал/канала/каналов), «Конец списка» once the last row is on screen; it covers no row; the hint bar is a separate band (its own soft ground, a faint rule) ≥ 8 px from the line, the list and the groups column; the groups column has its own slightly lighter ground and a faint divider before the channel list — gentle steps (≤ 10 % lightness), every text ≥ 4.5:1, the highlighted row the strongest; the line is gone with the menu | C1 | **AUTO-TV U0.list-end** + HARNESS list-end (browser + behaviour) | P1 |
 
 ### S. Search
 | ID | Steps | Expected result | Set | Verified | P |
@@ -259,6 +259,7 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 | Owner: «now» current and correct (refresh, accuracy) | D1, D2, A10, L13 |
 | Owner: U0 basic journey in every group | B2, B3, B9, N1, N4, D1–D3 |
 | Owner 2026-10-26: «неизвестно, он кончается на этой странице или нет» — list-end line under the menu's channel column and the search results | B11, S1 (tests/browser/list-end.test.mjs, tests/list-end.test.js, AUTO-TV U0.list-end) |
+| Owner 2026-10-26 (TV, after 703a2c1): one row fewer, the list-end line in its slot; the hint bar set apart from the list and the groups. Paging pin renamed «paging (pin): with one-line rows a page is still 13 channels» → «…a page is 12 channels and the list-end line takes the 13th slot» (13 → 12 rows, next page starts at 13 instead of 14). Soft grounds: hint bar #121927, groups #0b1019 on the menu's #06090f, divider rgba(141,153,173,.16) | B4, B11 (tests/browser/paging.test.mjs, tests/browser/list-end.test.mjs, AUTO-TV U0.list-end) |
 | TV crash: platform call throws error 18 | L15 |
 | D1 (7-day edge never starts) | R3 |
 | D2 (continuation jumps ~50 s) | L7 |

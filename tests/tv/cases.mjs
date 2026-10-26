@@ -103,15 +103,19 @@ export async function U0(d, opt, onlyAll) {
     }
     // The list-end line under the column (owner, 2026-10-26): «▼ ещё N …» with N = the rows after the last one
     // completely visible, or «Конец списка» when the last row is on screen; checked on every page of the walk.
+    // Owner 2026-10-26: the line sits right under the last visible row (one row fewer per page) and the hint bar
+    // keeps ≥ 8 px from the line and from both columns.
     const ends = { pages: 0, bad: [], last: '' };
     async function checkEnd() {
       const v = await d.ev("(function(){var col=document.getElementById('channels'),c=col.getBoundingClientRect(),m=-1,r,b,k;" +
-        "for(k=0;k<col.children.length;k++){r=col.children[k];b=r.getBoundingClientRect();if(getComputedStyle(r).visibility!=='hidden'&&b.height>0&&b.top>=c.top-1&&b.bottom<=c.bottom+1)m=Math.max(m,+r.getAttribute('data-i'));}" +
-        "return {last:m,text:document.getElementById('channels-more').textContent}})()");
+        "var lb=0,mo=document.getElementById('channels-more').getBoundingClientRect(),h=document.querySelector('#guide .hint').getBoundingClientRect().top;" +
+        "for(k=0;k<col.children.length;k++){r=col.children[k];b=r.getBoundingClientRect();if(getComputedStyle(r).visibility!=='hidden'&&b.height>0&&b.top>=c.top-1&&b.bottom<=c.bottom+1){m=Math.max(m,+r.getAttribute('data-i'));lb=Math.max(lb,b.bottom);}}" +
+        "var gb=document.getElementById('groups').getBoundingClientRect().bottom,wb=col.parentNode.getBoundingClientRect().bottom;" +
+        "return {last:m,text:document.getElementById('channels-more').textContent,under:mo.top>=lb-0.5&&mo.top<=lb+8,gap:Math.round(h-Math.max(mo.bottom,gb,wb))}})()");
       const rest = g.count - (v.last + 1);
-      const ok = v.last >= 0 && (rest > 0 ? new RegExp('^▼ ещё ' + rest + ' канал(а|ов)? · CH− — дальше$').test(v.text) : v.text === 'Конец списка');
+      const ok = v.last >= 0 && v.under && v.gap >= 8 && (rest > 0 ? new RegExp('^▼ ещё ' + rest + ' канал(а|ов)? · CH− — дальше$').test(v.text) : v.text === 'Конец списка');
       ends.pages++; ends.last = v.text;
-      if (!ok && ends.bad.length < 5) ends.bad.push('rows to #' + (v.last + 1) + ' of ' + g.count + ': «' + v.text + '»');
+      if (!ok && ends.bad.length < 5) ends.bad.push('rows to #' + (v.last + 1) + ' of ' + g.count + ': «' + v.text + '»' + (v.under ? '' : ' not right under the last row') + ' · hint gap ' + v.gap + ' px');
     }
     for (let p = 0; p < 80; p++) {
       await checkPage();
