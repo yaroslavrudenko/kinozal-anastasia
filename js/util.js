@@ -34,6 +34,16 @@ var Util = (function () {
     try { localStorage.removeItem(key); } catch (e) { if (window.Diag) Diag.note('remove.' + key, (e && e.name) || 'error'); }
   }
 
+  // Opens a web page in the TV's browser (on the desktop, a new tab); fail(message) if it cannot.
+  function openUrl(url, fail) {
+    try {
+      if (window.tizen && tizen.application) {
+        tizen.application.launchAppControl(new tizen.ApplicationControl('http://tizen.org/appcontrol/operation/view', url), null, null,
+          function (e) { fail((e && e.message) || 'error'); });
+      } else if (!window.open(url, '_blank')) fail('blocked');
+    } catch (e) { fail((e && e.message) || String(e)); }
+  }
+
   function pad2(n) { return n < 10 ? '0' + n : '' + n; }
   function hhmm(d) { return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
   function $(id) { return document.getElementById(id); }
@@ -80,6 +90,5 @@ var Util = (function () {
   return {
     MIN_MS: MIN_MS, DAY_MS: DAY_MS,
     load: load, save: save, remove: remove, pad2: pad2, hhmm: hhmm, $: $, show: show, plural: plural, esc: esc, dict: dict,
-    idle: idle, dayStart: dayStart, addDays: addDays, backoff: backoff
-  };
+    idle: idle, dayStart: dayStart, addDays: addDays, backoff: backoff, openUrl: openUrl };
 }());

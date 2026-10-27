@@ -5,7 +5,7 @@ var UI = (function () {
   var el = {}, toastTimer = null, bannerTimer = null, scrubBarPx = 0;
   var IDS = ['banner', 'b-num', 'b-logo', 'b-title', 'b-state', 'b-now', 'b-next', 'b-tech', 'b-progress', 'b-clock', 'toast',
     'spinner', 'numentry', 'fatal', 'guide', 'prog', 'p-title', 'scrub', 's-title', 's-time', 's-start', 's-end',
-    's-delta', 's-played', 's-now', 's-knob', 'about', 'about-table', 'search', 'setup', 'channels-more', 'search-more'];
+    's-delta', 's-played', 's-now', 's-knob', 'about', 'about-table', 'sources', 'search', 'setup', 'search-more', 'groups-bar', 'channels-bar'];
 
   // Desktop check only: fit the 1920×1080 TV layout into the browser window.
   function fitDesktop() {
@@ -76,6 +76,20 @@ var UI = (function () {
   // последнего элемента списка»): how many rows are still below the page, or that the list ends here.
   // rest: ListView.rest(column) — null (empty list) leaves the line empty; at: ListView.end(column), px from
   // the column's top (null without a layout). Moved by a transform (no layout); written only when it changes.
+  // The thin scroll bar beside a list column: the thumb's length is the share of the list on screen, its
+  // place where that window is; hidden when the whole list fits. v: ListView.shown(column) or null.
+  function scrollBar(id, v) {
+    var e = el[id], all = v && v.total > v.count;
+    if ((e.className.indexOf('on') >= 0) !== !!all) e.className = all ? 'bar on' : 'bar';
+    if (!all) return;
+    // Moved by a transform (no layout); its height is written only when the share changes.
+    var thumb = e.children[0], h = Math.max(6, 100 * v.count / v.total), top = Math.min(100 - h, (100 - h) * v.first / Math.max(1, v.total - v.count));
+    var hs = h.toFixed(2) + '%', t = 'translateY(' + (100 * top / h).toFixed(2) + '%)';
+    if (thumb.style.height !== hs) thumb.style.height = hs;
+    if (thumb.style.transform !== t) { thumb.style.webkitTransform = t; thumb.style.transform = t; }
+  }
+
+  // The search results' list-end line (the menu's columns show their place with scroll bars instead).
   function listEnd(id, rest, at) {
     var e = el[id], text = rest === null ? '' : rest > 0
       ? '▼ ещё ' + rest + ' ' + Util.plural(rest, ['канал', 'канала', 'каналов']) + ' · CH− — дальше' : 'Конец списка';
@@ -84,21 +98,24 @@ var UI = (function () {
     if (e.style.transform !== t) { e.style.webkitTransform = t; e.style.transform = t; }
   }
 
-  // rows: [[label, value]]; then the one setting, highlighted because OK toggles it.
-  function about(rows, adultOn) {
+  // rows: [[label, value]]; then the items [{ label, on, state } or { label, link: true, state }], the one under
+  // the cursor highlighted (▲▼ choose, OK switches or opens).
+  function about(rows, settings, cursor) {
     var html = '';
     for (var r = 0; r < rows.length; r++) {
       html += '<div class="about-row"><span class="about-k">' + Util.esc(rows[r][0]) + '</span><span class="about-v">' + Util.esc(rows[r][1]) + '</span></div>';
     }
-    html += '<div class="about-row about-setting"><span class="about-k">Каналы для взрослых</span>' +
-      '<span class="about-v"><span class="switch' + (adultOn ? ' on' : '') + '" id="adult-switch"><i></i></span>' +
-      '<span id="adult-state">' + (adultOn ? 'показываются в меню' : 'скрыты') + '</span></span></div>';
+    for (var i = 0; i < settings.length; i++) {
+      var x = settings[i];
+      html += '<div class="about-row about-setting' + (i === cursor ? ' sel' : '') + '"><span class="about-k">' + Util.esc(x.label) + '</span>' +
+        '<span class="about-v">' + (x.link ? '' : '<span class="switch' + (x.on ? ' on' : '') + '"><i></i></span>') + '<span>' + Util.esc(x.state) + '</span></span></div>';
+    }
     el['about-table'].innerHTML = html;
   }
 
   return {
     STICKY: STICKY, init: init, fitDesktop: fitDesktop, show: show, banner: banner, bannerTech: bannerTech, hideBanner: hideBanner, bannerShown: bannerShown,
     toast: toast, spinner: spinner, numEntry: numEntry, fatal: fatal, panelTitle: panelTitle, scrub: scrub, about: about,
-    listEnd: listEnd
+    listEnd: listEnd, scrollBar: scrollBar
   };
 }());

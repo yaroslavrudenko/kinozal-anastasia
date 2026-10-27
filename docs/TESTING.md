@@ -1885,3 +1885,101 @@ Suite: 229 tests, 229 pass (with `--browser`). By name vs 3991b71 (231/231): 0 n
 
 
 **TV check of v1.8.3 (4e9fd3b), 2026-10-26 ~23:15, owner: «Сделай базовый прогон… Не надо полностью» and «Пройдись по тем каналам, которых не было».** Installed version read from the TV: 1.8.3. Basic: groups «Все каналы» 372 · «Израиль» **18** · «Национальные» 62 (the afternoon build showed 339 / 11 / 49); playing, one zap ▶ and back ◀, menu open and close — each PASS (media time advancing ~3 s per 3 s); no «отключён» on screen. Israeli group, every channel tuned inside the group (the afternoon's missing ones were not recorded by name, so all 18 were walked): **18/18 PLAYING**, media time advancing — Channel 9, 11, 12, 13, 14, 24, 5Sport, VIVA Premium, i24, Yam Tichoni, HOT Zone, YES Movies Action, HOT HBO at 1920×1080 (4.1–7.3 Mbit/s); HOP!, Good Life, Knesset Channel, Zoom at 720×576; KAN23 at 1024×576. Afterwards the channel and group on before (152 CineMan Action) were restored.
+
+## DEC-2026-10-27-sources — «📡 Источники»: OTT Club, ten free playlists, the viewer's own (v1.8.4)
+
+Owner, 2026-10-27: five (then up to ten) predefined free playlists and OTT Club in one menu, switch between them, add and delete one's own playlists (only those), change the OTT Club key there; groups follow the playlist (no Ukrainian channels → no «Украина» group, no music → no music group); Israeli then Ukrainian channels first; nothing filtered; the key taken exactly as entered, the provider judges it.
+
+What changed: `js/overlays/sources.js` (new screen: menu → Blue, or the «📡 Источники» row), `Sources.list/activeId/addUser/switchTo/removeUser`, `CONFIG.FREE_PLAYLISTS` (iptv-org: Israel, Ukraine, Russian, English, news, kids, music, movies, documentary, sports), setup modes `key` / `playlist`, `OttClub.extractKey` (a non-OTT-Club link is a playlist; a typed key is used as is), `Country.detect` (iptv-org ids `.il@SD`, quality / `[Not 24/7]` suffixes), `M3U` (`General;News` → the specific group, English group names in Russian, Israeli then Ukrainian channels first). The groups column a shade darker than the list (owner).
+
+| Test (`tests/sources.test.js`) | On 7ca71ce | On the change |
+|---|---|---|
+| sources: OTT Club, the ten built-in free playlists, then «+ Добавить свой плейлист» | FAIL | PASS |
+| sources: a built-in free playlist cannot be removed (RED twice) | FAIL | PASS |
+| sources: one's own playlist is added on the TV, listed, and removed by RED pressed twice | FAIL | PASS |
+| sources: OK on a free playlist switches to it and does not reopen the last channel of another source | FAIL | PASS |
+| key as entered: whatever is typed is saved as the OTT Club key, with no check of the app's own | FAIL | PASS |
+| another provider's link with a key inside (/playlist/<key>/) is a playlist, not an OTT Club key | FAIL | PASS |
+| playlists: Israeli channels first, then Ukrainian, then the rest in the playlist's order | FAIL | PASS |
+| playlists: groups come from the playlist (iptv-org ids and "General;News" read right); no channel is filtered | FAIL | PASS |
+| playlists: no Ukrainian channel -> no «Украина» group | FAIL | PASS |
+| sources: each source keeps its own last channel and group; coming back reopens them | FAIL | PASS (mutation: not restoring `lastCh` turns it red) |
+
+Owner, 2026-10-27: «меню выбора стримов должно быть по требованию… приложение всегда открывает последний стрим, последняя группа и последний канал». «📡 Источники» opens only on Blue in the menu or its row; the app starts on the last source; each source keeps its own last channel and group (`lastBySource`), so switching back reopens where the viewer was in it.
+
+Renamed: `key change (BLUE in the menu): …` → `key change (menu → BLUE «Источники» → BLUE): …` (Blue in the menu now opens «Источники»). `now healthy … every row of every group …` skips the two service rows at the end (📡 Источники, ℹ О программе). Suite with `--browser`: 239 tests, 239 pass; by name vs 7ca71ce (229/229): 0 newly failing.
+
+Desktop checks with the real playlists (headless Chrome, this tree): iptv-org Israel 34 channels, list ready in 536 ms, «Израиль» 32 of 34 (the other two are not Israeli by id or name); iptv-org English 3005 channels, list ready in 542 ms, 27 groups; «📡 Источники» opens in < 50 ms. Layout: 6 own playlists (19 rows): the list ends at 973 px, the hint starts at 1012 px; the last row scrolled into view sits at 915–973 px. Five channels of the Israel playlist played on the desktop (Kan 11, i24NEWS Hebrew, Now 14, Channel 9, Makan 33). Not yet on the TV.
+
+### Review of v1.8.4 (2026-10-27): three experts, one batch of fixes
+
+Owner: «review делают три эксперта: эксперт по производительности, независимый эксперт и Codex» and «исправляй всё одним пакетом». All three returned REJECT; every finding and what was done:
+
+| # | Finding (reviewers) | Status |
+|---|---|---|
+| 1 | Adding a playlist / entering the key bypassed the switch: the left source's position was lost and the new one could reopen another source's channel (perf, independent, Codex) | APPLIED — one switch (`Sources.switchTo`) for every change; tests «adding one's own playlist keeps…», «entering the OTT Club key from a playlist…» |
+| 2 | OK twice before the restart wiped the left source's saved position (independent, Codex) | APPLIED — `switchTo` runs once per page life; test «OK pressed twice…» |
+| 3 | A playlist set up by 1.8.3 or built in was missing from «Источники» (independent, Codex) | APPLIED — listed at start (`addUser`); test «a playlist set up before…» |
+| 4 | Translated group names changed M3U channel keys, so favourites / last channel were lost on upgrade (all three) | APPLIED — keys keep the playlist's own group text; test «channel keys keep…» |
+| 5 | Two tests could not fail (the helper filtered empty groups) and the group-restore test never checked the group (independent, Codex) | APPLIED — unfiltered helper; group asserted (mutation: not restoring the group turns it red) |
+| 6 | `GROUP_RU` plain object (`constructor`, `__proto__`) (all three) | APPLIED — `Util.dict()` |
+| 7 | Deleting the active playlist re-created its saved position (independent, Codex) | APPLIED — the switch keeps no position for a removed playlist; test «removing the playlist being watched…» |
+| 8 | OTT Club link check matched substrings / look-alike hosts (independent, Codex) | APPLIED — host name only; test «an OTT-Club-looking word…» |
+| 9 | The key was trimmed (Codex) | APPLIED — kept exactly as typed; test «key as typed…» |
+| 10 | A fresh install could not reach the free playlists (setup only) — against the README (Codex) | APPLIED — a fresh install plays the first free playlist; the first-run screen is gone; test «fresh install…» |
+| 11 | «XXX» became the hidden «Для взрослых» — against «не фильтруем» (perf) | APPLIED — the provider's group stays as is; test «a provider group «XXX»…» |
+| 12 | Key screen said «Поле пустое» for a link (all three) | APPLIED — says it is a playlist link; test «a playlist link typed on the key screen…» |
+| 13 | «Переключаю…» never painted (perf) | APPLIED — the restart runs in its own task (`SWITCH_PAINT_MS`) |
+| 14 | Regex literals rebuilt per channel (perf, independent) | APPLIED — hoisted (`IL_ID`, `UA_ID`, `NAME_SUFFIX`, `VAGUE_GROUP`) |
+| 15 | `activeId()` read on every key in «Источники»; cursor jumped after a delete; `zapGroup` key owned twice; prefixes repeated (perf, independent) | APPLIED — read once per opening; cursor kept; `Zap.GROUP_STORE`; `FREE` / `USER` + `urlOf` / `idOfUrl` |
+| 16 | `#EXTGRP` groups not read like `group-title` (independent) | APPLIED — same `groupName`; test |
+| 17 | README: «other paid providers not supported» contradicted the M3U path; the 📡 row position (independent, Codex) | APPLIED |
+| 18 | Up to 3005 channels never measured on the TV (perf F1, F2: longest task, offline copy) | measured on the TV — see below |
+| 19 | No test proves the parse is sliced for 3000 channels (perf F9): the harness clock does not move during synchronous work, so `Date.now()` slicing cannot be observed there | OPEN — measured on the TV instead (row 18) |
+| 20 | Each switch forgets the offline copy; switching back re-downloads up to 692 KB (perf F7) | OPEN — owner's call (a copy per source costs storage on the TV) |
+| 21 | Logos load per visible row from many hosts (perf F8) | OPEN — bounded to 13 rows; measured with row 18 |
+
+Owner, 2026-10-27: «ключ для OTT-клуба отправляется только в плейлист OTT-клуба и не отправляется в другие плейлисты». Two tests: `key privacy: with an OTT Club key saved, a free or own playlist never receives it (list, streams, guide, zaps, switching)` and `key privacy: on OTT Club the key goes only to the OTT Club server` — they check every page request and every address the player opens.
+
+Removed with the first-run screen (replaced by the tests above): `P-R: pressing OK twice on the setup screen starts one list refresh, not two` (the double OK is now covered by «OK pressed twice…»), `key as entered: …`, `another provider's link with a key inside (/playlist/<key>/) is a playlist, not an OTT Club key` (new wording: «… is added as a playlist; the OTT Club key stays»).
+
+About screen: author row (owner: «Добавь автора: Ярослав Руденко, и ссылку на LinkedIn profile»).
+
+**TV check of v1.8.4 (this tree), 2026-10-27, owner: «Так, ты можешь прогонку сделать на телевизоре».** The TV had moved to `192.168.1.176` (found by scanning the network; see `docs/DEPLOY.md` §3 and `tools/find-tv.sh`). Installed version read from the TV: 1.8.4.
+
+| Check | Result |
+|---|---|
+| Review rows 18–21: the 3005-channel iptv-org English playlist on the TV (fetched and parsed on the TV while OTT Club kept playing; a 10 ms interval measures the longest pause) | fetch 692 458 chars in 429 ms (longest pause 14 ms) · parse 3005 channels in 247 ms, **longest pause 27 ms** · favourites + groups for 3005 channels 18 ms (30 menu rows) · offline-copy stringify 18 ms · the TV's own list put back (389) and М1 still PLAYING. All under 50 ms: rows 18 and 19 closed by measurement (estimate was 75–125 ms) |
+| Switch OTT Club → free «Израиль» | 34 channels, «Израиль» 32, PLAYING; OTT Club's last channel kept in `lastBySource` (1+1 Україна) |
+| Switch back to OTT Club (`Sources.switchTo('ott')`) | 389 channels, «Израиль» 18; **the app reopened OTT Club's last channel (22 1+1 Україна) in its group («Украина»)**, PLAYING, media time +3.0 s per 3 s |
+| Left as found | 350 М1 picked again (the owner's channel before the run), PLAYING |
+
+Note on the run: the first scripted switch sent remote keys 300 ms apart, faster than the menu opens, so an OK landed in the channel menu (it tuned 1+1 Україна) and the switch went to «Израиль» instead of «На английском». The app did what those keys asked; the script now waits for each screen before the next key (TV scripts in the session scratchpad, not in the repo).
+
+### Providers, not playlists; scroll bars; the picture fits the screen (2026-10-27)
+
+Owner: «Источник — это … источник провайдера … Когда выбираешь провайдера, уже в нём все каналы группируются»; then, for iptv-org, «Весь iptv-org» and «если он отдаёт отдельно плейлисты … тогда это источник плейлистов». «📡 Провайдеры» lists OTT Club, the free **iptv-org** provider (OK opens its playlists: «Весь список» ~11 340 channels first, then Израиль · Украина · На русском · На английском · Новости · Детские · Музыка · Кино · Познавательные · Спорт; Back returns) and the viewer's own providers. A fresh install plays iptv-org's whole list.
+
+Owner: «чтобы слева тоже было понятно, что внизу ещё есть пункты меню»; «справа от группы каналов … и справа от списка каналов … ползунок»; «очень элегантным, неярким и не сильно контрастным, но его должно быть видно». The groups column got the same «▼ ещё N групп» / «Конец списка» line as the channel list, and both columns a hair-thin grey-blue scroll bar (moved by a transform, hidden with the menu).
+
+Owner: «изображение ложилось чётко на размер экрана, чтобы оно не было уже, и стрим адаптировался под разрешение и размер экрана телевизора»; «поставить себе отметку, чтобы мы не потеряли эту функциональность»; «в настройках … расширять ли автоматически экран на весь размер … По умолчанию да». **Picture fit (kept by tests):** every stream the player opens gets `setDisplayRect(0, 0, 1920, 1080)` (the whole TV screen), the display mode **full screen by default** (`PLAYER_DISPLAY_MODE_FULL_SCREEN`; was «Авто», which kept the stream's proportions and left 576p channels narrower), and adaptive quality from the best the bandwidth allows (`ADAPTIVE_INFO STARTBITRATE=HIGHEST`), so a stream that starts at a lower rendition grows to full quality on the same full-screen picture. «Картинка во весь экран» in «ℹ О программе» (default on; off = the stream's proportions); Green while watching cycles full screen → stream proportions → with borders.
+
+| Test | Proves |
+|---|---|
+| `picture fit: every stream opened (start and each zap) gets the whole 1920×1080 screen, full screen by default, adaptive quality from the highest` | the pin (mutation: removing `setDisplayRect` turns it red) |
+| `picture fit: GREEN cycles full screen → aspect-keeping → with borders → full screen, and the choice is kept` | the modes and their order |
+| `picture fit: the setting «Картинка во весь экран» in «О программе» is on by default; OK turns it off (stream proportions) and on again` | the setting |
+| `providers: OTT Club, the free iptv-org provider, «+ Добавить провайдера»; iptv-org opens its playlists («Весь список» first); Back returns` | the two levels |
+| `providers: the built-in iptv-org provider and its playlists cannot be removed (RED twice)` | built in stays |
+| `providers: OK on an iptv-org playlist switches to it; its provider row is marked as current` | switching |
+| `menu: a scroll bar and «▼ ещё N групп» show that the groups column goes on below` | the groups column's hints |
+
+Suite with `--browser`: 258 tests, 258 pass. One run had `paging: with mixed row heights, page-up in search results ends exactly one row before the previous page` fail once; alone it passed 3 of 3 and the next full run passed — a timing-sensitive browser test, recorded here, not a change in search.
+
+### The menu's «▼ ещё N …» lines gave way to the scroll bars; lists never reach the hint bar (2026-10-27)
+
+Owner: «у нас появились ползунки, поэтому есть смысл убрать внизу вот эти сообщения … по ползункам уже понятно, где мы» — the list-end lines under the menu's groups and channels are gone (the search results, which have no bar, keep theirs). «в меню «О программе» всё налазит на нижнюю строчку … нужно как-то отделить» — «О программе» is more compact (row 6 px padding, 24 px text, smaller icon) and its hint, like «Провайдеры», sits on its own band (#121927, a rule above it): the last row now ends at 827 px, the hint starts at 1008 px. «Есть телевизоры меньше … на всех размерах экранов списки не должны доходить до нижней подсказки»: the app is a fixed 1920×1080 canvas every screen scales as a whole; `tests/browser/hint-gap.test.mjs` measures the gap on the channel menu, search, «О программе» and «Провайдеры» at 1920×1080 and 1280×720 (≥ 8 px scaled) — the old «О программе» layout turns both of its checks red.
+
+Replaced (they asserted the removed lines): `list end: a long group says «▼ ещё N каналов» …`, `list end: a group that fits one page says «Конец списка» at once`, `list end: with one-line rows a page holds 12 channels (was 13) and the line says «▼ ещё 33 канала» in the 13th slot`, `list end: after a channel is picked the line is not visible`, `list end: the menu says how many channels are below the page, and «Конец списка» on the last page`, `menu: a scroll bar and «▼ ещё N групп» …` → `scroll bar: in a long group the thumb starts at the top, moves down page by page and reaches the bottom; no list-end line under the menu`, `scroll bar: a group that fits one page shows no bar`, `list end: with one-line rows a page holds 12 channels (one row slot kept free above the hint bar)`, `scroll bar: after a channel is picked the bars are not visible`, `scroll bar: the menu's channel bar starts at the top and its thumb reaches the bottom on the last page (no list-end line in the menu)`, `menu: a scroll bar shows that the groups column goes on below`.
+
+**Author link (2026-10-27, owner: «перейти на пункт автора, нажать «Ввод», и открылся браузер с моим LinkedIn-профайлом»).** «О программе» starts with the item «Автор — Ярослав Руденко · linkedin.com/in/yaroslav-rudenko-2303 · OK — открыть в браузере»; OK opens https://www.linkedin.com/in/yaroslav-rudenko-2303 in the TV's browser through Tizen app control (`operation/view`; new privilege `application.launch` in config.xml; a new tab on the desktop). Test: `about: «Автор» is the first item; OK on it opens the author's LinkedIn profile in the TV's browser`.

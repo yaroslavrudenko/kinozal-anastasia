@@ -1,6 +1,6 @@
 // The channel list, its groups and the one visibility rule. Channels are identified by `key`
 // (stable across refreshes); a refresh installs a new list and rebuilds the groups.
-// Group order: 🔍 Поиск · Все каналы · ★ Избранное · Израиль · Украина · provider groups · ℹ О программе.
+// Group order: 🔍 Поиск · Все каналы · ★ Избранное · Израиль · Украина · provider groups · 📡 Провайдеры · ℹ О программе.
 var Channels = (function () {
   var ADULT = 'Для взрослых';
   var list = [], byKey = Util.dict(), groups = [];
@@ -36,6 +36,7 @@ var Channels = (function () {
       if (items.length) groups.push({ key: 'pin:' + pin.name, name: pin.name, items: items, pinned: true });
     }
     for (var j = 0; j < order.length; j++) groups.push({ key: 'grp:' + order[j], name: order[j], items: byGroup[order[j]] });
+    groups.push({ key: 'sources', name: '📡 Провайдеры', items: [], sources: true });
     groups.push({ key: 'about', name: 'ℹ О программе', items: [], about: true });
   }
   function byNameNumber(a, b) { return ORDER.nameNumber(list[a].name) - ORDER.nameNumber(list[b].name) || a - b; }
@@ -84,7 +85,7 @@ var Channels = (function () {
     var n = 0;
     for (var g = 0; g < groups.length; g++) {
       var x = groups[g];
-      if (!x.search && !x.all && !x.fav && !x.pinned && !x.about) n++;
+      if (!x.search && !x.all && !x.fav && !x.pinned && !x.about && !x.sources) n++;
     }
     return n;
   }

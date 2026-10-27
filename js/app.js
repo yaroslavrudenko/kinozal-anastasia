@@ -49,10 +49,12 @@
     optional('keys', Keys.register);   // right away: CH± and digits pressed in the first seconds must work
   }
 
-  // The list loads and the saved channel starts (in its own task right after this one), or setup opens.
+  // The list loads and the saved channel starts (in its own task right after this one). With no key and
+  // no playlist yet (a fresh install), the first free playlist plays: free out of the box; OTT Club and
+  // everything else are in «📡 Провайдеры».
   function startSource() {
+    if (!Sources.mode()) Sources.select(Sources.firstFreeId());
     var mode = Sources.mode();
-    if (!mode) { Overlay.open('setup'); return; }
     Sources.start();
     setTimeout(function () {
       var last = Sources.lastChannel();

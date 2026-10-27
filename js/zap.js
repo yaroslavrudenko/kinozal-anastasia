@@ -94,5 +94,5 @@ var Zap = (function () {
   // true while a burst of presses is still choosing (the banner shows the channel being passed).
   function choosing() { return !!timer; }
 
-  return { step: step, cancel: cancel, choosing: choosing, pick: pick, previous: previous, onFirstFrame: onFirstFrame, group: group };
+  return { GROUP_STORE: GROUP_STORE, step: step, cancel: cancel, choosing: choosing, pick: pick, previous: previous, onFirstFrame: onFirstFrame, group: group };
 }());

@@ -25,7 +25,7 @@ after(async () => { if (app) await app.close(); });
 // every clipping ancestor), the line's text, and the boxes of the line, of every visible row and of the hint.
 function look(listId, moreId, hintSel) {
   return page.evaluate((listId, moreId, hintSel) => {
-    const col = document.getElementById(listId), more = document.getElementById(moreId);
+    const col = document.getElementById(listId), more = moreId ? document.getElementById(moreId) : null;
     let clip = { top: 0, bottom: window.innerHeight };
     for (let a = col; a && a !== document.body; a = a.parentElement) {
       const cs = getComputedStyle(a);
@@ -38,8 +38,8 @@ function look(listId, moreId, hintSel) {
     const fully = rows.filter((r) => { const b = r.getBoundingClientRect(); return b.height > 0 && b.top >= clip.top - 1 && b.bottom <= clip.bottom + 1; })
       .map((r) => +r.getAttribute('data-i'));
     const groups = listId === 'channels' ? Array.from(document.getElementById('groups').children).filter((r) => getComputedStyle(r).visibility !== 'hidden') : [];
-    return { fully, text: more.textContent, visible: getComputedStyle(more).visibility === 'visible' && more.getBoundingClientRect().height > 0,
-      more: box(more), rows: rows.map((r) => ({ i: r.getAttribute('data-i'), ...box(r) })), groups: groups.map(box), hint: box(document.querySelector(hintSel)),
+    return { fully, text: more ? more.textContent : '', visible: !!more && getComputedStyle(more).visibility === 'visible' && more.getBoundingClientRect().height > 0,
+      more: more ? box(more) : null, rows: rows.map((r) => ({ i: r.getAttribute('data-i'), ...box(r) })), groups: groups.map(box), hint: box(document.querySelector(hintSel)),
       // The column boxes themselves: a full column's last row can reach their bottom.
       boxes: [box(col.parentElement)].concat(listId === 'channels' ? [box(document.getElementById('groups'))] : []),
       hintRule: getComputedStyle(document.querySelector(hintSel)).borderTopWidth };
@@ -76,19 +76,45 @@ async function pageDown(listId, moreId, hintSel, total) {
   return pages;
 }
 
-test('list end: a long group says «▼ ещё N каналов» with N = the rows below the page, and «Конец списка» on the last page', async () => {
+// Owner 2026-10-27: «по ползункам уже понятно, где мы» — the «▼ ещё N …» line under the menu's columns gave way to
+// a scroll bar beside each column (the search results keep their line). The columns still end above the hint bar.
+function bar(id) {
+  return page.evaluate((id) => {
+    const t = document.getElementById(id), th = t.children[0], a = t.getBoundingClientRect(), b = th.getBoundingClientRect();
+    return { on: /\bon\b/.test(t.className), visible: getComputedStyle(t).visibility === 'visible' && a.height > 0,
+      top: b.top - a.top, bottom: a.bottom - b.bottom, len: b.height, track: a.height };
+  }, id);
+}
+function assertApart(v, where) {
+  for (const b of [...v.rows, ...v.groups, ...v.boxes]) assert.ok(v.hint.top - b.bottom >= 8, where + ': less than 8 px above the hint bar: ' + JSON.stringify([b, v.hint]));
+  assert.notEqual(v.hintRule, '0px', where + ': the hint bar has no rule above it');
+}
+
+test('scroll bar: in a long group the thumb starts at the top, moves down page by page and reaches the bottom; no list-end line under the menu', async () => {
   await closeAll();
   await press(K.ENTER, K.LEFT, K.UP, K.UP);
   for (let i = 0; i < 12; i++) await press(K.UP);
   await press(K.DOWN, K.RIGHT);                                     // «Все каналы» (second group row), its first channel
-  const pages = await pageDown('channels', 'channels-more', '#guide .hint', CHANNELS);
-  assert.ok(pages.length >= 3, 'too few pages: ' + pages.length);
-  assert.match(pages[0].text, /^▼ ещё \d+ канал/, 'the first page of 45 channels does not say more follow');
-  assert.equal(pages[pages.length - 1].text, 'Конец списка');
-  assert.ok(pages[pages.length - 1].fully.indexOf(CHANNELS - 1) >= 0, 'the last page does not show the last channel');
+  assert.equal(await page.evaluate(() => document.getElementById('channels-more')), null, 'the menu still has a list-end line');
+  const seen = [];
+  for (let i = 0; i < 30; i++) {
+    const v = await look('channels', null, '#guide .hint'), b = await bar('channels-bar');
+    assert.ok(b.on && b.visible, 'page ' + (i + 1) + ': the scroll bar is not shown for 45 channels');
+    assertApart(v, 'channels page ' + (i + 1));
+    seen.push({ fully: v.fully.join(), b });
+    if (seen.length > 1 && seen[seen.length - 1].fully === seen[seen.length - 2].fully) break;
+    await press(K.PG_DOWN);
+  }
+  await new Promise((r) => setTimeout(r, 300));                    // the thumb's transition
+  const last = await bar('channels-bar');
+  assert.ok(seen.length >= 3, 'too few pages: ' + seen.length);
+  assert.ok(seen[0].b.top <= 1, 'the thumb does not start at the top: ' + JSON.stringify(seen[0].b));
+  assert.ok(last.bottom <= 1.5, 'the thumb does not reach the bottom on the last page: ' + JSON.stringify(last));
+  for (let i = 1; i < seen.length - 1; i++) assert.ok(seen[i].b.top >= seen[i - 1].b.top - 0.5, 'the thumb moved up while paging down');
+  assert.ok(seen[0].b.len < seen[0].b.track * 0.5, 'the thumb is not proportional to 12 of 45 rows: ' + JSON.stringify(seen[0].b));
 });
 
-test('list end: a group that fits one page says «Конец списка» at once', async () => {
+test('scroll bar: a group that fits one page shows no bar', async () => {
   await closeAll();
   await press(K.ENTER, K.LEFT);
   const groups = await page.evaluate(() => Array.from(document.querySelectorAll('#groups .grow')).filter((r) => getComputedStyle(r).visibility !== 'hidden')
@@ -98,10 +124,10 @@ test('list end: a group that fits one page says «Конец списка» at o
   assert.ok(small, 'no short group in the fixture: ' + JSON.stringify(groups));
   for (let i = 0; i < Math.abs(small.i - cur); i++) await press(small.i > cur ? K.DOWN : K.UP);
   await press(K.RIGHT);
-  const v = await look('channels', 'channels-more', '#guide .hint');
+  const v = await look('channels', null, '#guide .hint');
   assert.equal(v.fully.length, small.n, 'the short group «' + small.t + '» is not completely on one page');
-  assert.equal(v.text, 'Конец списка');
-  assertPlaced(v, 'short group');
+  assert.equal((await bar('channels-bar')).visible, false, 'a bar is shown for a list that fits');
+  assertApart(v, 'short group');
 });
 
 test('list end: search results carry their own count and end the same way', async () => {
@@ -121,7 +147,7 @@ test('list end: search results carry their own count and end the same way', asyn
   assert.notEqual(bg[0], 'rgba(0, 0, 0, 0)', 'the search hint bar is transparent');
 });
 
-test('list end: with one-line rows a page holds 12 channels (was 13) and the line says «▼ ещё 33 канала» in the 13th slot', async () => {
+test('list end: with one-line rows a page holds 12 channels (one row slot kept free above the hint bar)', async () => {
   const now = Date.now();
   const data = JSON.parse(f.ottChannelList(CHANNELS, { now, padChars: 0 }).body);
   Object.values(data).forEach((c) => { c.name = 'Новости'; });
@@ -132,23 +158,21 @@ test('list end: with one-line rows a page holds 12 channels (was 13) and the lin
     await one.press(K.DOWN, K.RIGHT);
     const prev = page; page = one.page;
     try {
-      const v = await look('channels', 'channels-more', '#guide .hint');
+      const v = await look('channels', null, '#guide .hint');
       assert.equal(v.fully.length, 12, 'one-line rows on a page: ' + v.fully.length);
-      assert.equal(v.text, '▼ ещё 33 канала · CH− — дальше');
-      assertPlaced(v, 'one-line rows');
+      assertApart(v, 'one-line rows');
     } finally { page = prev; }
   } finally { await one.close(); }
 });
 
-test('list end: after a channel is picked the line is not visible', async () => {
+test('scroll bar: after a channel is picked the bars are not visible', async () => {
   await closeAll();
   await press(K.ENTER);
-  assert.ok((await look('channels', 'channels-more', '#guide .hint')).visible, 'the line is not shown in the open menu');
+  assert.ok((await bar('channels-bar')).visible, 'the bar is not shown in the open menu');
   await press(K.DOWN, K.ENTER);
   await new Promise((r) => setTimeout(r, 300));
-  const v = await look('channels', 'channels-more', '#guide .hint');
-  assert.equal(v.visible, false, 'the list-end line stays on the picture after the pick');
-  assert.equal(await page.evaluate(() => document.getElementById('channels-more').style.visibility), '', 'the line must not carry an inline visibility');
+  assert.equal((await bar('channels-bar')).visible, false, 'the scroll bar stays on the picture after the pick');
+  assert.equal((await bar('groups-bar')).visible, false, 'the groups bar stays on the picture after the pick');
 });
 
 // Owner 2026-10-26: «подсветить … бэкграунд цвет сделать отличным», «для группы background-цвет сделать отличным

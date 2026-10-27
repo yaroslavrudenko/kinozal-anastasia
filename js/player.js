@@ -191,10 +191,11 @@ var Player = (function () {
   function audioTracks() { return av ? AvTracks.audioTracks(av) : []; }
   function selectAudio(index) { return !!av && AvTracks.selectAudio(av, index); }
   function cycleDisplay() { return AvTracks.cycleDisplay(av); }
+  function setFullScreen(on) { return AvTracks.setFullScreen(av, on); }
 
   return {
     init: init, open: open, pause: pause, play: play, suspend: suspend, reconnect: reconnect,
     mediaTimeMs: mediaTimeMs, streamInfo: streamInfo, audioTracks: audioTracks, selectAudio: selectAudio,
-    cycleDisplay: cycleDisplay, unmute: function () { return !av && HtmlVideo.unmute(); }
+    cycleDisplay: cycleDisplay, fullScreen: AvTracks.fullScreen, setFullScreen: setFullScreen, unmute: function () { return !av && HtmlVideo.unmute(); }
   };
 }());

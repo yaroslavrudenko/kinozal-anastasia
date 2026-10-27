@@ -7,11 +7,31 @@ var CONFIG = {
   OTT_KEY: '__OTT_KEY__',
   PLAYLIST_URL: '__PLAYLIST_URL__',
   EPG_URL: '',                 // empty = use url-tvg from the playlist header
-  VERSION: '1.8.3',            // must equal config.xml's version
+  VERSION: '1.8.4',            // must equal config.xml's version
   BUILD: '__BUILD__',          // filled by build.sh: commit and date
+  // «📡 Провайдеры» (owner, 2026-10-27: a source is a provider; inside it the channels are grouped as the
+  // provider gives them; a provider that gives separate playlists is a source of playlists): OTT Club (key),
+  // the free iptv-org provider with its playlists (its whole public list first, ~11 000 channels; it can never
+  // be removed) and the viewer's own providers (an M3U link each).
+  FREE_PROVIDERS: [
+    { id: 'iptvorg', name: 'iptv-org — бесплатные каналы', playlists: [
+      { id: 'all', name: 'Весь список — каналы со всего мира', url: 'https://iptv-org.github.io/iptv/index.m3u' },
+      { id: 'il', name: 'Израиль', url: 'https://iptv-org.github.io/iptv/countries/il.m3u' },
+      { id: 'ua', name: 'Украина', url: 'https://iptv-org.github.io/iptv/countries/ua.m3u' },
+      { id: 'rus', name: 'На русском языке', url: 'https://iptv-org.github.io/iptv/languages/rus.m3u' },
+      { id: 'eng', name: 'На английском — CNN, Bloomberg, DW, France 24, Euronews…', url: 'https://iptv-org.github.io/iptv/languages/eng.m3u' },
+      { id: 'news', name: 'Новости', url: 'https://iptv-org.github.io/iptv/categories/news.m3u' },
+      { id: 'kids', name: 'Детские', url: 'https://iptv-org.github.io/iptv/categories/kids.m3u' },
+      { id: 'music', name: 'Музыка', url: 'https://iptv-org.github.io/iptv/categories/music.m3u' },
+      { id: 'movies', name: 'Кино', url: 'https://iptv-org.github.io/iptv/categories/movies.m3u' },
+      { id: 'documentary', name: 'Познавательные', url: 'https://iptv-org.github.io/iptv/categories/documentary.m3u' },
+      { id: 'sports', name: 'Спорт', url: 'https://iptv-org.github.io/iptv/categories/sports.m3u' }
+    ] }
+  ],
 
   // channel list
   PLAYLIST_REFRESH_MS: 6 * 3600 * 1000,
+  SWITCH_PAINT_MS: 300,        // «Провайдеры»: the switch message is painted before the app starts again
   LIST_TIMEOUT_MS: 20000,
   LIST_RETRY_MIN_MS: 10000,
   LIST_RETRY_MAX_MS: 300000,

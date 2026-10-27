@@ -16,6 +16,8 @@ var Country = (function () {
   var UA_GROUP = /украин|україн|ukrain|^ua$|\bua\b/i;
   var OTHER_TAG = /\((?!Израиль|Israel|IL|Украина|Україна|Ukraine|UA)[^)]*\)/i;   // "(Литва)", "(Казахстан)" ...
   var HEBREW = /[֐-׿]/;
+  var IL_ID = /\.il(@|$)/, UA_ID = /\.ua(@|$)/;                        // guide ids: "Kan11.il", iptv-org "Kan11.il@SD"
+  var NAME_SUFFIX = /\s*\(\d{3,4}[pi]\)|\s*\[[^\]]*\]/g;                 // "(1080p)", "[Not 24/7]"
   var UA_LETTERS = /[іїєґІЇЄҐ]/;
   var NOT_UA_LETTERS = /[ўЎәғқңөұүһӘҒҚҢӨҰҮҺ]/;                                  // Belarusian, Kazakh
 
@@ -31,10 +33,12 @@ var Country = (function () {
   // ch: { name, group, id }; nowTitle: what is on (optional). Returns { il: bool, ua: bool }.
   function detect(ch, nowTitle) {
     var name = (ch.name || '').trim(), group = ch.group || '', id = String(ch.id || '').toLowerCase();
-    var il = IL_TAG.test(name) || IL_GROUP.test(group) || /\.il$/.test(id) || HEBREW.test(name) || has(IL_SET, name);
+    // iptv-org style: "Kan 11 (1080p) [Not 24/7]" is "Kan 11"; its guide id "Kan11.il@SD" ends in the country.
+    var base = name.replace(NAME_SUFFIX, '').trim();
+    var il = IL_TAG.test(name) || IL_GROUP.test(group) || IL_ID.test(id) || HEBREW.test(name) || has(IL_SET, base);
     var ua = false;
     if (!il) {
-      if (UA_TAG.test(name) || UA_GROUP.test(group) || /\.ua$/.test(id) || has(UA_SET, name)) ua = true;
+      if (UA_TAG.test(name) || UA_GROUP.test(group) || UA_ID.test(id) || has(UA_SET, base)) ua = true;
       else if (!OTHER_TAG.test(name)) {
         var text = name + ' ' + (nowTitle || '');
         ua = UA_LETTERS.test(text) && !NOT_UA_LETTERS.test(text);

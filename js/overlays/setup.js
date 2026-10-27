@@ -1,17 +1,24 @@
-// First run (and BLUE in the menu, at any time): enter an OTT Club key or a playlist link. The key is
-// saved and used at once, with no check of the app's own: the provider judges it, and a key it refuses
-// gets the provider's error in the stream (owner, 2026-10-26: «Ключ проверяет сам провайдер»).
+// Entering a provider, from «Провайдеры»: mode 'key' (enter or change the OTT Club key) or mode 'playlist'
+// (add one's own provider by its M3U link). What is entered is saved and used at once through the one switch, with no
+// check of the app's own: the provider judges it, and a key it refuses gets the provider's error in the
+// stream (owner, 2026-10-26: «Ключ проверяет сам провайдер»). The key is kept exactly as typed.
 (function () {
   var FOCUS_DELAY_MS = 300;
-  var changingKey = false, focusTimer = null;
+  var TEXT = {
+    key: 'Ключ OTT Club. Сейчас используется сохранённый ключ, если он был. Введите новый или нажмите «Назад».',
+    playlist: 'Ссылка на M3U-список каналов вашего провайдера (http:// или https://). «Назад» — без изменений.'
+  };
+  var mode = 'key', focusTimer = null;
 
   function field() { return Util.$('key-input'); }
   function say(text) { Util.$('setup-err').textContent = text; }
 
-  // arg: { changingKey } — changing the key keeps the current one until a new one is entered.
+  // arg: { mode: 'key' | 'playlist' }.
   function open(arg) {
-    changingKey = !!(arg && arg.changingKey);
-    if (changingKey) { field().value = ''; say('Сейчас используется сохранённый ключ. Введите новый или нажмите «Назад».'); }
+    mode = arg && arg.mode === 'playlist' ? 'playlist' : 'key';
+    field().value = '';
+    say('');
+    Util.$('setup-text').textContent = TEXT[mode];
     UI.show('setup', true);
     focusTimer = setTimeout(function () { field().focus(); }, FOCUS_DELAY_MS);
   }
@@ -22,26 +29,17 @@
   }
 
   function submit() {
-    var text = field().value, key = OttClub.extractKey(text);
-    if (key) {
-      finish(function () { Sources.setOtt(key); });
-    } else if (/^https?:\/\//.test(text.trim())) {
-      finish(function () { Sources.setM3u(text.trim()); });
-    } else {
-      say('Это не похоже на ключ или ссылку.');
-    }
-  }
-
-  function finish(saveSource) {
-    saveSource();
-    if (changingKey) { window.location.reload(); return; }
-    Overlay.close();
-    Sources.start();
+    var raw = field().value, text = raw.trim(), url = /^https?:\/\//i.test(text) ? text : '';
+    var key = mode === 'playlist' || !text ? '' : url ? OttClub.extractKey(url) : raw;
+    if (key) { OttClub.saveKey(key); Sources.switchTo('ott'); return; }
+    if (url && mode === 'playlist') { Sources.addUser(url); Sources.switchTo(Sources.idOfUrl(url)); return; }
+    say(mode === 'playlist' ? 'Ссылка должна начинаться с http:// или https://' :
+      url ? 'Это ссылка на список каналов: добавьте её в «Провайдерах» через «+ Добавить провайдера».' : 'Поле пустое.');
   }
 
   function onKey(k, e) {
     if (Keys.isSubmit(k)) { e.preventDefault(); submit(); }
-    else if (Keys.isTextBack(k) && changingKey) Overlay.close();
+    else if (Keys.isTextBack(k)) Overlay.open('sources');
   }
 
   Overlay.register('setup', { open: open, close: close, onKey: onKey });

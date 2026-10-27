@@ -50,18 +50,22 @@
         return { num: c.num, logo: c.logo, title: (Favs.has(c.key) ? '★ ' : '') + c.name + (g.items[i] === playing ? '  ▶' : ''),
           sub: on, playing: g.items[i] === playing };
       } } }]);
-    UI.listEnd('channels-more', ListView.rest('channels'), ListView.end('channels'));
+    // Where the viewer is in each column: the scroll bars (owner 2026-10-27: «по ползункам уже понятно, где мы» —
+    // the «▼ ещё N …» lines under the menu's columns are gone; the search results keep theirs).
+    UI.scrollBar('groups-bar', ListView.shown('groups'));
+    UI.scrollBar('channels-bar', ListView.shown('channels'));
     NowLines.update();
   }
   function groupRow(i) {
     var g = groups()[i];
-    return { num: '', logo: '', title: g.name, sub: g.search || g.about ? '' : g.items.length };
+    return { num: '', logo: '', title: g.name, sub: g.search || g.about || g.sources ? '' : g.items.length };
   }
 
   // Search and «О программе» are rows of the group column that open their own screens.
   function openSpecial(g) {
     if (g.search) { Overlay.open('search'); return true; }
     if (g.about) { Overlay.open('about'); return true; }
+    if (g.sources) { Overlay.open('sources'); return true; }
     return false;
   }
 
@@ -80,7 +84,7 @@
       else { var c = Channels.at(g.items[cursor]), gi = groupIdx(); Overlay.close(); if (c) Zap.pick(c, gi); return; }
     }
     else if (k === K.YELLOW || k === K.F || k === K.PLAY_PAUSE) toggleFav();
-    else if (k === K.BLUE) { Overlay.open('setup', { changingKey: true }); return; }
+    else if (k === K.BLUE) { Overlay.open('sources'); return; }
     else if (Keys.isBack(k) || k === K.CH_LIST) { Overlay.close(); return; }
     else return;
     render();

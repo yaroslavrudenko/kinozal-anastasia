@@ -17,16 +17,19 @@ test('list end: the Russian plural of «канал» — 1 канал, 2 кан�
   assert.deepEqual(cases.map(([n]) => n + ' ' + plural(n, FORMS)), cases.map(([n, w]) => n + ' ' + w));
 });
 
-test('list end: the menu says how many channels are below the page, and «Конец списка» on the last page', () => {
+test('scroll bar: the menu\'s channel bar starts at the top and its thumb reaches the bottom on the last page (no list-end line in the menu)', () => {
   const app = f.untilPlaying(f.ottApp({ channels: 30 }));
   app.advance(2000);
   app.press(KEYS.ENTER, 50);
   for (let i = 0; i < 40; i++) app.press(KEYS.UP, 10);       // the first channel of «Все каналы»
-  const v = app.ctx.ListView.shown('channels');
-  assert.equal(v.total - v.first - v.count, 30 - 13);
-  assert.equal(app.text('channels-more'), '▼ ещё 17 каналов · CH− — дальше');
+  const bar = () => { const t = app.document.getElementById('channels-bar'); return { on: /\bon\b/.test(t.className), tr: t.children[0].style.transform, h: parseFloat(t.children[0].style.height) }; };
+  assert.equal(app.document.getElementById('channels-more'), null);
+  let b = bar();
+  assert.ok(b.on, 'no bar for 30 channels');
+  assert.equal(b.tr, 'translateY(0.00%)');
   app.press(KEYS.CH_DOWN, 50);
-  assert.equal(app.text('channels-more'), '▼ ещё 4 канала · CH− — дальше');
   app.press(KEYS.CH_DOWN, 50);
-  assert.equal(app.text('channels-more'), 'Конец списка');
+  b = bar();
+  const end = 100 * (100 - b.h) / b.h, at = parseFloat(/translateY\(([\d.]+)%\)/.exec(b.tr)[1]);   // the thumb's foot on the track's foot
+  assert.ok(Math.abs(at - end) < 1, 'the thumb is not at the bottom: ' + b.tr + ', expected ~' + end.toFixed(2) + '%');
 });

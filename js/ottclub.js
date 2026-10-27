@@ -18,11 +18,15 @@ var OttClub = (function () {
   function enabled() { return !!key(); }
   function saveKey(k) { cachedKey = k; Util.save('ottKey', k); }
 
-  // Accepts a bare key or any OTT Club link that carries it (/stream/<key>/, ?key=, ottkey=, /playlist/<key>/).
+  // The key an OTT Club link carries (/stream/<key>/, ?key=, ottkey=, /playlist/<key>/); another
+  // provider's link is a playlist and gives none, even when it holds a key of its own. A typed key is
+  // used as typed (setup.js) and never passes through here.
   function extractKey(text) {
     var t = String(text).trim();
+    var host = (/^https?:\/\/(?:[^\/?#@]*@)?([^\/?#:]+)/i.exec(t) || [])[1] || '';
+    if (!/(^|\.)(myott|ottclub)\.[a-z]+$/i.test(host)) return '';
     var m = /\/stream\/([A-Za-z0-9]+)\//.exec(t) || /[?&](?:ott)?key=([A-Za-z0-9]+)/.exec(t) ||
-            /\/(?:playlist|ottplayer|m3u)\/([A-Za-z0-9]{6,})/.exec(t) || /^([A-Za-z0-9]{6,})$/.exec(t);
+            /\/(?:playlist|ottplayer|m3u)\/([A-Za-z0-9]{6,})/.exec(t);
     return m ? m[1] : '';
   }
 

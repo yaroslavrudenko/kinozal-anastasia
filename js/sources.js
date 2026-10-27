@@ -22,9 +22,92 @@ var Sources = (function () {
     return OttClub.enabled() ? 'ott' : playlistUrl() ? 'm3u' : '';
   }
 
-  function setOtt(key) { OttClub.saveKey(key); Util.save('sourceMode', 'ott'); forgetCopy(); }
-  function setM3u(url) { Util.save('playlistUrl', url); Util.save('sourceMode', 'm3u'); forgetCopy(); }
+  // Makes `id` the source the app starts on (no restart: switchTo does that).
+  function select(id) {
+    if (id === 'ott') Util.save('sourceMode', 'ott');
+    else { Util.save('playlistUrl', urlOf(id)); Util.save('sourceMode', 'm3u'); }
+    forgetCopy();
+  }
   function forgetCopy() { Util.remove('playlistSnap'); Util.remove('playlistText'); }
+
+  // «Провайдеры»: OTT Club, the free provider (CONFIG.FREE_PROVIDERS) and the viewer's own providers (M3U links).
+  // Ids: 'ott' · FREE + <id> · USER + <url>. Only the viewer's own can be removed.
+  var FREE = 'free:', USER = 'user:', OWN_STORE = 'userPlaylists', PER_SOURCE = 'lastBySource';
+  var switching = false;       // a switch is under way: the page is about to start again on the new source
+  function userPlaylists() { var l = Util.load(OWN_STORE); return l instanceof Array ? l : []; }
+  // Every free playlist as { id: FREE + '<provider>/<playlist>', name, url }, in the providers' order.
+  function freePlaylists() {
+    var out = [];
+    for (var i = 0; i < CONFIG.FREE_PROVIDERS.length; i++) {
+      var p = CONFIG.FREE_PROVIDERS[i];
+      for (var j = 0; j < p.playlists.length; j++) out.push({ id: FREE + p.id + '/' + p.playlists[j].id, provider: p.name, name: p.playlists[j].name, url: p.playlists[j].url });
+    }
+    return out;
+  }
+  function freeBy(test) { var l = freePlaylists(); for (var i = 0; i < l.length; i++) if (test(l[i])) return l[i]; return null; }
+  function freeByUrl(url) { return freeBy(function (f) { return f.url === url; }); }
+  function idOfUrl(url) { var f = freeByUrl(url); return f ? f.id : USER + url; }
+  function urlOf(id) {
+    if (id.indexOf(USER) === 0) return id.substring(USER.length);
+    var f = freeBy(function (x) { return x.id === id; });
+    return f ? f.url : '';
+  }
+  // "https://host/path/name.m3u?token" -> "host · name": the token is never shown.
+  function shortName(url) {
+    var m = /^\w+:\/\/([^\/?#]+)([^?#]*)/.exec(url) || [];
+    var last = (m[2] || '').split('/').filter(Boolean).pop() || '';
+    return (m[1] || url) + (last ? ' · ' + last.replace(/\.m3u8?$/i, '') : '');
+  }
+  function list() {
+    var rows = [{ id: 'ott', kind: 'ott', name: 'OTT Club', ready: OttClub.enabled() }];
+    for (var i = 0; i < CONFIG.FREE_PROVIDERS.length; i++) {
+      var p = CONFIG.FREE_PROVIDERS[i], pls = [];
+      for (var j = 0; j < p.playlists.length; j++) pls.push({ id: FREE + p.id + '/' + p.playlists[j].id, kind: 'freepl', name: p.playlists[j].name, url: p.playlists[j].url });
+      rows.push({ id: FREE + p.id, kind: 'free', name: p.name, playlists: pls });
+    }
+    var own = userPlaylists();
+    for (var j = 0; j < own.length; j++) rows.push({ id: USER + own[j], kind: 'user', name: shortName(own[j]), url: own[j] });
+    return rows;
+  }
+  function activeId() {
+    var m = mode();
+    return m === 'ott' ? 'ott' : m === 'm3u' ? idOfUrl(playlistUrl()) : '';
+  }
+  // A playlist the viewer typed in (or one an older version or the build set up): listed once, so it can
+  // always be come back to; a free one is listed already.
+  function addUser(url) {
+    var own = userPlaylists();
+    if (!freeByUrl(url) && own.indexOf(url) < 0) { own.push(url); Util.save(OWN_STORE, own); }
+  }
+  // The one way to change the source: the position in the source being left is kept (each source has its
+  // own last channel and group; owner: the app always opens the last source, group and channel), the new
+  // source gets its own back, and the app starts again on it. Once per page life: a second OK before the
+  // restart would otherwise save the new source's empty position over the old one.
+  function switchTo(id) {
+    if (switching) return;
+    switching = true;
+    var saved = Util.load(PER_SOURCE) || {}, from = activeId();
+    if (from && (from.indexOf(USER) !== 0 || userPlaylists().indexOf(urlOf(from)) >= 0)) {
+      saved[from] = { ch: Util.load('lastCh'), url: Util.load('lastUrl'), group: Util.load(Zap.GROUP_STORE) };
+    }
+    var back = saved[id] || {};
+    Util.save(PER_SOURCE, saved);
+    restore('lastCh', back.ch);
+    restore('lastUrl', back.url);
+    restore(Zap.GROUP_STORE, back.group);
+    select(id);
+    // In its own task, so a message shown just before the switch is painted first.
+    setTimeout(function () { window.location.reload(); }, CONFIG.SWITCH_PAINT_MS);
+  }
+  function restore(key, value) { if (value == null) Util.remove(key); else Util.save(key, value); }
+  // Removes one of the viewer's own playlists and its saved position; the one being watched gives way to
+  // OTT Club (or the first free playlist).
+  function removeUser(url) {
+    Util.save(OWN_STORE, userPlaylists().filter(function (u) { return u !== url; }));
+    var saved = Util.load(PER_SOURCE);
+    if (saved && saved[USER + url]) { delete saved[USER + url]; Util.save(PER_SOURCE, saved); }
+    if (activeId() === USER + url) switchTo(OttClub.enabled() ? 'ott' : freePlaylists()[0].id);
+  }
 
   // Idempotent: a second call (double submit on the setup screen) starts nothing.
   function start() {
@@ -32,6 +115,7 @@ var Sources = (function () {
     started = true;
     active = mode();
     if (active === 'ott') EPG.setLoader(OttClub.guide);
+    else addUser(playlistUrl());   // a playlist set up before «Провайдеры» existed is listed there too
     // A fixed guide URL does not depend on the list: it starts at the first frame, in parallel with it.
     if (active === 'm3u' && CONFIG.EPG_URL) xmltvPending = { url: CONFIG.EPG_URL, channels: null };
     load(true);
@@ -173,7 +257,8 @@ var Sources = (function () {
   }
 
   return {
-    setHooks: setHooks, mode: mode, setOtt: setOtt, setM3u: setM3u, start: start,
+    setHooks: setHooks, mode: mode, select: select, start: start,
+    list: list, activeId: activeId, activeName: function () { var id = activeId(), f = freeBy(function (x) { return x.id === id; }); return f ? f.provider + ' · ' + f.name : id.indexOf(USER) === 0 ? shortName(urlOf(id)) : id; }, firstFreeId: function () { return freePlaylists()[0].id; }, idOfUrl: idOfUrl, addUser: addUser, switchTo: switchTo, removeUser: removeUser,
     onFirstFrame: onFirstFrame, rememberLanding: rememberLanding, lastChannel: lastChannel, onNetwork: onNetwork,
     loading: function () { return !!req; }
   };

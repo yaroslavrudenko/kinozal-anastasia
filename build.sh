@@ -4,7 +4,8 @@
 #   OTT_KEY=...            OTT Club subscriber key (optional: it can be entered on the TV instead)
 #   CERT_PROFILE=...       Tizen security profile with the Samsung author + distributor certificates
 #   DEVICE_PROFILE=...     device-profile.xml returned by Samsung with the distributor certificate
-#   TV=192.168.1.175:26101
+#   TV=<ip>:26101          the TV's last known address; when it does not answer, tools/find-tv.sh scans the
+#                          local network for it (the router can give the TV another address)
 # The sdb server must have local-network access: start it once from a normal terminal
 # (`sdb kill-server; sdb connect $TV`), not from tmux.
 set -eu
@@ -14,6 +15,7 @@ SDB=~/tizen-studio/tools/sdb
 APP=Yr0ttPlay1.OttClubPlayer
 STAGE=/home/owner/share/tmp/sdk_tools
 source ./build.local.env
+TV=$(tools/find-tv.sh "${TV:-}")
 
 rm -rf .buildResult && mkdir .buildResult
 cp -R config.xml index.html css js img .buildResult/

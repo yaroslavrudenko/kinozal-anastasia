@@ -396,9 +396,9 @@ function createApp(opts) {
     open(url) { avCall('open', [url]); av.url = url; av.state = 'IDLE'; av.currentTime = 0; av.suspended = false; av.paused = false; },
     close() { avCall('close', []); av.state = 'NONE'; },
     stop() { avCall('stop', []); if (av.state !== 'NONE') av.state = 'IDLE'; },
-    setDisplayRect() {},
-    setDisplayMethod() {},
-    setStreamingProperty() {},
+    setDisplayRect(...a) { avCall('setDisplayRect', a); },
+    setDisplayMethod(...a) { avCall('setDisplayMethod', a); },
+    setStreamingProperty(...a) { avCall('setStreamingProperty', a); },
     setBufferingParam() {},
     setListener(l) { av.listener = l; },
     prepareAsync(ok, err) {
@@ -467,7 +467,9 @@ function createApp(opts) {
     },
     tizen: {
       tvinputdevice: { getSupportedKeys: () => [{ name: 'ColorF0Red' }, { name: 'MediaPlayPause' }, { name: 'ChannelUp' }], registerKey() {} },
-      application: { getCurrentApplication: () => ({ exit() { log('exit', {}); } }) },
+      application: { getCurrentApplication: () => ({ exit() { log('exit', {}); } }),
+        launchAppControl(ctl, id, ok, err) { log('appcontrol', { operation: ctl.operation, uri: ctl.uri }); } },
+      ApplicationControl: function (operation, uri) { this.operation = operation; this.uri = uri; },
       systeminfo: { getCapability: () => '3.0', getPropertyValue(name, ok) { if (ok) ok({}); } }
     },
     _winListeners: {},

@@ -1,8 +1,10 @@
 // AVPlay's tracks and picture: the technical line, the number of video renditions, audio tracks, and
 // the display mode (kept on the device).
 var AvTracks = (function () {
-  var MODES = ['PLAYER_DISPLAY_MODE_AUTO_ASPECT_RATIO', 'PLAYER_DISPLAY_MODE_FULL_SCREEN', 'PLAYER_DISPLAY_MODE_LETTER_BOX'];
-  var NAMES = ['Авто', 'Во весь экран', 'С полями'];
+  // Full screen first (owner, 2026-10-27: «изображение ложилось чётко на размер экрана, чтобы оно не было уже»):
+  // every stream fills the TV's 1920×1080 exactly; GREEN still cycles to the aspect-keeping modes.
+  var MODES = ['PLAYER_DISPLAY_MODE_FULL_SCREEN', 'PLAYER_DISPLAY_MODE_AUTO_ASPECT_RATIO', 'PLAYER_DISPLAY_MODE_LETTER_BOX'];
+  var NAMES = ['Во весь экран', 'Авто (пропорции потока)', 'С полями'];
   var displayIdx = null;
 
   function extra(track) { try { return JSON.parse(track.extra_info) || {}; } catch (e) { return {}; } }
@@ -47,15 +49,18 @@ var AvTracks = (function () {
   }
 
   function displayMode() { if (displayIdx === null) displayIdx = Util.load('displayIdx') || 0; return MODES[displayIdx]; }
-  // GREEN: the next display mode; returns its name.
-  function cycleDisplay(av) {
-    displayMode();
-    displayIdx = (displayIdx + 1) % MODES.length;
+  function setDisplay(av, idx) {
+    displayIdx = idx;
     Util.save('displayIdx', displayIdx);
     if (av) { try { av.setDisplayMethod(MODES[displayIdx]); } catch (e) { Diag.count('settingsRejected'); Diag.note('setting.display', (e && e.message) || String(e)); } }
     return NAMES[displayIdx];
   }
+  // GREEN: the next display mode; returns its name.
+  function cycleDisplay(av) { displayMode(); return setDisplay(av, (displayIdx + 1) % MODES.length); }
+  // The «Картинка во весь экран» setting: on = full screen (the default), off = the stream's own proportions.
+  function fullScreen() { displayMode(); return displayIdx === 0; }
+  function setFullScreen(av, on) { return setDisplay(av, on ? 0 : 1); }
 
   return { streamInfo: streamInfo, variantCount: variantCount, audioTracks: audioTracks, selectAudio: selectAudio,
-    displayMode: displayMode, cycleDisplay: cycleDisplay, mbps: mbps };
+    displayMode: displayMode, cycleDisplay: cycleDisplay, fullScreen: fullScreen, setFullScreen: setFullScreen, mbps: mbps };
 }());

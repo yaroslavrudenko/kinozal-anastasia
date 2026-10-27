@@ -44,7 +44,12 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 /* List columns: rows wrap, so a column hides (never cuts) the rows that do not fit (ui.js column). */
 /* The groups column on its own, slightly lighter ground and a faint divider before the channel list (owner 2026-10-26:
    «для группы background-цвет сделать отличным … слабо видимую линию»); widths unchanged, the highlight stays strongest. */
-.groups { position: relative; overflow: hidden; width: 380px; margin-right: 24px; background: #0b1019; border-radius: 14px; }
+/* 2026-10-27 (owner: «ещё немножко темнее, чтобы немножко контрастировал с цветом фона каналов»): a shade darker than the list. */
+.groups-wrap { position: relative; -webkit-flex: none; flex: none; width: 380px; margin-right: 24px; }
+/* 2026-10-27: like the channel list, the groups column ends one row slot above its box, so neither column touches
+   the hint bar; where the viewer is in a column is shown by its scroll bar (the «▼ ещё N …» lines were dropped:
+   «по ползункам уже понятно, где мы»). */
+.groups { position: absolute; left: 0; right: 0; top: 0; bottom: 70px; overflow: hidden; background: #020407; border-radius: 14px; }
 .list-wrap:before { content: ''; position: absolute; left: -13px; top: 0; bottom: 0; width: 1px; background: rgba(141,153,173,.16); }
 .list-wrap { position: relative; -webkit-flex: 1; flex: 1; }
 /* One row fewer, the list-end line in its slot (owner 2026-10-26: «сделать список максимально на один элемент
@@ -148,16 +153,18 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 /* «О программе» */
 .about { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 20; padding: 46px 260px;
   background: #06090f; text-align: center; }
-.about-icon { width: 120px; height: 120px; border-radius: 26px; }
-.about-title { font-size: 54px; font-weight: 700; color: #4da3ff; margin: 12px 0 10px; }
-.about-dedication { font-size: 30px; line-height: 42px; color: #eef1f6; font-style: italic; margin-bottom: 26px; }
+.about-icon { width: 88px; height: 88px; border-radius: 20px; }
+.about-title { font-size: 46px; font-weight: 700; color: #4da3ff; margin: 6px 0 6px; }
+.about-dedication { font-size: 26px; line-height: 34px; color: #eef1f6; font-style: italic; margin-bottom: 16px; }
 .about-table { text-align: left; border-top: 1px solid rgba(255,255,255,.12); }
-.about-row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 11px 16px; font-size: 26px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.about-row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 6px 16px; font-size: 24px; line-height: 30px; border-bottom: 1px solid rgba(255,255,255,.08); }
 .about-k { -webkit-flex: 0 0 300px; flex: 0 0 300px; color: #8d99ad; }
 .about-v { -webkit-flex: 1; flex: 1; color: #e4efff; }
-.about-hint { position: absolute; left: 0; right: 0; bottom: 40px; font-size: 24px; color: #8d99ad; }
-.about-setting { margin-top: 10px; border-radius: 12px; background: rgba(47,126,232,.16); border-bottom: 0;
-  box-shadow: inset 4px 0 0 #4da3ff; }
+/* The hint on its own band at the bottom, set apart from the rows above (owner 2026-10-27: «всё налазит на нижнюю строчку … нужно как-то отделить»). */
+.about-hint { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; line-height: 72px; font-size: 24px; color: #a9b4c6;
+  background: #121927; border-top: 1px solid rgba(141,153,173,.22); }
+.about-setting { margin-top: 8px; border-radius: 12px; background: rgba(47,126,232,.06); border-bottom: 0; }
+.about-setting.sel { background: rgba(47,126,232,.16); box-shadow: inset 4px 0 0 #4da3ff; }
 .about-setting .about-v { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; }
 .switch { position: relative; width: 64px; height: 34px; border-radius: 17px; background: #3a4456; margin-right: 18px;
   -webkit-transition: background .15s; transition: background .15s; }
@@ -167,3 +174,25 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 .switch.on i { left: 34px; }
 /* The list-end line (ui.js listEnd): placed at the column's top and moved under the last visible row by a transform. */
 .more { position: absolute; left: 22px; right: 0; top: 4px; font-size: 24px; line-height: 26px; color: #8d99ad; word-wrap: break-word; }
+
+/* «Источники» */
+.src-note { font-size: 26px; color: #8d99ad; margin-bottom: 22px; }
+.src-list { position: relative; max-height: 790px; overflow: hidden; text-align: left; border-top: 1px solid rgba(255,255,255,.12); }
+.src-row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; min-height: 58px;
+  padding: 6px 20px; font-size: 29px; color: #c4ccd8; border-bottom: 1px solid rgba(255,255,255,.08); word-wrap: break-word; }
+.src-t { -webkit-flex: 1; flex: 1; min-width: 0; }
+.src-s { -webkit-flex: 0 1 560px; flex: 0 1 560px; margin-left: 20px; text-align: right; font-size: 24px; color: #8d99ad; }
+.src-row.on .src-t { color: #4da3ff; font-weight: 700; }
+.src-row.sel { background: rgba(47,126,232,.26); color: #eef1f6; box-shadow: inset 6px 0 0 #2f7ee8; }
+.src-row.sel .src-s { color: #c9dcf7; }
+
+/* Scroll bars beside the groups and the channel list (owner 2026-10-27: «аккуратный, красивый ползунок … видно, в
+   каком состоянии находится ползунок и что ты доходишь до конца списка»; «очень элегантным, неярким и не сильно
+   контрастным, но его должно быть видно»): a hair-thin track and a soft grey-blue thumb, shown only when the list does
+   not fit (ui.js scrollBar). Visibility is inherited, so a closed menu hides it with everything else. */
+.bar { position: absolute; top: 8px; bottom: 78px; width: 4px; border-radius: 2px; background: rgba(141,153,173,.07); visibility: hidden; }
+.bar.on { visibility: inherit; }
+.bar i { position: absolute; left: 0; right: 0; top: 0; border-radius: 2px; background: rgba(160,178,204,.34);
+  -webkit-transition: -webkit-transform .12s ease-out; transition: transform .12s ease-out; }
+.groups-wrap .bar { right: -9px; }       /* in the gap, left of the faint divider (list-wrap:before at -13px) */
+.list-wrap .bar { right: -18px; }

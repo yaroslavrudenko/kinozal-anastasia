@@ -54,6 +54,14 @@ sed -i '' 's#http://usa.sdk-dl.tizen.org/sdk/tizenstudio#https://download.tizen.
 - The `sdb` server keeps running in the background with Terminal's permission. Every later `sdb` command, from any shell, goes through it.
 - A tool can open such a window itself: write the two commands into a `.command` file and run `open -a Terminal file.command`.
 
+**Find the TV first: its address can change.** The router hands the TV its address, so after a restart it can come back on another one (2026-10-27: `192.168.1.175` → `.176`; `ping` and port 26101 at the old address simply stop answering). Rule (owner, 2026-10-27: «нужно предварительно сканировать сеть, потому что телевизор может оказаться по другому адресу»): **before every install or TV run, check the address and scan when it does not answer.** This is built in:
+
+```sh
+tools/find-tv.sh 192.168.1.175:26101   # prints the TV's ip:26101; scans the Mac's /24 network when the given one is silent
+```
+
+`./build.sh` and `tests/tv/launch.sh` call it on their own: they try `TV=` from `build.local.env` and, if the TV is not there, scan and use the address found (with a note to update `TV=`). If the TV moved, run the `sdb kill-server; sdb connect <new-ip>:26101` window once more. The TV's Developer Mode is bound to the Mac's address, not the TV's, so it keeps working after the TV moves.
+
 ## 4. Samsung certificates
 
 ### Why the official GUI was not used

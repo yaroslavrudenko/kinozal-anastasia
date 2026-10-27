@@ -278,6 +278,7 @@ Severity: the consolidated review groups findings by theme without one severity 
 | 2026-10-26 | (this commit, 1.8.2) | — | The remembered group was kept (checked on the TV: restart → menu in «Кино» on 149; 11 navigation steps → the group and cursor always right) but not visible: `.sel` was 8 % white, lost on the new groups ground. The group the menu is in now has a soft blue band and a 6 px blue bar (`.grow.sel`), weaker than the focused row. CSS only; suite 231/231. |
 Each future performance fix appends one row here and changes its backlog Status to `DONE (<commit>)`. Rows are never deleted or rewritten; a correction is a new row.
 | 2026-10-26 | v1.8.3 (DEC-2026-10-26-show-as-is) | P-D | Background health sweep removed: it hid channels whose stream answered the provider's placeholder for 6 h (7 Israeli channels missing on the TV 14:00–22:00). Every listed channel is shown; the landing key check is gone too (the provider judges the key) | sweep: 1 request per channel every 6 h behind steady playback | 0 background stream requests | harness `show-as-is: steady playback makes no background stream requests` |
+| 2026-10-27 | v1.8.4 (DEC-2026-10-27-sources) | P-S (M3U parse), P-M (menu) | Free playlists up to 3005 channels (iptv-org English): sliced M3U parse, groups from the playlist, Israeli/Ukrainian channels first (one pass) | — | desktop: list ready 542 ms for 3005 channels; «Источники» opens < 50 ms | headless Chrome on the tree; the TV not yet measured |
 
 ## 7. Not yet verified on the TV
 
