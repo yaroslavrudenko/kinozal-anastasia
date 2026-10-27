@@ -10,6 +10,15 @@ The owner asked, verbatim: «Всю статистику измерений хр
 
 **What «playing» means here.** The picture itself is not seen. AVPlay can draw into a plane that the inspector cannot capture. «To playing» is the time until AVPlay reports `PLAYING` **and** its playback time starts to advance. A «freeze» is a period in `PLAYING` with the playback time standing still for 2 s or more. «Spinner» is the time the app's own buffering indicator is visible. «AVPlay buffering» is the player's `onbufferingstart` → `onbufferingcomplete` time; it is invisible to the viewer unless the spinner shows.
 
+## ⚠ Corrections found after the first commit (stream expert's review, 2026-10-27)
+
+1. **Zap ▶ ×4 times in `watch-and-zaps.log` are NOT valid.** In that scenario the key's timestamp is the TV's `Date.now()` and it is subtracted from the Mac's clock (`scenarios/cdp.mjs` `key()` + `s-baseline2.mjs`), and the two clocks differ. Discard the 2133–2463 ms figures. A ◀▶ press goes through the same code path as a channel pick, which was measured correctly at 1.15–1.7 s.
+2. **Every «spinner» figure here is understated.** The scenarios add 100 ms per sample, but each sample also includes a round trip to the TV inspector, so the real interval between samples is longer than 100 ms. The spinner is shown from the opening of the stream until the picture moves (`js/player.js:44`), so it is visible for about as long as «to playing»: ≈1.3–1.5 s at the median, not 0.5–1.0 s.
+3. **Valid as measured:** «to playing» in the stream, group and archive tables (Mac clock on both sides, round trips included); the menu navigation timings (measured inside the TV page); the AVPlay buffering times, which come from the player's own events; the freeze and request counts; and the storage quota.
+4. **Valid aggregate** (77 channel picks, Кино + Украина): key → playback moving median 1479 ms, p90 1663 ms, worst 6503 ms (176 Комедийное). Start-up buffering 44–395 ms. 0 rebuffers and 0 freezes while watching.
+
+The scenarios are fixed before the 1.9.0 run: one clock, and the spinner measured inside the page.
+
 ## Storage — `storage-quota.log`
 
 | Item | Value |
@@ -26,7 +35,7 @@ The owner asked, verbatim: «Всю статистику измерений хр
 | Item | Value |
 |---|---|
 | 90 s watching «Киномикс» | spinner never shown, 360/360 samples `PLAYING` |
-| Zap ▶ ×4 (189 Amedia Premium, 190 ТВ XXI, 191 Amedia Hit, 192 Киносемья) | key → playing 2133–2463 ms; spinner 500–700 ms |
+| Zap ▶ ×4 (189 Amedia Premium, 190 ТВ XXI, 191 Amedia Hit, 192 Киносемья) | ~~key → playing 2133–2463 ms~~ invalid (two clocks, see Corrections); spinner understated |
 
 ## Menu navigation — `menu-navigation.log` (`s-fullnav.mjs`)
 
