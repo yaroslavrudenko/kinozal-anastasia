@@ -1,0 +1,31 @@
+port 38101
+2.3s start 188 Киномикс group 7
+2.3s Музык channels to test 25
+24.8s {"ch":"348 Stingray iConcerts","res":"1920x1080","kbps":4880,"toPlayingMs":1283,"toMovingMs":1395,"spinnerStartMs":500,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":110,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+47.5s {"ch":"349 Stingray CMusic","res":"1920x1080","kbps":4620,"toPlayingMs":1332,"toMovingMs":1443,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":95,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+70.3s {"ch":"350 М1","res":"1920x1080","kbps":12270,"toPlayingMs":1446,"toMovingMs":1558,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":349,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+93.1s {"ch":"351 М2","res":"1920x1080","kbps":11710,"toPlayingMs":1439,"toMovingMs":1556,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":337,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+115.9s {"ch":"352 Inrating","res":"1920x1080","kbps":10770,"toPlayingMs":1475,"toMovingMs":1614,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":180,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+138.9s {"ch":"353 Музвар","res":"1920x1080","kbps":8070,"toPlayingMs":1719,"toMovingMs":1847,"spinnerStartMs":900,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":303,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+161.4s {"ch":"354 Муз ТВ","res":"720x576","kbps":2280,"toPlayingMs":1221,"toMovingMs":1333,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":212,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+184.0s {"ch":"355 Bridge deluxe","res":"1920x1080","kbps":9980,"toPlayingMs":1296,"toMovingMs":1418,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":309,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+206.5s {"ch":"356 RU TV","res":"720x576","kbps":2270,"toPlayingMs":1293,"toMovingMs":1407,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":157,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+229.1s {"ch":"357 Music Box Classic","res":"1920x1080","kbps":100000,"toPlayingMs":1459,"toMovingMs":1572,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":68,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+251.5s {"ch":"358 Музыка Первого","res":"720x576","kbps":2140,"toPlayingMs":1238,"toMovingMs":1349,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":150,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+274.1s {"ch":"359 Europa Plus TV","res":"704x576","kbps":2250,"toPlayingMs":1367,"toMovingMs":1479,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":124,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+296.9s {"ch":"360 4ever Music","res":"1920x1080","kbps":100000,"toPlayingMs":1523,"toMovingMs":1636,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":44,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+321.6s {"ch":"361 EU Music","res":"1920x1080","kbps":100000,"toPlayingMs":1487,"toMovingMs":1599,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":114,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+344.5s {"ch":"362 Bridge classic","res":"704x576","kbps":3140,"toPlayingMs":1398,"toMovingMs":1510,"spinnerStartMs":500,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":174,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+367.8s {"ch":"363 Mezzo Live","res":"1920x1080","kbps":4880,"toPlayingMs":2155,"toMovingMs":2265,"spinnerStartMs":1200,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":207,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+390.4s {"ch":"364 UA Music","res":"1920x1080","kbps":100000,"toPlayingMs":1528,"toMovingMs":1640,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":120,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+413.0s {"ch":"365 Black","res":"1920x1080","kbps":100000,"toPlayingMs":1502,"toMovingMs":1617,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":111,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+435.5s {"ch":"366 Viva Latino","res":"1920x1080","kbps":100000,"toPlayingMs":1423,"toMovingMs":1535,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":60,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+457.7s {"ch":"367 Ля-минор ТВ","res":"720x576","kbps":2270,"toPlayingMs":1232,"toMovingMs":1344,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":154,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+480.1s {"ch":"368 ТНТ music","res":"720x576","kbps":2920,"toPlayingMs":1274,"toMovingMs":1386,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":151,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+502.3s {"ch":"369 Bridge","res":"720x576","kbps":2270,"toPlayingMs":1120,"toMovingMs":1232,"spinnerStartMs":500,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":166,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+524.9s {"ch":"370 Music Box","res":"1350x1080","kbps":6790,"toPlayingMs":1400,"toMovingMs":1512,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":260,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+547.4s {"ch":"371 Bridge хит","res":"720x576","kbps":2260,"toPlayingMs":1246,"toMovingMs":1361,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":184,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+569.8s {"ch":"372 Жара","res":"1920x1080","kbps":4890,"toPlayingMs":1267,"toMovingMs":1382,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":305,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+569.8s TOP by bitrate ["357 Music Box Classic 100000kbps 1920x1080","360 4ever Music 100000kbps 1920x1080","361 EU Music 100000kbps 1920x1080","364 UA Music 100000kbps 1920x1080","365 Black 100000kbps 1920x1080"]
+569.8s problems 0 []
+573.5s restored {"name":"188 Киномикс","sameGroup":true,"lastChIsOriginal":true}

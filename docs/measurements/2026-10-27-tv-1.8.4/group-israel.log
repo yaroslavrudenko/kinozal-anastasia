@@ -1,0 +1,24 @@
+port 55721
+2.3s start 188 Киномикс group 7
+2.3s Израиль channels to test 18
+24.9s {"ch":"1 Channel 9 (Израиль)","res":"1920x1080","kbps":5440,"toPlayingMs":1196,"toMovingMs":1317,"spinnerStartMs":500,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":198,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+48.0s {"ch":"2 Channel 11 (Израиль)","res":"1920x1080","kbps":6760,"toPlayingMs":1653,"toMovingMs":1766,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":202,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+70.4s {"ch":"3 Channel 12 (Израиль)","res":"1920x1080","kbps":4790,"toPlayingMs":1102,"toMovingMs":1214,"spinnerStartMs":500,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":196,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+92.7s {"ch":"4 Channel 13 (Израиль)","res":"1920x1080","kbps":6100,"toPlayingMs":1096,"toMovingMs":1209,"spinnerStartMs":500,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":115,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+115.2s {"ch":"5 Channel 14 (Израиль)","res":"1920x1080","kbps":4780,"toPlayingMs":1138,"toMovingMs":1252,"spinnerStartMs":500,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":196,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+137.8s {"ch":"6 Channel 24 (Израиль)","res":"1920x1080","kbps":4810,"toPlayingMs":1322,"toMovingMs":1440,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":211,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+160.1s {"ch":"7 5Sport (Израиль)","res":"1920x1080","kbps":7330,"toPlayingMs":1146,"toMovingMs":1259,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":180,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+182.8s {"ch":"8 VIVA Premium (Израиль)","res":"1920x1080","kbps":4160,"toPlayingMs":1399,"toMovingMs":1510,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":180,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+205.2s {"ch":"9 HOP! (Израиль)","res":"720x576","kbps":1850,"toPlayingMs":1232,"toMovingMs":1345,"spinnerStartMs":500,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":60,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+227.7s {"ch":"10 i24 (Израиль)","res":"1920x1080","kbps":6110,"toPlayingMs":1227,"toMovingMs":1339,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":201,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+251.0s {"ch":"11 Yam Tichoni (Израиль)","res":"1920x1080","kbps":4160,"toPlayingMs":2016,"toMovingMs":2167,"spinnerStartMs":1100,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":379,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+273.6s {"ch":"12 Good Life (Израиль)","res":"720x576","kbps":1900,"toPlayingMs":1291,"toMovingMs":1562,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":502,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+296.0s {"ch":"13 Knesset Channel (Израиль)","res":"720x576","kbps":2180,"toPlayingMs":1246,"toMovingMs":1359,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":140,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+318.6s {"ch":"14 Zoom (Израиль)","res":"720x576","kbps":2190,"toPlayingMs":1303,"toMovingMs":1437,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":366,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+341.0s {"ch":"15 KAN23 (Израиль)","res":"1024x576","kbps":2240,"toPlayingMs":1193,"toMovingMs":1307,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":153,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+363.6s {"ch":"16 HOT Zone (Израиль)","res":"1920x1080","kbps":4740,"toPlayingMs":1476,"toMovingMs":1588,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":341,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+386.1s {"ch":"17 YES Movies Action (Израиль)","res":"1920x1080","kbps":4080,"toPlayingMs":1354,"toMovingMs":1467,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":133,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+408.8s {"ch":"18 HOT HBO (Израиль)","res":"1920x1080","kbps":4760,"toPlayingMs":1462,"toMovingMs":1574,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":489,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+408.8s TOP by bitrate ["7 5Sport (Израиль) 7330kbps 1920x1080","2 Channel 11 (Израиль) 6760kbps 1920x1080","10 i24 (Израиль) 6110kbps 1920x1080","4 Channel 13 (Израиль) 6100kbps 1920x1080","1 Channel 9 (Израиль) 5440kbps 1920x1080"]
+408.8s problems 0 []
+412.5s restored {"name":"188 Киномикс","sameGroup":true,"lastChIsOriginal":true}

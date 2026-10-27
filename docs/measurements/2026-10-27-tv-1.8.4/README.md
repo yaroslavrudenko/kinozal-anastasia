@@ -118,8 +118,34 @@ Several channels declare 100 Mbit/s: 53 Капучино ТВ, 54 ATR, 56 Раі
 
 **Not yet covered:** the rest of the group, if it has more than 40 channels.
 
+## Group «Израиль» — `group-israel.log` (`s-group.mjs 20000 40 Израиль`)
+
+All 18 channels were checked. Each was watched for 20 s.
+
+| Item | Value |
+|---|---|
+| Channels with a problem | **0** |
+| To playing | median 1437 ms, max 2167 ms |
+| Starts over 3 s | none |
+| AVPlay buffering while watching | max 502 ms |
+| Resolution | 13 channels 1920×1080 · 9 HOP!, 12 Good Life, 13 Knesset Channel, 14 Zoom at 720×576 · 15 KAN23 at 1024×576 |
+| Highest bitrates | 7 5Sport 7.3 Mbit/s · 2 Channel 11 6.8 · 10 i24 6.1 · 4 Channel 13 6.1 · 1 Channel 9 5.4 |
+
+## Group «Музыкальные» — `group-music.log` (`s-group.mjs 20000 40 Музык`)
+
+All 25 channels were checked. Each was watched for 20 s.
+
+| Item | Value |
+|---|---|
+| Channels with a problem | **0** |
+| To playing | median 1510 ms, max 2265 ms |
+| Starts over 3 s | none |
+| AVPlay buffering while watching | max 349 ms |
+| Resolution | mostly 1920×1080 · 10 channels in SD (704/720×576): Муз ТВ, RU TV, Музыка Первого, Europa Plus TV, Bridge classic, Ля-минор ТВ, ТНТ music, Bridge, Bridge хит · 370 Music Box at 1350×1080 |
+
+Several channels declare 100 Mbit/s: 357 Music Box Classic, 360 4ever Music, 361 EU Music, 364 UA Music, 365 Black. This is the stream's own figure.
+
 ## Pending in this series
 
-- Groups «Израиль» and «Музыкальные»: running.
 - The rest of «Кино» and «Украина».
 - A second try of «176 Комедийное».
