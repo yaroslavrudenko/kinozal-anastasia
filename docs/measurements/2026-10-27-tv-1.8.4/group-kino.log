@@ -1,0 +1,45 @@
+3.7s start 188 Киномикс group 7
+3.7s Кино channels to test 40
+26.5s {"ch":"138 KinoKazka","res":"1920x1080","kbps":10750,"toPlayingMs":1454,"toMovingMs":1568,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":257,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+49.0s {"ch":"139 Fox","res":"1920x1080","kbps":5000,"toPlayingMs":1264,"toMovingMs":1375,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":178,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+71.5s {"ch":"140 Fox Life","res":"1920x1080","kbps":5030,"toPlayingMs":1259,"toMovingMs":1371,"spinnerStartMs":500,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":129,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+94.3s {"ch":"141 Kino 1","res":"1920x1080","kbps":5430,"toPlayingMs":1434,"toMovingMs":1547,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":248,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+117.3s {"ch":"142 Kino 2","res":"1920x1080","kbps":5180,"toPlayingMs":1663,"toMovingMs":1776,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":220,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+140.3s {"ch":"143 Твій Серіал","res":"1920x1080","kbps":10770,"toPlayingMs":1504,"toMovingMs":1628,"spinnerStartMs":900,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":395,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+163.0s {"ch":"144 Enter-фільм","res":"1920x1080","kbps":4890,"toPlayingMs":1320,"toMovingMs":1431,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":226,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+185.9s {"ch":"145 Kinosweet","res":"1920x1080","kbps":11390,"toPlayingMs":1341,"toMovingMs":1456,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":352,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+208.8s {"ch":"146 Дорама","res":"1920x1080","kbps":12210,"toPlayingMs":1425,"toMovingMs":1543,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":289,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+231.5s {"ch":"147 CineMan","res":"1920x1080","kbps":5180,"toPlayingMs":1405,"toMovingMs":1522,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":44,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+254.0s {"ch":"148 CineMan Top","res":"1920x1080","kbps":5180,"toPlayingMs":1290,"toMovingMs":1404,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":75,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+276.5s {"ch":"149 Cineman Premium","res":"1920x1080","kbps":8790,"toPlayingMs":1204,"toMovingMs":1315,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":205,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+302.7s {"ch":"150 Cineman Катастрофы","res":"1920x1080","kbps":4940,"toPlayingMs":1519,"toMovingMs":1633,"spinnerStartMs":900,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":166,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+325.6s {"ch":"151 Cineman Мелодрама","res":"1920x1080","kbps":5810,"toPlayingMs":1424,"toMovingMs":1554,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":70,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+348.4s {"ch":"152 CineMan Action","res":"1920x1080","kbps":4440,"toPlayingMs":1454,"toMovingMs":1568,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":192,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+372.4s {"ch":"153 CineMan Thriller","res":"1920x1080","kbps":5240,"toPlayingMs":2158,"toMovingMs":2678,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":191,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+395.6s {"ch":"154 CineMan Marvel","res":"1920x1080","kbps":5370,"toPlayingMs":1405,"toMovingMs":1516,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":85,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+418.0s {"ch":"155 CineMan Ужасы","res":"1920x1080","kbps":4830,"toPlayingMs":1047,"toMovingMs":1160,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":135,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+440.9s {"ch":"156 CineMan Comedy","res":"1920x1080","kbps":5370,"toPlayingMs":1308,"toMovingMs":1421,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":195,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+463.5s {"ch":"157 Cineman VHS","res":"1920x1080","kbps":5280,"toPlayingMs":1378,"toMovingMs":1491,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":103,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+485.9s {"ch":"158 Cineman Скорая помощь","res":"1920x1080","kbps":5320,"toPlayingMs":1271,"toMovingMs":1384,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":179,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+508.3s {"ch":"159 CineMan Сваты","res":"1920x1080","kbps":4670,"toPlayingMs":1145,"toMovingMs":1257,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":108,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+530.6s {"ch":"160 Fresh Rating","res":"1920x1080","kbps":8100,"toPlayingMs":1068,"toMovingMs":1184,"spinnerStartMs":500,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":144,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+553.0s {"ch":"161 Fresh Cinema","res":"1920x1080","kbps":8120,"toPlayingMs":1272,"toMovingMs":1385,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":208,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+575.5s {"ch":"162 Fresh Premiere","res":"1920x1080","kbps":8050,"toPlayingMs":1174,"toMovingMs":1292,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":199,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+598.1s {"ch":"163 Fresh Comedy","res":"1920x1080","kbps":8140,"toPlayingMs":1233,"toMovingMs":1346,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":197,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+620.6s {"ch":"164 Fresh Family","res":"1918x1080","kbps":8020,"toPlayingMs":1273,"toMovingMs":1390,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":211,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+643.0s {"ch":"165 Fresh VHS","res":"1920x1080","kbps":8010,"toPlayingMs":1197,"toMovingMs":1309,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":163,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+665.5s {"ch":"166 Fresh Fantastic","res":"1920x1080","kbps":8150,"toPlayingMs":1283,"toMovingMs":1395,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":135,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+688.1s {"ch":"167 Fresh Series","res":"1920x1080","kbps":8060,"toPlayingMs":1350,"toMovingMs":1464,"spinnerStartMs":1000,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":301,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+710.5s {"ch":"168 Fresh Horror","res":"1920x1080","kbps":8130,"toPlayingMs":1173,"toMovingMs":1287,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":205,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+733.0s {"ch":"169 Fresh Adventure","res":"1920x1080","kbps":6160,"toPlayingMs":1262,"toMovingMs":1373,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":227,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+755.6s {"ch":"170 Fresh Romantic","res":"1920x1080","kbps":8170,"toPlayingMs":1300,"toMovingMs":1411,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":139,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+778.1s {"ch":"171 Fresh Thriller","res":"1920x1080","kbps":8040,"toPlayingMs":1255,"toMovingMs":1368,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":176,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+800.6s {"ch":"172 Cinema","res":"1920x1080","kbps":100000,"toPlayingMs":1326,"toMovingMs":1440,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":72,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+823.0s {"ch":"173 Кинопоказ","res":"1920x1080","kbps":6200,"toPlayingMs":1157,"toMovingMs":1270,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":137,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+845.3s {"ch":"174 Комедия","res":"720x576","kbps":2230,"toPlayingMs":1163,"toMovingMs":1276,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":219,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+868.0s {"ch":"175 red","res":"1920x1080","kbps":6730,"toPlayingMs":1502,"toMovingMs":1615,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":191,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+895.6s {"ch":"176 Комедийное","res":"1920x1080","kbps":6220,"toPlayingMs":6391,"toMovingMs":6503,"spinnerStartMs":3600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":179,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+918.0s {"ch":"177 Шокирующее","res":"1920x1080","kbps":6200,"toPlayingMs":1228,"toMovingMs":1340,"spinnerStartMs":500,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":172,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+918.0s TOP by bitrate ["172 Cinema 100000kbps 1920x1080","146 Дорама 12210kbps 1920x1080","145 Kinosweet 11390kbps 1920x1080","143 Твій Серіал 10770kbps 1920x1080","138 KinoKazka 10750kbps 1920x1080"]
+918.0s problems 0 []
+921.7s restored {"name":"188 Киномикс","sameGroup":true,"lastChIsOriginal":true}

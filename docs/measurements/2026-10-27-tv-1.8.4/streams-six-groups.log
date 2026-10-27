@@ -1,0 +1,9 @@
+2.4s start 188 Киномикс group 7
+42.9s stream Израиль     {"ch":"2 Channel 11 (Израиль)","toPlayingMs":1308,"toPictureMs":1308,"spinnerAtStartMs":600,"bufferingEventsAtStart":1,"watch30s":{"spinnerMs":0,"bufferingEvents":0,"bufferingMs":183},"state":"PLAYING"}
+76.0s stream Украина     {"ch":"20 ICTV","toPlayingMs":1284,"toPictureMs":1284,"spinnerAtStartMs":700,"bufferingEventsAtStart":1,"watch30s":{"spinnerMs":0,"bufferingEvents":0,"bufferingMs":301},"state":"PLAYING"}
+108.8s stream Новостные   {"ch":"64 BBC News UK","toPlayingMs":1137,"toPictureMs":1137,"spinnerAtStartMs":600,"bufferingEventsAtStart":1,"watch30s":{"spinnerMs":0,"bufferingEvents":0,"bufferingMs":180},"state":"PLAYING"}
+141.7s stream Кино        {"ch":"139 Fox","toPlayingMs":1185,"toPictureMs":1185,"spinnerAtStartMs":500,"bufferingEventsAtStart":1,"watch30s":{"spinnerMs":0,"bufferingEvents":0,"bufferingMs":145},"state":"PLAYING"}
+174.6s stream Детские     {"ch":"234 JimJam","toPlayingMs":1280,"toPictureMs":1280,"spinnerAtStartMs":500,"bufferingEventsAtStart":1,"watch30s":{"spinnerMs":0,"bufferingEvents":0,"bufferingMs":167},"state":"PLAYING"}
+208.2s stream Спорт       {"ch":"256 Setanta Sports+","toPlayingMs":1705,"toPictureMs":1705,"spinnerAtStartMs":900,"bufferingEventsAtStart":1,"watch30s":{"spinnerMs":0,"bufferingEvents":0,"bufferingMs":340},"state":"PLAYING"}
+218.7s archive start      {"ch":"188 Киномикс","mode":"archive","toPlayingMs":1621,"toPictureMs":1621,"spinnerMs":600,"state":"PLAYING"}
+227.4s back to live       {"toPlayingMs":1208,"name":"188 Киномикс","mode":"live","sameGroup":true,"lastChIsOriginal":true}

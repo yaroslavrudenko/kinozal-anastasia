@@ -1,0 +1,46 @@
+port 47316
+2.3s start 188 Киномикс group 7
+2.3s Украина channels to test 40
+25.2s {"ch":"19 Інтер","res":"1920x1080","kbps":6140,"toPlayingMs":1491,"toMovingMs":1604,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":254,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+48.0s {"ch":"20 ICTV","res":"1920x1080","kbps":6150,"toPlayingMs":1372,"toMovingMs":1485,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":216,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+71.3s {"ch":"21 1+1","res":"1920x1080","kbps":9320,"toPlayingMs":1205,"toMovingMs":1322,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":171,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+95.3s {"ch":"22 1+1 Україна","res":"1920x1080","kbps":10210,"toPlayingMs":1313,"toMovingMs":1427,"spinnerStartMs":500,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":200,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+118.2s {"ch":"23 К2","res":"1920x1080","kbps":7510,"toPlayingMs":1197,"toMovingMs":1313,"spinnerStartMs":400,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":149,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+141.1s {"ch":"24 Суспільне Київ","res":"1920x1080","kbps":11780,"toPlayingMs":1424,"toMovingMs":1557,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":302,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+165.0s {"ch":"25 Суспільне Крим","res":"1920x1080","kbps":10390,"toPlayingMs":1314,"toMovingMs":1426,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":286,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+187.6s {"ch":"26 Суспільне Перший","res":"1920x1080","kbps":11410,"toPlayingMs":1331,"toMovingMs":1462,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":287,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+211.7s {"ch":"28 Уніан","res":"1920x1080","kbps":9980,"toPlayingMs":1471,"toMovingMs":1586,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":358,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+234.8s {"ch":"53 Капучино ТВ","res":"1920x1080","kbps":100000,"toPlayingMs":1568,"toMovingMs":1680,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":64,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+257.8s {"ch":"54 ATR","res":"1920x1080","kbps":100000,"toPlayingMs":1450,"toMovingMs":1565,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":70,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+281.9s {"ch":"55 Перший Західний","res":"1920x1080","kbps":4880,"toPlayingMs":1359,"toMovingMs":1520,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":155,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+304.8s {"ch":"56 Раі","res":"1920x1080","kbps":100000,"toPlayingMs":1506,"toMovingMs":1617,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":119,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+327.6s {"ch":"57 11 Канал Дніпро","res":"1920x1080","kbps":100000,"toPlayingMs":1549,"toMovingMs":1663,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":113,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+350.2s {"ch":"62 Армія TV","res":"1920x1080","kbps":10340,"toPlayingMs":1271,"toMovingMs":1435,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":354,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+372.9s {"ch":"65 Рада","res":"1920x1080","kbps":6210,"toPlayingMs":1406,"toMovingMs":1518,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":276,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+396.5s {"ch":"66 Еспресо","res":"1920x1080","kbps":11660,"toPlayingMs":2286,"toMovingMs":2431,"spinnerStartMs":1300,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":353,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+419.3s {"ch":"67 24 Канал","res":"1920x1080","kbps":11280,"toPlayingMs":1426,"toMovingMs":1554,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":249,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+442.1s {"ch":"68 FreeДОМ","res":"1920x1080","kbps":11430,"toPlayingMs":1387,"toMovingMs":1503,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":304,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+464.8s {"ch":"70 5 Канал","res":"1920x1080","kbps":6180,"toPlayingMs":1364,"toMovingMs":1479,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":207,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+487.6s {"ch":"71 Прямий","res":"1920x1080","kbps":11060,"toPlayingMs":1341,"toMovingMs":1457,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":189,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+510.4s {"ch":"73 Новини Live","res":"1920x1080","kbps":100000,"toPlayingMs":1519,"toMovingMs":1632,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":27,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+533.1s {"ch":"78 Quiz TV","res":"1920x1080","kbps":6180,"toPlayingMs":1389,"toMovingMs":1504,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":282,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+555.9s {"ch":"80 Чемодан ТВ","res":"1920x1080","kbps":9950,"toPlayingMs":1461,"toMovingMs":1580,"spinnerStartMs":800,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":453,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+578.4s {"ch":"82 Терра","res":"720x576","kbps":2570,"toPlayingMs":1278,"toMovingMs":1407,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":205,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+601.1s {"ch":"83 Наука","res":"720x576","kbps":2570,"toPlayingMs":1332,"toMovingMs":1446,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":149,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+624.0s {"ch":"84 Перший Автомобільний","res":"1920x1080","kbps":9890,"toPlayingMs":1464,"toMovingMs":1599,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":188,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+646.7s {"ch":"86 Рибалка","res":"1920x1080","kbps":100000,"toPlayingMs":1431,"toMovingMs":1544,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":54,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+669.3s {"ch":"87 Мега","res":"1920x1080","kbps":4880,"toPlayingMs":1306,"toMovingMs":1423,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":237,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+692.0s {"ch":"89 Трофей","res":"1920x1080","kbps":5130,"toPlayingMs":1362,"toMovingMs":1474,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":223,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+714.6s {"ch":"127 Світ+","res":"1920x1080","kbps":5090,"toPlayingMs":1257,"toMovingMs":1369,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":155,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+737.3s {"ch":"129 Закон","res":"1920x1080","kbps":6200,"toPlayingMs":1444,"toMovingMs":1558,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":189,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+759.9s {"ch":"137 ЗооСвіт","res":"1920x1080","kbps":10690,"toPlayingMs":1372,"toMovingMs":1483,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":280,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+782.9s {"ch":"143 Твій Серіал","res":"1920x1080","kbps":10750,"toPlayingMs":1639,"toMovingMs":1756,"spinnerStartMs":900,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":419,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+805.6s {"ch":"144 Enter-фільм","res":"1920x1080","kbps":4890,"toPlayingMs":1485,"toMovingMs":1597,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":218,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+828.2s {"ch":"145 Kinosweet","res":"1920x1080","kbps":11410,"toPlayingMs":1373,"toMovingMs":1491,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":324,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+851.0s {"ch":"213 4ever Drama","res":"1920x1080","kbps":100000,"toPlayingMs":1530,"toMovingMs":1669,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":90,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+873.8s {"ch":"230 Наше любимое кино","res":"1920x1080","kbps":10520,"toPlayingMs":1386,"toMovingMs":1497,"spinnerStartMs":700,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":355,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+896.4s {"ch":"235 Піксель","res":"1920x1080","kbps":4890,"toPlayingMs":1274,"toMovingMs":1386,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":150,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+919.1s {"ch":"250 Niki junior","res":"1920x1080","kbps":100000,"toPlayingMs":1452,"toMovingMs":1565,"spinnerStartMs":600,"watch":{"spinnerMs":0,"bufEvents":0,"bufMs":45,"freezes":0,"frozenMs":0},"state":"PLAYING"}
+919.1s TOP by bitrate ["53 Капучино ТВ 100000kbps 1920x1080","54 ATR 100000kbps 1920x1080","56 Раі 100000kbps 1920x1080","57 11 Канал Дніпро 100000kbps 1920x1080","73 Новини Live 100000kbps 1920x1080"]
+919.1s problems 0 []
+922.8s restored {"name":"188 Киномикс","sameGroup":true,"lastChIsOriginal":true}

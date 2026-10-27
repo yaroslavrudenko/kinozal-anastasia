@@ -1,0 +1,8 @@
+port 38289
+2.2s start 188 Киномикс group 7 archive days 7
+50.1s ◀ ×3 (≈1.5 min back)           {"slider":"прямой эфир","programme":"","toPlayingMs":null,"toMovingMs":null,"spinnerStartMs":0,"positionVsTargetS":null,"watch15s":{"spinnerMs":0,"bufEvents":0,"bufMs":0,"freezes":0},"mode":"live","state":"PLAYING"}
+73.9s ◀ held ×20 (≈1 h back)         {"slider":"19:37:33","behind":"−1 ч 3 мин от эфира","programme":"Х/ф \"Дыхание шторма\".","toPlayingMs":1771,"toMovingMs":1884,"spinnerStartMs":800,"positionVsTargetS":0,"watch15s":{"spinnerMs":0,"bufEvents":0,"bufMs":276,"freezes":0},"mode":"archive","state":"PLAYING"}
+95.0s ▲ previous programme ×2        {"slider":"14:10:00","behind":"−6 ч 31 мин от эфира","programme":"Х/ф \"Терминатор 2: Судный день\".","toPlayingMs":2017,"toMovingMs":2135,"spinnerStartMs":1000,"positionVsTargetS":0,"watch15s":{"spinnerMs":0,"bufEvents":0,"bufMs":382,"freezes":0},"mode":"archive","state":"PLAYING"}
+127.0s ◀ held ×60 (≈8 h back)         {"slider":"06:27:15","behind":"−14 ч 14 мин от эфира","programme":"Х/ф \"Остров на троих\".","toPlayingMs":1662,"toMovingMs":1775,"spinnerStartMs":800,"positionVsTargetS":0,"watch15s":{"spinnerMs":0,"bufEvents":0,"bufMs":308,"freezes":0},"mode":"archive","state":"PLAYING"}
+148.8s in archive: ▶ ×4 forward       {"slider":"06:29:31","behind":"−14 ч 12 мин от эфира","programme":"Х/ф \"Остров на троих\".","toPlayingMs":1761,"toMovingMs":1876,"spinnerStartMs":900,"positionVsTargetS":0,"watch15s":{"spinnerMs":0,"bufEvents":0,"bufMs":380,"freezes":0},"mode":"archive","state":"PLAYING"}
+153.5s back to live {"toPlayingMs":2134,"name":"188 Киномикс","mode":"live","sameGroup":true,"lastChIsOriginal":true}
