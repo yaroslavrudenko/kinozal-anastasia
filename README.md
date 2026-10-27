@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>Your old Samsung TV deserves a cinema that never freezes.</b><br>
-  Free TV out of the box: 10 built‑in playlists · your own playlists · OTT Club for 389 channels and a 7‑day archive · zero stalls in 30 minutes of film playback.
+  <b>Watch free TV the moment you install it</b> — ~11 000 free channels built in · <b>add your own playlists</b> · OTT Club for 389 channels and a 7‑day archive · zero stalls in 30 minutes of film playback.
 </p>
 
 <p align="center">
@@ -40,6 +40,13 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
 > ### 📺 Watch free the moment you install it
 > Настин кинозал comes with a **free provider built in: [iptv-org](https://github.com/iptv-org/iptv)** — its whole public list (**~11 000 channels from all over the world**) and its ready playlists: 🇮🇱 Israel · 🇺🇦 Ukraine · in Russian · **in English (CNN, Bloomberg, DW, France 24, Euronews, NBC News NOW, ABC News Live…)** · News · Kids · Music · Movies · Documentary · Sport. A fresh install starts playing iptv-org's whole list at once — no key, no sign‑up. Pick a provider and a playlist in **📡 Провайдеры**; inside, the channels are grouped as the provider gives them, Israeli and Ukrainian ones first. You can also **add your own providers** (an M3U link each) and switch between all of them on the TV.
 >
+> ### ➕ Add your own playlists — in three steps
+> 1. Press **OK** (the channel menu), then **Blue** — **📡 Провайдеры** opens.
+> 2. Choose **«+ Добавить провайдера»** and type (or paste) the **M3U link** your provider gave you — `http://…` or `https://…`. Press **OK**.
+> 3. It plays at once and stays in the list; switch to it, to iptv-org or to OTT Club any time. **Red twice** on it removes it — only your own can be removed; the built‑in ones always stay.
+>
+> Each provider remembers your last channel and group, and the app always opens where you left off.
+>
 > ### ⭐ Want more? Subscribe to OTT Club
 > For **389 channels, a 7‑day archive with a real timeline slider and the full programme guide**, subscribe to [OTT Club](https://www.ottclub.tv): it is built in, enter your key and it works. Another paid provider works today if it gives you an **M3U link**: add it as your own playlist. **Built‑in support like OTT Club's (key, guide and archive from the provider's API) is not there yet for other paid providers; we will add it if there is interest** — [tell us which one](https://github.com/yaroslavrudenko/nastin-kinozal/issues).
 >
@@ -57,7 +64,10 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
 | 📺 **Every channel, in order** | Every channel the source lists, nothing filtered or hidden (adult channels only after you switch them on in «ℹ О программе»). 🇮🇱 Israeli channels come first, then 🇺🇦 Ukrainian ones, in every source. Groups follow the playlist: a group with no channels (say, no Ukrainian or no music channels) simply is not there. With OTT Club: **389 channels**, Israel first, then National, News, Documentary, Movies, Kids, Sport and more. |
 | ★ **Your own favourites** | Press ⏯ (or Yellow) on any channel to pin it to ★ Favourites. CH+/CH− inside Favourites zaps through favourites only. |
 | ⚡ **Instant on old hardware** | Virtualised lists keep a 1000‑channel playlist as fast as a 10‑channel one. The programme guide loads per channel, only when you look at it. |
-| 🔊 **Picture and sound under control** | Every channel switch shows the stream briefly: resolution, codec, bitrate and sound (for example `1920×1080 · H264 · 7,5 Мбит/с · звук стерео`). Choose the audio track and the picture mode (auto, full screen or letter‑box). |
+| 🔊 **Picture and sound under control** | Every channel switch shows the stream briefly: resolution, codec, bitrate and sound (for example `1920×1080 · H264 · 7,5 Мбит/с · звук стерео`). Choose the audio track and the picture mode (full screen, the stream's proportions or with borders). |
+| 🧭 **Always know where you are** | A soft, quiet scroll bar beside the groups and beside the channels shows where you are in each list and when it ends; lists never run into the hint bar at the bottom, on any TV size. |
+| 🔑 **Your key stays with OTT Club** | The OTT Club key is used exactly as you typed it and is only ever sent to OTT Club — never to a free or your own playlist (pinned by tests). The app never judges the key: OTT Club does. |
+| 👤 **From the author** | «ℹ О программе» → «Автор» → OK opens the author's LinkedIn profile in the TV's browser. |
 
 ## See it in action
 
@@ -212,7 +222,9 @@ printf 'CERT_PROFILE=kinozal\nDEVICE_PROFILE=%s\nTV=<tv-ip>:26101\n' ~/tizen-stu
 ./build.sh                                                   # sign, push the device profile, install, start
 ```
 
-The daisy icon appears in your TV's apps.
+The daisy icon appears in your TV's apps. It starts on the free iptv-org channels at once; enter an OTT Club key or add your own playlists in **📡 Провайдеры**.
+
+**The TV's address can change** (the router hands it out): `./build.sh` and the TV test runs check the saved address and, if the TV is not there, scan the local network for it (`tools/find-tv.sh`; [docs/DEPLOY.md §3](docs/DEPLOY.md)).
 
 ## 🗺 Roadmap
 
