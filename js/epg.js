@@ -94,7 +94,7 @@ var EPG = (function () {
     return p ? { p: p, ended: false } : s ? { p: s, ended: true } : null;
   }
   // The one text of a shown programme: its title, and for an ended one «(шла до HH:MM)» with its own end.
-  function label(sh) { return !sh ? '' : sh.p.title + (sh.ended ? ' (шла до ' + Util.hhmm(new Date(sh.p.stop)) + ')' : ''); }
+  function label(sh) { return !sh ? '' : sh.ended ? I18n.t('b.ended', I18n.iso(sh.p.title), Util.hhmm(new Date(sh.p.stop))) : I18n.iso(sh.p.title); }
   // { cur, next, shown } for the banner: next only when it follows a programme on air directly.
   function nowNext(id, t) {
     var sh = shown(id, t), cur = sh && sh.p;

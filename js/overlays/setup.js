@@ -4,21 +4,19 @@
 // stream (owner, 2026-10-26: «Ключ проверяет сам провайдер»). The key is kept exactly as typed.
 (function () {
   var FOCUS_DELAY_MS = 300;
-  var TEXT = {
-    key: 'Ключ OTT Club. Сейчас используется сохранённый ключ, если он был. Введите новый или нажмите «Назад».',
-    playlist: 'Ссылка на M3U-список каналов вашего провайдера (http:// или https://). «Назад» — без изменений.'
-  };
-  var mode = 'key', focusTimer = null;
+  var mode = 'key', focusTimer = null, first = false;   // first: opened from the first launch's «Провайдеры»
 
   function field() { return Util.$('key-input'); }
   function say(text) { Util.$('setup-err').textContent = text; }
 
-  // arg: { mode: 'key' | 'playlist' }.
+  // arg: { mode: 'key' | 'playlist', first }.
   function open(arg) {
     mode = arg && arg.mode === 'playlist' ? 'playlist' : 'key';
+    first = !!(arg && arg.first);
     field().value = '';
     say('');
-    Util.$('setup-text').textContent = TEXT[mode];
+    // On the first launch no key is in use yet, and Back returns to the choice (review 4, D8).
+    Util.$('setup-text').textContent = I18n.t(mode === 'playlist' ? 'set.playlist' : first ? 'set.keyFirst' : 'set.key');
     UI.show('setup', true);
     focusTimer = setTimeout(function () { field().focus(); }, FOCUS_DELAY_MS);
   }
@@ -33,13 +31,12 @@
     var key = mode === 'playlist' || !text ? '' : url ? OttClub.extractKey(url) : raw;
     if (key) { OttClub.saveKey(key); Sources.switchTo('ott'); return; }
     if (url && mode === 'playlist') { Sources.addUser(url); Sources.switchTo(Sources.idOfUrl(url)); return; }
-    say(mode === 'playlist' ? 'Ссылка должна начинаться с http:// или https://' :
-      url ? 'Это ссылка на список каналов: добавьте её в «Провайдерах» через «+ Добавить провайдера».' : 'Поле пустое.');
+    say(I18n.t(mode === 'playlist' ? 'set.needLink' : url ? 'set.isLink' : 'set.empty'));
   }
 
   function onKey(k, e) {
     if (Keys.isSubmit(k)) { e.preventDefault(); submit(); }
-    else if (Keys.isTextBack(k)) Overlay.open('sources');
+    else if (Keys.isTextBack(k)) Overlay.open('sources', first ? { first: true } : undefined);
   }
 
   Overlay.register('setup', { open: open, close: close, onKey: onKey });

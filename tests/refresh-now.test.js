@@ -30,7 +30,13 @@ function liveApp(opts) {
   if (!(opts && opts.noBoot)) { app.boot(); f.untilPlaying(app); }
   return app;
 }
-const listRequests = (app) => app.net.requests((r) => f.isList(r.url));
+// «Now» refreshes: the provider-fresh list (?t=, js/nowlines.js). The plain list URL is the scheduled list download
+// (Sources, hourly since 2026-10-27: «Нужно сделать раз в час»), not a «now» refresh.
+const listRequests = (app) => app.net.requests((r) => f.isList(r.url) && r.url.indexOf('?t=') > 0);
+const catalogRequests = (app) => app.net.requests((r) => f.isList(r.url) && r.url.indexOf('?t=') < 0);
+// Every «now» source in order (the fresh re-reads and the hourly catalog, which carries «now» lines too): the longest
+// time between two of them, in ms — the oldest a row on screen can get while nothing fails.
+const longestWait = (reqs) => reqs.slice().sort((a, b) => a.sentAt - b.sentAt).reduce((m, r, i, a) => (i ? Math.max(m, r.sentAt - a[i - 1].sentAt) : m), 0);
 // The "now" cell of every visible menu row: on air now (this hour's «Выпуск», or the full guide's
 // «Передача … THH» for the watched channel)?
 function staleRows(app) {
@@ -74,7 +80,7 @@ function twoHoursOpen() {
   const playing = f.streamIdOf(f.lastOpenUrl(app));
   app.press(KEYS.ENTER, 100);
   app.advance(2 * HOUR);
-  return { lists: listRequests(app).filter((r) => r.sendSeq > fromSeq),
+  return { lists: listRequests(app).filter((r) => r.sendSeq > fromSeq), catalogs: catalogRequests(app).filter((r) => r.sendSeq > fromSeq),
     guides: app.net.requests((r) => r.sendSeq > fromSeq && f.isGuide(r.url) && f.guideIdOf(r.url) !== playing) };
 }
 
@@ -82,10 +88,14 @@ function twoHoursOpen() {
 // the hour, so the refreshes are the open menu's re-read 5 min after each answer (17:05 … 18:55: 23), the
 // 18:00 end falling on one of them; never per-channel guide requests.
 test('now line: a refresh is one /api/channel_now request and never per-channel guide requests', () => {
-  const { lists, guides } = twoHoursOpen();
+  const { lists, catalogs, guides } = twoHoursOpen();
   // Owner 2026-10-26 (accuracy when paging): the open menu re-reads every 60 s after the 100 ms answer —
   // 2 h / 60.1 s = 119 refreshes; the hourly ends fall on re-reads.
-  assert.equal(lists.length, 119, 'refreshes in 2 hours: ' + lists.map((r) => new Date(r.sentAt).toISOString().slice(11, 19)).join(' '));
+  // Owner 2026-10-27 («Нужно сделать раз в час»): the catalog is downloaded every hour too (2 in 2 h) and brings «now»
+  // lines, so the re-read after it counts from it: 118 fresh re-reads + 2 catalogs, never more than 61 s apart.
+  assert.equal(catalogs.length, 2, 'hourly catalog downloads in 2 hours');
+  assert.ok(longestWait(lists.concat(catalogs)) <= 61000, 'a «now» line waited ' + longestWait(lists.concat(catalogs)) + ' ms');
+  assert.equal(lists.length, 118, 'refreshes in 2 hours: ' + lists.map((r) => new Date(r.sentAt).toISOString().slice(11, 19)).join(' '));
   assert.ok(lists.every((r, i) => i === 0 || r.sentAt - lists[i - 1].sentAt > 1000), 'two channel_now requests for one refresh');
   assert.deepEqual(guides.map((r) => r.url), [], 'per-channel guide requests');
 });
@@ -147,7 +157,11 @@ test('now line: every refresh is justified — a programme in the last answer en
   // DEC-2026-10-26-now-refresh-2 (NC-2; replaces the lower bound «≥ 10»): a show on screen ends every 12 min
   // (9 ends: 17:12 … 18:48), each followed by the 5-min re-reads at +5 and +10 min, plus 17:05 and 17:10: 29.
   // Owner 2026-10-26: the 60 s re-read dominates; the 12-min ends fall on re-reads: 119 in 2 hours.
-  assert.equal(lists.length, 119, 'refreshes in 2 hours: ' + lists.map((r) => new Date(r.sentAt).toISOString().slice(11, 19)).join(' '));
+  // Owner 2026-10-27: the hourly catalog brings «now» lines and the next re-read counts from it: 118 + 2 catalogs.
+  const catalogs = catalogRequests(app).filter((r) => r.sendSeq > fromSeq);
+  assert.equal(catalogs.length, 2);
+  assert.ok(longestWait(lists.concat(catalogs)) <= 61000, 'a «now» line waited ' + longestWait(lists.concat(catalogs)) + ' ms');
+  assert.equal(lists.length, 118, 'refreshes in 2 hours: ' + lists.map((r) => new Date(r.sentAt).toISOString().slice(11, 19)).join(' '));
   assert.deepEqual(unjustified, []);
 });
 

@@ -9,6 +9,7 @@
   // Required steps first, then the list and the saved channel, then the optional platform setup.
   function boot() {
     UI.init();
+    I18n.apply();                      // the interface language (RU by default) and its writing direction
     Overlay.onBeforeOpen(function () { NumEntry.cancel(); Zap.cancel(); });
     Player.init({
       // The state line on the banner while there is no picture (not over a zap burst's preview).
@@ -17,13 +18,19 @@
       // The picture is up: the banner with this stream's technical line, at once.
       onFirstFrame: function () {
         UI.spinner(false); Playback.onFirstFrame();
-        Zap.onFirstFrame(); Util.idle(function () { Overlay.prepare('menu'); });   // menu laid out ahead, hidden
+        Zap.onFirstFrame(); Util.idle(prepareMenu);   // menu laid out ahead, hidden
         if (!Zap.choosing()) Banner.onFirstFrame();
       },
       // The first three retries (≈3.5 s) are silent (a channel switch or a short hiccup is not "no signal"); none over a menu.
-      onError: function (n, delay) { if (n >= 4 && Overlay.isNone()) UI.toast('Нет сигнала, переподключаюсь… (' + n + ')', delay + 500); if (!Zap.choosing()) Banner.retrying(n, delay); },
+      // From the fourth, «no signal»: the menu is laid out ahead now (it would be at the first frame), so the viewer
+      // reaching for it finds it ready. During the silent retries the stream keeps the bandwidth (logos) and the thread
+      // (layout) to itself (review 4, P4-2).
+      onError: function (n, delay) {
+        if (n >= 4) { if (Overlay.isNone()) UI.toast(I18n.t('m.noSignal', n), delay + 500); Util.idle(prepareMenu); }
+        if (!Zap.choosing()) Banner.retrying(n, delay);
+      },
       onEnded: Playback.onEnded,
-      onMutedStart: function () { UI.toast('Звук включится после любого нажатия или клика', 6000); },
+      onMutedStart: function () { UI.toast(I18n.t('m.soundAfterKey'), 6000); },
       retryTarget: Playback.retryTarget
     });
     Playback.setHooks({ onOpened: function () { Banner.show(false); }, onBanner: function () { Banner.show(true); } });
@@ -32,40 +39,46 @@
       onNotice: function (text) { UI.toast(text, 5000); } });
     EPG.setHooks({
       onGuide: function () { Banner.onGuide(null); Overlay.refresh(); },
-      onXmltvFailed: function () { if (!guideNoticeShown) UI.toast('Программа передач недоступна, повторю позже', 5000); guideNoticeShown = true; }
+      onXmltvFailed: function () { if (!guideNoticeShown) UI.toast(I18n.t('m.guideDown'), 5000); guideNoticeShown = true; }
     });
     document.addEventListener('keydown', function (e) {
-      if (Player.unmute()) UI.toast('Звук включён', 1200);
+      if (Player.unmute()) UI.toast(I18n.t('m.soundOn'), 1200);
       onKey(e);
     });
     document.addEventListener('click', onClick);
     document.addEventListener('visibilitychange', onVisibility);
-    startSource();
+    var chosen = startSource();
     optional('fit', function () { UI.fitDesktop(); window.addEventListener('resize', UI.fitDesktop); });
     optional('hint', function () {
-      UI.toast(window.webapis ? '◀ ▶ — каналы · ▲ — архив · ▼ — программа · OK — меню и поиск' : '← → каналы · ↑ архив · ↓ программа · Enter — меню и поиск', 7000);
+      if (chosen) UI.toast(I18n.t(window.webapis ? 'h.first' : 'h.firstDesktop'), 7000);
     });
     optional('network', Playback.watchNetwork);
     optional('keys', Keys.register);   // right away: CH± and digits pressed in the first seconds must work
   }
 
-  // The list loads and the saved channel starts (in its own task right after this one). With no key and
-  // no playlist yet (a fresh install), the first free playlist plays: free out of the box; OTT Club and
-  // everything else are in «📡 Провайдеры».
+  function prepareMenu() { Overlay.prepare('menu'); }
+
+  // The list loads and the saved channel starts (in its own task right after this one). With no source (a first launch:
+  // nothing chosen or built in; or a source built into an older build only) «📡 Провайдеры» opens to choose it, with
+  // nothing playing behind it (owner, 2026-10-27: «А если я первый раз установил плеер и запустил — мне он должен
+  // предложить выбрать источник»); the choice starts the app on it, and from then on it opens the last source, group
+  // and channel. false: the source is being chosen.
   function startSource() {
-    if (!Sources.mode()) Sources.select(Sources.firstFreeId());
+    if (Sources.firstLaunch()) { Overlay.open('sources', { first: true }); return false; }
     var mode = Sources.mode();
     Sources.start();
     setTimeout(function () {
       var last = Sources.lastChannel();
       if (!Playback.current() && last && last.key.indexOf(mode + ':') === 0 && Channels.adultAllowed(last)) Zap.pick(last);
     }, 0);
+    return true;
   }
 
   // The list arrived: keep what is playing (with its fresh record), or start the first channel.
   function onListApplied(firstLoad) {
     var cur = Playback.current(), fresh = cur ? Channels.get(cur.key) : null;
     if (fresh) Playback.adopt(fresh);
+    Zap.onListApplied();
     if (firstLoad && !Channels.isEligible(fresh)) startFirst();
     Overlay.refresh();
   }
@@ -100,8 +113,8 @@
     else if (k === K.STOP) { if (c && mode !== 'live') Playback.goLive(); }
     else if (k === K.PREV_CH) Zap.previous();
     else if (k === K.RED) Playback.cycleAudio();
-    else if (k === K.GREEN) UI.toast('Экран: ' + Player.cycleDisplay());
-    else if (k === K.BLUE) UI.toast(Player.streamInfo(true) || 'Нет данных о потоке', 3000);
+    else if (k === K.GREEN) UI.toast(I18n.t('m.screen', Player.cycleDisplay()));
+    else if (k === K.BLUE) UI.toast(Player.streamInfo(true) || I18n.t('m.noStreamInfo'), 3000);
     else if (k === K.YELLOW) { if (c) toggleFav(c); }
     else if (Keys.isBack(k)) back(c, mode);
     else return false;
@@ -109,7 +122,7 @@
   }
 
   function openScrub(c, k) {
-    if (!Catchup.supported(c)) { Banner.show(true); UI.toast('У этого канала нет архива'); return; }
+    if (!Catchup.supported(c)) { Banner.show(true); UI.toast(I18n.t('m.noArchive')); return; }
     Overlay.open('scrub');
     if (k !== K.UP) Overlay.onKey(k, { preventDefault: function () {} });
   }
@@ -118,7 +131,7 @@
   function toggleFav(c) {
     var on = Favs.toggle(c.key);
     Channels.rebuild();
-    UI.toast(on ? 'Добавлено в избранное' : 'Убрано из избранного');
+    UI.toast(I18n.t(on ? 'm.favAdded' : 'm.favRemoved'));
   }
 
   function back(c, mode) {
@@ -127,12 +140,12 @@
       try { tizen.application.getCurrentApplication().exit(); } catch (e) { Diag.note('exit', (e && e.message) || String(e)); }
     }
     lastBack = Date.now();
-    UI.toast('Нажмите «Назад» ещё раз для выхода');
+    UI.toast(I18n.t('m.backAgain'));
   }
 
   // ---------- mouse (desktop preview; the TV remote never produces clicks) ----------
   function onClick(e) {
-    if (Player.unmute()) UI.toast('Звук включён', 1200);
+    if (Player.unmute()) UI.toast(I18n.t('m.soundOn'), 1200);
     if (Overlay.mode() === 'setup') return;
     if (Overlay.isNone()) { if (Channels.count()) Overlay.open('menu'); return; }
     var el = e.target;

@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const { KEYS } = require('./harness');
 const f = require('./fixtures');
 
-const OVERLAYS = ['guide', 'prog', 'scrub', 'search', 'about', 'sources', 'setup'];
+const OVERLAYS = ['guide', 'prog', 'scrub', 'search', 'about', 'lang', 'sources', 'setup'];
 const IL_NAMES = ['Channel 9', 'Kan 11', 'Keshet 12', 'Reshet 13'];
 const playingId = (app) => f.streamIdOf(f.lastOpenUrl(app));
 const playingName = (app) => f.ottRecord(app, playingId(app)).channel_name;
@@ -151,6 +151,8 @@ for (const [name, screen] of KEY_MAP) {
   });
 }
 
+// With the default settings: the adult group is hidden by default (owner, 2026-10-27: «Для взрослых нужно скрывать по
+// умолчанию всегда» — the only exception to «не фильтруем»).
 test('eligibility (pin): an adult channel is not listed, not found by search and never zapped to', () => {
   const adult = '1003';
   const app = f.untilPlaying(f.ottApp({ channels: 10, list: f.ottChannelList(10, { adultIds: [adult] }) }));

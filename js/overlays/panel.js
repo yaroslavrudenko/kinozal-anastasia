@@ -1,7 +1,6 @@
 // The programme panel over the video (▼): ▲▼ shows, ◀ ▶ / CH± days, OK watches (archive, or live when
 // on air without an archive), BACK closes.
 (function () {
-  var WEEKDAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
   var day = 0, cursor = -1, c = null, unavailable = false, moved = false;   // moved: ▲▼ used on this day
 
   function open() {
@@ -17,17 +16,19 @@
 
   function list() { return EPG.day(c.id, day); }
 
-  function render() {
+  // l: the day's programmes when the caller has them already.
+  function render(l) {
     // On air: the programme at now, or the one the channel list names when the guide ends it earlier.
-    var l = list(), now = Date.now(), archive = Catchup.supported(c), cur = day === 0 ? EPG.onAir(c.id, now) : null;
+    l = l || list();
+    var now = Date.now(), archive = Catchup.supported(c), cur = day === 0 ? EPG.onAir(c.id, now) : null;
     var isCur = function (p) { return p.start <= now && p.stop > now || !!cur && p.start === cur.start && p.title === cur.title; };
     if (cursor < 0 || cursor >= l.length) cursor = day === 0 ? Math.min(onAirIndex(l, now, isCur), Math.max(0, l.length - 1)) : 0;
-    UI.panelTitle(c.name + ' — ' + dayName(day));
-    var rows = l.length ? l : [{ start: now, stop: now, title: unavailable ? 'Программа передач недоступна, повторю позже' : 'Программа загружается…' }];
+    UI.panelTitle(I18n.iso(c.name) + ' — ' + dayName(day));
+    var rows = l.length ? l : [{ start: now, stop: now, title: I18n.t(unavailable ? 'm.guideDown' : 'p.loading') }];
     ListView.column('programmes', { total: rows.length, cursor: cursor, active: true, row: function (i) {
       var p = rows[i], onAir = isCur(p), past = p.stop <= now && !onAir;
-      return { num: Util.hhmm(new Date(p.start)), logo: '', title: p.title, past: past,
-        sub: onAir ? 'в эфире' : (past && archive ? '● архив' : '') };
+      return { num: Util.hhmm(new Date(p.start)), logo: '', title: p.title, own: !!l.length, past: past,   // own: a programme, not our «loading»
+        sub: onAir ? I18n.t('p.onAir') : (past && archive ? I18n.t('p.archived') : '') };
     } });
   }
 
@@ -37,18 +38,17 @@
   }
 
   function dayName(off) {
-    if (off === 0) return 'Сегодня';
-    if (off === -1) return 'Вчера';
-    if (off === 1) return 'Завтра';
+    if (off === 0) return I18n.t('p.today');
+    if (off === -1) return I18n.t('p.yesterday');
+    if (off === 1) return I18n.t('p.tomorrow');
     var d = new Date(Util.addDays(Date.now(), off));
-    return WEEKDAYS[d.getDay()] + ' ' + d.getDate() + '.' + (d.getMonth() + 1);
+    return I18n.list('p.weekdays')[d.getDay()] + ' ' + d.getDate() + '.' + (d.getMonth() + 1);
   }
 
   function onKey(k, e) {
     e.preventDefault();
-    var l = list();
     if ((k === K.UP || k === K.DOWN) && ListView.scrollWithin('programmes', k === K.UP ? -1 : 1)) return;
-    var was = cursor;
+    var l = list(), was = cursor;
     if (k === K.UP) cursor = Math.max(0, cursor - 1);
     else if (k === K.DOWN) cursor = Math.min(l.length - 1, cursor + 1);
     // CH± / PG± here change the day (frozen behaviour), so the panel has no paging; a new day starts afresh.
@@ -58,13 +58,13 @@
     else if (Keys.isBack(k)) { Overlay.close(); return; }
     else return;
     if ((k === K.UP || k === K.DOWN) && cursor !== was) moved = true;   // a press clamped at an end is not a choice
-    render();
+    render(k === K.UP || k === K.DOWN ? l : null);                    // a new day has its own list
   }
 
   function watch(p) {
     var now = Date.now();
     if (!p) return;
-    if (p.start > now) { UI.toast('Передача ещё не началась'); return; }
+    if (p.start > now) { UI.toast(I18n.t('m.notStarted')); return; }
     Overlay.close();
     if (p.stop > now && !Catchup.supported(c)) { Zap.pick(c); return; }
     Playback.archive(c, p.start);

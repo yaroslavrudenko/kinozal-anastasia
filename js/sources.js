@@ -1,12 +1,15 @@
 // Where the channels come from (OTT Club API or an M3U playlist) and loading them: one request at a
-// time, parsed once, validated, one retry chain with a growing delay, and a compact offline copy written
-// only after the first frame, when the TV is idle. The UI is reached through hooks.
+// time, every list downloaded parsed and applied, validated, one retry chain with a growing delay, and a compact
+// offline copy written only after the first frame, when the TV is idle. The UI is reached through hooks.
 //   hooks: { onApplied(firstLoad), onFatal(text), onNotice(text), onSpinner(on) }
 var Sources = (function () {
-  var V = 1;                   // offline copy format
+  var V = 2;                   // offline copy format (1: before 1.9.0, still read)
   var hooks = null, started = false, active = '', req = null, parsing = null, retryTimer = null, retryN = 0;
   var lastKey;                 // key of the channel last remembered (undefined: not read yet)
   var hasList = false, fromSaved = false, firstFrameSeen = false, persistPending = null, xmltvPending = null;
+  // The offline copy: the one wanted for the list on screen (null: none wanted), and the downloaded text the copy on
+  // disk was written from in this page life (null: none yet — the first list always writes it).
+  var copyFor = null, copiedFrom = null;
 
   function setHooks(h) { hooks = h; }
 
@@ -22,6 +25,10 @@ var Sources = (function () {
     return OttClub.enabled() ? 'ott' : playlistUrl() ? 'm3u' : '';
   }
 
+  // No usable source (nothing chosen or built in, or a built-in one a later build no longer has): the source is chosen
+  // first. A remembered last channel does not make a source (review 4, F1: it made the app load '' as a playlist).
+  function firstLaunch() { return !mode(); }
+
   // Makes `id` the source the app starts on (no restart: switchTo does that).
   function select(id) {
     if (id === 'ott') Util.save('sourceMode', 'ott');
@@ -35,12 +42,13 @@ var Sources = (function () {
   var FREE = 'free:', USER = 'user:', OWN_STORE = 'userPlaylists', PER_SOURCE = 'lastBySource';
   var switching = false;       // a switch is under way: the page is about to start again on the new source
   function userPlaylists() { var l = Util.load(OWN_STORE); return l instanceof Array ? l : []; }
-  // Every free playlist as { id: FREE + '<provider>/<playlist>', name, url }, in the providers' order.
+  // Every free playlist as { id: FREE + '<provider>/<playlist>', kind: 'freepl', of (the provider's id), provider, name, url },
+  // in the providers' order.
   function freePlaylists() {
     var out = [];
     for (var i = 0; i < CONFIG.FREE_PROVIDERS.length; i++) {
       var p = CONFIG.FREE_PROVIDERS[i];
-      for (var j = 0; j < p.playlists.length; j++) out.push({ id: FREE + p.id + '/' + p.playlists[j].id, provider: p.name, name: p.playlists[j].name, url: p.playlists[j].url });
+      for (var j = 0; j < p.playlists.length; j++) out.push({ id: FREE + p.id + '/' + p.playlists[j].id, kind: 'freepl', of: p.id, provider: I18n.t('p.' + p.id), name: I18n.t('pl.' + p.playlists[j].id), url: p.playlists[j].url });
     }
     return out;
   }
@@ -59,14 +67,13 @@ var Sources = (function () {
     return (m[1] || url) + (last ? ' · ' + last.replace(/\.m3u8?$/i, '') : '');
   }
   function list() {
-    var rows = [{ id: 'ott', kind: 'ott', name: 'OTT Club', ready: OttClub.enabled() }];
+    var rows = [{ id: 'ott', kind: 'ott', name: 'OTT Club', ready: OttClub.enabled() }], free = freePlaylists();
     for (var i = 0; i < CONFIG.FREE_PROVIDERS.length; i++) {
-      var p = CONFIG.FREE_PROVIDERS[i], pls = [];
-      for (var j = 0; j < p.playlists.length; j++) pls.push({ id: FREE + p.id + '/' + p.playlists[j].id, kind: 'freepl', name: p.playlists[j].name, url: p.playlists[j].url });
-      rows.push({ id: FREE + p.id, kind: 'free', name: p.name, playlists: pls });
+      var p = CONFIG.FREE_PROVIDERS[i];
+      rows.push({ id: FREE + p.id, kind: 'free', name: I18n.t('p.' + p.id), playlists: free.filter(function (f) { return f.of === p.id; }) });
     }
     var own = userPlaylists();
-    for (var j = 0; j < own.length; j++) rows.push({ id: USER + own[j], kind: 'user', name: shortName(own[j]), url: own[j] });
+    for (var j = 0; j < own.length; j++) rows.push({ id: USER + own[j], kind: 'user', name: I18n.ltr(shortName(own[j])), url: own[j] });
     return rows;
   }
   function activeId() {
@@ -74,10 +81,10 @@ var Sources = (function () {
     return m === 'ott' ? 'ott' : m === 'm3u' ? idOfUrl(playlistUrl()) : '';
   }
   // A playlist the viewer typed in (or one an older version or the build set up): listed once, so it can
-  // always be come back to; a free one is listed already.
+  // always be come back to; a free one is listed already, and no link is no provider.
   function addUser(url) {
     var own = userPlaylists();
-    if (!freeByUrl(url) && own.indexOf(url) < 0) { own.push(url); Util.save(OWN_STORE, own); }
+    if (url && !freeByUrl(url) && own.indexOf(url) < 0) { own.push(url); Util.save(OWN_STORE, own); }
   }
   // The one way to change the source: the position in the source being left is kept (each source has its
   // own last channel and group; owner: the app always opens the last source, group and channel), the new
@@ -128,6 +135,9 @@ var Sources = (function () {
     if (parsing) parsing.cancel();
     if (blocking) hooks.onSpinner(true);
     var m = mode();
+    // Every list downloaded is parsed and applied: what the provider serves now is what is shown (owner: «актуальные
+    // списки каналов и групп», «избыточного кеширования тоже не должно быть»). No validator stands in for the text: a
+    // list rewritten with the same length under the same Last-Modified was kept stale by one (review 4, Codex 1).
     req = Net.get({ url: m === 'ott' ? OttClub.sourceUrl() : playlistUrl(), timeoutMs: CONFIG.LIST_TIMEOUT_MS }, function (err, text) {
       req = null;
       if (err) { failed(err); return; }
@@ -135,7 +145,7 @@ var Sources = (function () {
         if (!result) { failed('invalid'); return; }
         retryN = 0;
         fromSaved = false;
-        apply(result, m);
+        apply(result, m, text);
       });
     });
   }
@@ -155,22 +165,22 @@ var Sources = (function () {
       if (saved) {
         fromSaved = true;
         apply(saved, mode());
-        hooks.onNotice('Сервер не ответил — показан последний список, обновлю автоматически');
+        hooks.onNotice(I18n.t('m.oldList'));
       } else {
         hooks.onSpinner(false);
-        hooks.onFatal(err === 'invalid' ? 'Список каналов пуст или недоступен. Повтор через ' + Math.round(wait / 1000) + ' с.'
-          : 'Не удалось загрузить список каналов (' + err + '). Повтор через ' + Math.round(wait / 1000) + ' с.');
+        hooks.onFatal(err === 'invalid' ? I18n.t('m.listEmpty', Math.round(wait / 1000)) : I18n.t('m.listFail', err, Math.round(wait / 1000)));
       }
     });
     clearTimeout(retryTimer);
     retryTimer = setTimeout(function () { retryTimer = null; load(!hasList); }, wait);
   }
 
-  function apply(result, m) {
+  function apply(result, m, text) {
     var firstLoad = !hasList;
     hasList = true;
     Favs.migrate(result.channels);
     Channels.replace(result.channels);
+    Util.idle(function () { Logos.retain(result.channels); });
     hooks.onFatal('');
     // A list from the provider's cache does not count as fresh "now" lines: they are re-read at once.
     if (m === 'ott') {
@@ -178,10 +188,22 @@ var Sources = (function () {
       var cachedAnswer = EPG.setSeeds(result.seeds || Util.dict());
       if (!fromSaved) { if (cachedAnswer) NowLines.cachedList(); else NowLines.loaded(); }
     }
-    else if (!CONFIG.EPG_URL) xmltvPending = { url: result.epgUrl, channels: result.channels };
-    if (!fromSaved) persistPending = { m: m, epgUrl: result.epgUrl || '', channels: result.channels };
+    else guideFrom(result);
+    // Every list is applied; its copy is written again only when the text differs, byte for byte, from the one the copy
+    // on disk was written from (review 5, N5-2: an unchanged hour rewrote 2.1 M chars to the TV's flash).
+    if (!fromSaved) persistPending = copyFor = text === copiedFrom ? null : { m: m, epgUrl: result.epgUrl || '', channels: result.channels, text: text };
+    // The same text, held once: the list on screen keeps this download alive (its lines are slices of it), so the
+    // text the copy was written from is this one now, not a second 4.9 MB of equal characters (review 6, F3-1). No copy
+    // wanted means the texts were equal: one comparison per list, not two (review 7, F5 / R7-P1).
+    if (!fromSaved && !copyFor) copiedFrom = text;
     if (firstFrameSeen) afterFirstFrame();
     hooks.onApplied(firstLoad);
+  }
+  // A playlist's own guide (url-tvg) is handed to the guide with every list it comes with (EPG.load decides whether it is
+  // due). A playlist with none (iptv-org) has nothing to read, so its channels are not walked for it (review 4, P4-3).
+  function guideFrom(result) {
+    if (CONFIG.EPG_URL) return;
+    xmltvPending = result.epgUrl ? { url: result.epgUrl, channels: result.channels } : null;
   }
 
   // The network is back: a list shown from the offline copy (no "now" lines) is loaded at once.
@@ -208,34 +230,84 @@ var Sources = (function () {
     }
   }
 
-  // The offline copy: compact fields only (no descriptions, no subscriber key).
+  // The offline copy: compact fields only (no descriptions, no subscriber key), one row per channel in list order.
+  // Three idle tasks — the rows, their JSON, the write: all in one was a 52–58 ms task at 6× (review 4, P4-1). Each
+  // stops when the copy is not wanted any more (review 5, NB-3).
   function persist(p) {
+    if (dropped(p)) return;
     var rows = [];
-    for (var i = 0; i < p.channels.length; i++) rows.push(pack(p.channels[i]));
-    var copy = { v: V, mode: p.m, savedAt: Date.now(), epgUrl: p.epgUrl, channels: rows };
-    // Too big or over the quota: no copy at all (an older one would be stale); Util.save records why.
-    if (!Util.save('playlistSnap', copy, CONFIG.SNAPSHOT_MAX_CHARS)) { Util.remove('playlistSnap'); return; }
+    for (var i = 0; i < p.channels.length; i++) rows.push(row(p.channels[i]));
+    Util.idle(function () {
+      if (dropped(p)) return;
+      var json = JSON.stringify({ v: V, mode: p.m, savedAt: Date.now(), epgUrl: p.epgUrl, channels: rows });
+      Util.idle(function () { write(json, p); });
+    });
+  }
+  // Not while a switch is under way (the copy kept would be the source being left), nor once a later list came (its own
+  // copy is written, or the one on disk is already its own).
+  function dropped(p) { return switching || p !== copyFor; }
+  // Too big or over the quota: no copy at all (an older one would be stale); Util.saveJson records why.
+  function write(json, p) {
+    if (dropped(p)) return;
+    copiedFrom = null;
+    if (!Util.saveJson('playlistSnap', json, CONFIG.SNAPSHOT_MAX_CHARS)) { Util.remove('playlistSnap'); return; }
+    copiedFrom = p.text;
     Util.remove('playlistText');
   }
 
-  // [id, name, logo, group, url ('' for OTT: rebuilt from the key), catchup, catchupSource, catchupDays, il, ua, key, num]
+  // A row of the copy: [key, name ('' unnamed), logo, group id, url ('' for OTT: rebuilt from the id), catchup,
+  // catchupSource, catchupDays, il, ua, id]. Its number is its place; trailing empty values are left out; the id
+  // too when it is the one in the key (the key always holds it for an M3U channel with one, and for OTT).
+  // The group is kept by its id, so a copy written in one interface language reads right in another.
+  function row(ch) {
+    var r = [ch.key, ch.unnamed ? '' : ch.name, ch.logo, ch.groupId, ch.key.indexOf('ott:') === 0 ? '' : ch.url, ch.catchup, ch.catchupSource,
+      ch.catchupDays, ch.il ? 1 : 0, ch.ua ? 1 : 0, ch.id];
+    if (idOfKey(ch.key) !== ch.id) return r;      // an id the key does not give (none, or one with a «|»): kept, row in full
+    r.pop();
+    while (r.length > 1 && !r[r.length - 1]) r.pop();
+    return r;
+  }
+  function fromRow(r, num) {
+    return channel({ key: r[0], num: num, id: r.length > 10 ? r[10] : idOfKey(r[0]), name: r[1], logo: r[2], groupId: r[3] || '', url: r[4],
+      catchup: r[5], catchupSource: r[6], catchupDays: r[7], il: r[8], ua: r[9] });
+  }
+  // "m3u:<id>|<group>" or "ott:<id>" -> the id it starts with.
+  function idOfKey(key) { var bar = key.indexOf('|'); return key.substring(4, bar < 0 ? key.length : bar); }
+
+  // The last channel: [id, name ('' unnamed), logo, group id, url, catchup, catchupSource, catchupDays, il, ua, key, num]
+  // (the format of 1.8: a last channel saved by an older version is read back as it was).
   function pack(ch) {
-    return [ch.id, ch.name, ch.logo, ch.group, ch.key.indexOf('ott:') === 0 ? '' : ch.url, ch.catchup, ch.catchupSource,
+    return [ch.id, ch.unnamed ? '' : ch.name, ch.logo, ch.groupId, ch.key.indexOf('ott:') === 0 ? '' : ch.url, ch.catchup, ch.catchupSource,
       ch.catchupDays, ch.il ? 1 : 0, ch.ua ? 1 : 0, ch.key, ch.num];
   }
   function unpack(r, num) {
-    var ott = !r[4];
-    return { key: r[10], num: num, id: r[0], name: r[1], nameLc: String(r[1]).toLowerCase(), logo: r[2], group: r[3],
-      url: ott ? OttClub.streamUrl(r[0]) : r[4], catchup: r[5], catchupSource: r[6], catchupDays: r[7],
-      il: !!r[8], ua: !!r[9], dead: false };
+    return channel({ key: r[10], num: num, id: r[0], name: r[1], logo: r[2], groupId: r[3], url: r[4], catchup: r[5], catchupSource: r[6],
+      catchupDays: r[7], il: r[8], ua: r[9] });
+  }
+  // A copy written before 1.9.0 kept the group's translated name («Новостные»): the id is read from the key, with the
+  // name shown then telling a repeated entry's «#2» from a group's own. Its entry with no name was saved under the
+  // Russian placeholder: it is unnamed again (named in the interface language), as its key says (review 4, F10).
+  function unpackV1(r, num) {
+    var lc = String(r[1]).toLowerCase(), m3u = String(r[10]).indexOf('m3u:') === 0;
+    var ch = unpack(m3u && !r[0] && lc === M3U.KEY_UNNAMED ? r.slice(0, 1).concat([''], r.slice(2)) : r, num);
+    var g = m3u ? M3U.groupIdOfKey(r[10], r[0], lc, r[3]) : null;
+    ch.groupId = g !== null ? g : r[3] === M3U.KEY_NO_GROUP ? '' : r[3];
+    ch.group = I18n.group(ch.groupId);
+    return ch;
+  }
+  function channel(x) {
+    var ott = !x.url, name = x.name || I18n.t('m.channel');
+    return { key: x.key, num: x.num, id: x.id, name: name, nameLc: String(name).toLowerCase(), unnamed: !x.name, logo: x.logo || '',
+      groupId: x.groupId, group: I18n.group(x.groupId), url: ott ? OttClub.streamUrl(x.id) : x.url, catchup: x.catchup || '',
+      catchupSource: x.catchupSource || '', catchupDays: x.catchupDays || 0, il: !!x.il, ua: !!x.ua, dead: false };
   }
 
   // done(result | null): the offline copy, or the raw list text written by versions before 1.8.
   function savedList(done) {
     var copy = Util.load('playlistSnap');
-    if (copy && copy.v === V && copy.mode === mode() && copy.channels instanceof Array) {
-      var channels = [];
-      for (var i = 0; i < copy.channels.length; i++) channels.push(unpack(copy.channels[i], i + 1));
+    if (copy && (copy.v === V || copy.v === 1) && copy.mode === mode() && copy.channels instanceof Array) {
+      var channels = [], read = copy.v === V ? fromRow : unpackV1;
+      for (var i = 0; i < copy.channels.length; i++) channels.push(read(copy.channels[i], i + 1));
       done(channels.length ? { channels: channels, seeds: Util.dict(), epgUrl: copy.epgUrl } : null);
       return;
     }
@@ -257,8 +329,8 @@ var Sources = (function () {
   }
 
   return {
-    setHooks: setHooks, mode: mode, select: select, start: start,
-    list: list, activeId: activeId, activeName: function () { var id = activeId(), f = freeBy(function (x) { return x.id === id; }); return f ? f.provider + ' · ' + f.name : id.indexOf(USER) === 0 ? shortName(urlOf(id)) : id; }, firstFreeId: function () { return freePlaylists()[0].id; }, idOfUrl: idOfUrl, addUser: addUser, switchTo: switchTo, removeUser: removeUser,
+    setHooks: setHooks, mode: mode, firstLaunch: firstLaunch, select: select, start: start,
+    list: list, activeId: activeId, activeName: function () { var id = activeId(), f = freeBy(function (x) { return x.id === id; }); return f ? f.provider + ' · ' + f.name : id.indexOf(USER) === 0 ? I18n.ltr(shortName(urlOf(id))) : id; }, firstFreeId: function () { return freePlaylists()[0].id; }, idOfUrl: idOfUrl, addUser: addUser, switchTo: switchTo, removeUser: removeUser,
     onFirstFrame: onFirstFrame, rememberLanding: rememberLanding, lastChannel: lastChannel, onNetwork: onNetwork,
     loading: function () { return !!req; }
   };

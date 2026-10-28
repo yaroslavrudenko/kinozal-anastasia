@@ -35,7 +35,7 @@ function loadPuppeteer() {
 const MIME = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml' };
 const JSON_HEADERS = { 'Access-Control-Allow-Origin': '*' };
 
-// opts: { data (the /api/channel_now object), guide(id) -> body string }
+// opts: { data (the /api/channel_now object), guide(id) -> body string, lang ('ru' when absent) }
 export async function openApp(opts) {
   const puppeteer = loadPuppeteer();
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'kinozal-browser-'));
@@ -58,7 +58,7 @@ export async function openApp(opts) {
     else done = req.abort();
     Promise.resolve(done).catch(() => {});
   });
-  await page.evaluateOnNewDocument((k) => { localStorage.setItem('ottKey', JSON.stringify(k)); }, f.FAKE_KEY);
+  await page.evaluateOnNewDocument((k, lang) => { localStorage.setItem('ottKey', JSON.stringify(k)); if (lang) localStorage.setItem('lang', JSON.stringify(lang)); }, f.FAKE_KEY, opts.lang || '');
   await page.goto(ORIGIN + '/index.html', { waitUntil: 'load' });
   await page.waitForFunction(() => document.getElementById('b-title') && document.getElementById('b-title').textContent, { timeout: 15000 });
   await new Promise((r) => setTimeout(r, 1500));            // the guide of the first channel arrives

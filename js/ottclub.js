@@ -75,8 +75,8 @@ var OttClub = (function () {
     var k = key(), b = base(), pinCount = ORDER.PINNED.length;
     var rows = [];
     for (var i = 0; i < recs.length; i++) {
-      var c = recs[i], group = c.category && c.category.name ? c.category.name : 'Без группы';
-      var cc = Country.detect({ name: c.channel_name, group: c.category ? c.category.name : '', id: c.ch_id }, c.name);
+      var c = recs[i], group = c.category && c.category.name ? c.category.name : '';   // '': our «Без группы»
+      var cc = Country.detect({ name: c.channel_name, groupId: group, id: c.ch_id }, c.name);
       var grp = ORDER.GROUPS.indexOf(group);
       rows.push({ c: c, group: group, cc: cc, pin: pinRank(cc), num: ORDER.nameNumber(c.channel_name),
         grp: grp < 0 ? ORDER.GROUPS.length : grp, seq: ORDER.SEQ[c.ch_id] || 100000, pos: i });
@@ -91,7 +91,7 @@ var OttClub = (function () {
       var r = rows[j], rec = r.c, archive = rec.rec === '1';
       channels.push({
         key: 'ott:' + rec.ch_id, num: j + 1, id: String(rec.ch_id), name: rec.channel_name,
-        nameLc: rec.channel_name.toLowerCase(), logo: rec.img ? b + '/images/' + rec.img : '', group: r.group,
+        nameLc: rec.channel_name.toLowerCase(), logo: rec.img ? b + '/images/' + rec.img : '', groupId: r.group, group: I18n.group(r.group),
         url: b + '/stream/' + k + '/' + rec.ch_id + '.m3u8', catchup: archive ? 'ottclub' : '', catchupSource: '',
         catchupDays: archive ? CONFIG.ARCHIVE_DAYS : 0, il: r.cc.il, ua: r.cc.ua, dead: false
       });

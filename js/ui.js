@@ -1,21 +1,22 @@
 // Rendering only: view models in, DOM out. It reads no store. Banner, toast, spinner, number entry,
-// slider, «О программе» and the screens' visibility; the list columns are ListView.
+// slider, «⚙ Настройки» and the screens' visibility; the list columns are ListView.
 var UI = (function () {
   var STICKY = 0;              // toast(text, UI.STICKY): stays until the next toast
   var el = {}, toastTimer = null, bannerTimer = null, scrubBarPx = 0;
   var IDS = ['banner', 'b-num', 'b-logo', 'b-title', 'b-state', 'b-now', 'b-next', 'b-tech', 'b-progress', 'b-clock', 'toast',
     'spinner', 'numentry', 'fatal', 'guide', 'prog', 'p-title', 'scrub', 's-title', 's-time', 's-start', 's-end',
-    's-delta', 's-played', 's-now', 's-knob', 'about', 'about-table', 'sources', 'search', 'setup', 'search-more', 'groups-bar', 'channels-bar'];
+    's-delta', 's-played', 's-now', 's-knob', 'about', 'about-table', 'lang', 'sources', 'search', 'setup', 'search-more', 'groups-bar', 'channels-bar'];
 
-  // Desktop check only: fit the 1920×1080 TV layout into the browser window.
+  // Desktop check only: fit the 1920×1080 TV layout into the browser window. Right to left the canvas overflows
+  // the window to the left, so it is scaled toward its right edge (boot sets the language before the first fit).
   function fitDesktop() {
     if (window.webapis) return;
     var k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-    document.body.style.transformOrigin = '0 0';
+    document.body.style.transformOrigin = I18n.rtl() ? '100% 0' : '0 0';
     document.body.style.transform = 'scale(' + k + ')';
   }
 
-  function init() { for (var i = 0; i < IDS.length; i++) el[IDS[i]] = Util.$(IDS[i]); }
+  function init() { for (var i = 0; i < IDS.length; i++) el[IDS[i]] = Util.$(IDS[i]); Logos.track(el['b-logo']); }
 
   function show(id, on) { Util.show(el[id], on); }
 
@@ -23,8 +24,11 @@ var UI = (function () {
   // holdMs: how long it stays (default BANNER_MS; STICKY: until the next banner or hideBanner).
   function banner(m, holdMs) {
     el['b-num'].textContent = m.num;
-    el['b-logo'].style.visibility = m.logo ? 'inherit' : 'hidden';   // never 'visible': a hidden banner must hide it
-    if (m.logo) el['b-logo'].src = m.logo;
+    // Through Logos, as every channel logo: a loaded picture at once, else an empty box (never the previous channel's)
+    // until it arrives; a picture loaded or failed once is not asked for again. Shown 'inherit', never 'visible'.
+    var logo = el['b-logo'];
+    Logos.put(logo, m.logo || '');
+    if (m.logo && !Logos.ready(m.logo)) Logos.want('banner', [m.logo]);
     el['b-title'].textContent = m.title;
     el['b-now'].textContent = m.now || '';
     el['b-next'].textContent = m.next || '';
@@ -92,7 +96,7 @@ var UI = (function () {
   // The search results' list-end line (the menu's columns show their place with scroll bars instead).
   function listEnd(id, rest, at) {
     var e = el[id], text = rest === null ? '' : rest > 0
-      ? '▼ ещё ' + rest + ' ' + Util.plural(rest, ['канал', 'канала', 'каналов']) + ' · CH− — дальше' : 'Конец списка';
+      ? I18n.t('list.more', I18n.n(rest, 'channel')) : I18n.t('list.end');
     var t = 'translateY(' + (at || 0) + 'px)';
     if (e.textContent !== text) e.textContent = text;
     if (e.style.transform !== t) { e.style.webkitTransform = t; e.style.transform = t; }

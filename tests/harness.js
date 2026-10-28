@@ -68,6 +68,12 @@ class FakeElement {
     this._listeners = {};
   }
   get id() { return this._attrs.id || ''; }
+  // An image's src is its attribute, as in a browser; srcWrites counts every assignment (a picture load started).
+  get src() { return this._attrs.src; }
+  set src(v) {
+    this._attrs.src = String(v); this.srcWrites = (this.srcWrites || 0) + 1;
+    if (this.tagName === 'IMG' && this.ownerDocument.images) this.ownerDocument.images.load(this, String(v));
+  }
   set id(v) { this._attrs.id = String(v); }
   get childNodes() { return this.children; }
   get textContent() {
@@ -88,7 +94,7 @@ class FakeElement {
     if (k === 'class') this.className = String(v);
   }
   getAttribute(k) { return Object.prototype.hasOwnProperty.call(this._attrs, k) ? this._attrs[k] : null; }
-  removeAttribute(k) { delete this._attrs[k]; if (k === 'src') this.src = undefined; }
+  removeAttribute(k) { delete this._attrs[k]; if (k === 'src' && this.tagName === 'IMG') { this._loading = null; this.complete = true; this.naturalWidth = 0; this.showing = null; } }
   addEventListener(type, fn) { (this._listeners[type] || (this._listeners[type] = [])).push(fn); }
   removeEventListener(type, fn) { this._listeners[type] = (this._listeners[type] || []).filter((f) => f !== fn); }
   focus() { this.ownerDocument.activeElement = this; }
@@ -191,7 +197,9 @@ function createApp(opts) {
     avPauseState: 'PAUSED',      // state AVPlay reports after pause(); the TV behaviour is unverified
     random: null,                // Math.random replacement (e.g. () => 0: the shortest jitter every time)
     platformThrows: [],          // paths of TV platform calls that throw, like the real TV can (see below)
-    maxStepsPerAdvance: 300000
+    maxStepsPerAdvance: 300000,
+    imageDelayMs: 100,           // a logo's download time
+    imageStatus: null            // (url) -> HTTP status of a picture (default 200); 'hang': never answers
   }, opts || {});
 
   const clock = createClock(o.now, o.autoTickMs);
@@ -276,6 +284,11 @@ function createApp(opts) {
   }
   FakeXHR.prototype.open = function (method, url) { this._method = method; this._url = String(url); this.readyState = 1; };
   FakeXHR.prototype.setRequestHeader = function () {};
+  // A route's answer may carry headers: { headers: { 'Last-Modified': '…' } } (looked up case-insensitively).
+  FakeXHR.prototype.getResponseHeader = function (name) {
+    const h = this._headers || {}, k = Object.keys(h).find((x) => x.toLowerCase() === String(name).toLowerCase());
+    return k === undefined ? null : String(h[k]);
+  };
   FakeXHR.prototype.send = function () {
     const xhr = this;
     const req = { id: requests.length + 1, url: xhr._url, method: xhr._method, sentAt: clock.now, endedAt: null,
@@ -285,6 +298,7 @@ function createApp(opts) {
     xhr._req = req;
     const r = findRoute(req.url);
     const res = r ? r.handler(req) : { status: 404, body: '' };
+    xhr._headers = res.headers || null;
     const delay = res.delay == null ? o.defaultLatencyMs : res.delay;
     if (xhr.timeout > 0) {
       xhr._timers.push(addTimer(function () { finish(xhr, 'timeout', 0, ''); }, xhr.timeout, false, 'xhr-timeout ' + req.url));
@@ -445,6 +459,35 @@ function createApp(opts) {
   const index = readIndex();
   const netListeners = [];
   const document = createDocument(index.bodyHtml);
+  // Pictures, as the TV's engine (Chromium 47) loads them: every <img> / Image() src is a download unless this page already
+  // loaded that URL (the memory cache: complete at once, no request); two elements asking for one URL share one download;
+  // a failed picture is not cached (asked again, it is downloaded again). requests: every download started, { url, at }.
+  // el.showing: the URL whose picture the element paints — a new src keeps painting the previous picture until the new
+  // one has arrived (removeAttribute('src') drops it at once); a failed picture paints nothing.
+  const images = document.images = {
+    requests: [], loaded: new Set(), inflight: new Map(),
+    load(el, url) {
+      el._loading = url; el.complete = false;
+      if (images.loaded.has(url)) { images.finish(el, url, true); return; }
+      if (!images.inflight.has(url)) {
+        images.requests.push({ url, at: clock.now });
+        images.inflight.set(url, []);
+        const status = o.imageStatus ? o.imageStatus(url) : 200;
+        if (status !== 'hang') addTimer(function () {      // 'hang': a dead host never answers; the elements wait
+          const ok = status === 200, els = images.inflight.get(url);
+          images.inflight.delete(url);
+          if (ok) images.loaded.add(url);
+          els.forEach((e) => images.finish(e, url, ok));
+        }, o.imageDelayMs, false, 'image');
+      }
+      images.inflight.get(url).push(el);
+    },
+    finish(el, url, ok) {
+      if (el._loading !== url) return;              // the element was given another picture meanwhile
+      el._loading = null; el.complete = true; el.naturalWidth = ok ? 120 : 0; el.showing = ok ? url : null;
+      addTimer(function () { const fn = ok ? el.onload : el.onerror; if (fn) fn.call(el, {}); }, 0, false, 'image-event');
+    }
+  };
   const sandbox = {
     console: { log() {}, warn() {}, error() {}, info() {} },
     navigator: { userAgent: 'Mozilla/5.0 (SMART-TV; Linux; Tizen 3.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.69 TV Safari/537.36' },
@@ -472,6 +515,7 @@ function createApp(opts) {
       ApplicationControl: function (operation, uri) { this.operation = operation; this.uri = uri; },
       systeminfo: { getCapability: () => '3.0', getPropertyValue(name, ok) { if (ok) ok({}); } }
     },
+    Image: function () { return document.createElement('img'); },
     _winListeners: {},
     addEventListener(type, fn) { (sandbox._winListeners[type] || (sandbox._winListeners[type] = [])).push(fn); }
   };
@@ -512,7 +556,7 @@ function createApp(opts) {
   }
 
   const app = {
-    ctx: sandbox, clock, events, errors, tasks, net, av, document, jsonParses, thrown,
+    ctx: sandbox, clock, events, errors, tasks, net, av, document, jsonParses, thrown, images,
     storage: { raw: store, used, reads, writes: () => events.filter((e) => e.type === 'storage-write') },
     seq: () => seq,
     advance, advanceUntil, runTask, log,

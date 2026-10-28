@@ -50,9 +50,12 @@ const IPTV_ORG = ['#EXTM3U',
   '#EXTINF:-1 tvg-id="Channel9.il@SD" group-title="Entertainment",Channel 9 (1080p) [Not 24/7]', 'http://iptv.example.test/live/4/index.m3u8',
   '#EXTINF:-1 tvg-id="Euronews.fr@SD" group-title="News",Euronews English (720p)', 'http://iptv.example.test/live/5/index.m3u8', ''].join('\n');
 
-function playlistApp(body) {
-  const app = f.m3uApp({ boot: false });
+// url: where the list comes from (iptv-org's or any other); no list's groups are translated (owner, 2026-10-27).
+const IPTV_ORG_URL = 'https://iptv-org.github.io/iptv/countries/il.m3u';
+function playlistApp(body, url) {
+  const app = f.m3uApp({ boot: false, storage: url ? { playlistUrl: JSON.stringify(url) } : {} });
   app.fixture.playlist = body;
+  if (url) app.net.route((u) => u === url, () => ({ body: app.fixture.playlist, delay: 100 }));
   app.boot();
   app.advance(3000);
   return app;
@@ -64,13 +67,13 @@ test('playlists: Israeli channels first, then Ukrainian, then the rest in the pl
 });
 
 test('playlists: groups come from the playlist (iptv-org ids and "General;News" read right); no channel is filtered', () => {
-  const app = playlistApp(IPTV_ORG);
+  const app = playlistApp(IPTV_ORG, IPTV_ORG_URL);
   const g = Object.fromEntries(groups(app));
   assert.equal(g['Все каналы'], 5, JSON.stringify(g));
   assert.equal(g['Израиль'], 2, JSON.stringify(g));
   assert.equal(g['Украина'], 1, JSON.stringify(g));
-  assert.equal(g['Новостные'], 2, JSON.stringify(g));    // "General;News" -> News, and "News"
-  assert.equal(g['Музыкальные'], undefined, 'a group with no channels is shown');
+  assert.equal(g['News'], 2, JSON.stringify(g));         // "General;News" -> News, and "News": the provider's own word
+  assert.equal(g['Music'], undefined, 'a group with no channels is shown');
 });
 
 test('playlists: no Ukrainian channel -> no «Украина» group', () => {
@@ -223,9 +226,9 @@ test('review: a provider group «XXX» stays the provider\'s group and is not hi
 
 test('review: groups from #EXTGRP are read like group-title', () => {
   const body = ['#EXTM3U', '#EXTINF:-1 tvg-id="A.fr@SD",A (720p)', '#EXTGRP:General;News', 'http://iptv.example.test/live/1/index.m3u8', ''].join('\n');
-  const app = playlistApp(body);
+  const app = playlistApp(body, IPTV_ORG_URL);
   const g = Object.fromEntries(groups(app));
-  assert.equal(g['Новостные'], 1, JSON.stringify(g));
+  assert.equal(g['News'], 1, JSON.stringify(g));
 });
 
 
@@ -261,13 +264,23 @@ test('key privacy: on OTT Club the key goes only to the OTT Club server', () => 
 });
 
 
-test('fresh install (no key, no playlist): iptv-org\'s whole list plays at once — free out of the box', () => {
-  const app = createApp({});
-  app.net.route((u) => u.indexOf('iptv-org.github.io') >= 0, () => ({ body: IPTV_ORG, delay: 100 }));
-  app.net.route((u) => u.indexOf('http://iptv.example.test/') === 0, () => ({ body: f.MASTER.ottAlive, delay: 50 }));
-  app.boot();
+// Owner 2026-10-27 («А если я первый раз установил плеер и запустил — мне он должен предложить выбрать источник»):
+// a fresh install opens the choice of source instead of playing at once (replaces Codex R7's auto-play); Back there
+// still gives iptv-org's whole list — free out of the box. More: tests/first-launch.test.js.
+test('fresh install (no key, no playlist): «📡 Провайдеры» opens to choose; Back plays iptv-org\'s whole list — free out of the box', () => {
+  const boot = (storage) => {
+    const app = createApp({ storage });
+    app.net.route((u) => u.indexOf('iptv-org.github.io') >= 0, () => ({ body: IPTV_ORG, delay: 100 }));
+    app.net.route((u) => u.indexOf('http://iptv.example.test/') === 0, () => ({ body: f.MASTER.ottAlive, delay: 50 }));
+    app.boot();
+    return app;
+  };
+  const first = boot({});
+  first.advance(2000);
+  assert.ok(first.visible('sources') && !first.visible('setup'), 'a fresh install does not offer the choice');
+  first.press(KEYS.BACK, 1000);
+  const app = boot(Object.fromEntries(first.storage.raw));
   f.untilPlaying(app);
-  assert.ok(!app.visible('setup'), 'a fresh install asks for a key instead of playing');
   assert.equal(stored(app, 'playlistUrl'), freeUrl(app, 0));
   assert.match(f.lastOpenUrl(app), /^http:\/\/iptv\.example\.test\//);
 });
@@ -373,4 +386,15 @@ test('menu: a scroll bar shows that the groups column goes on below', () => {
   const app = playlistApp(body);
   app.press(KEYS.ENTER, 300);
   assert.match(app.document.getElementById('groups-bar').className, /\bon\b/);
+});
+
+test('providers: with two free providers each lists only its own playlists (review 4, F7: one list of free playlists, filtered per provider)', () => {
+  const two = [{ id: 'iptvorg', playlists: [{ id: 'all', url: 'https://iptv-org.github.io/iptv/index.m3u' }, { id: 'il', url: 'https://iptv-org.github.io/iptv/countries/il.m3u' }] },
+    { id: 'freetv', playlists: [{ id: 'news', url: 'https://free-tv.example.test/news.m3u' }] }];
+  const app = createApp({ config: { FREE_PROVIDERS: two } });
+  const rows = JSON.parse(vm.runInContext('JSON.stringify(Sources.list().filter(function (r) { return r.kind === "free"; })' +
+    '.map(function (r) { return [r.id, r.playlists.map(function (p) { return [p.id, p.kind, p.url]; })]; }))', app.ctx));
+  assert.deepEqual(rows, [
+    ['free:iptvorg', [['free:iptvorg/all', 'freepl', two[0].playlists[0].url], ['free:iptvorg/il', 'freepl', two[0].playlists[1].url]]],
+    ['free:freetv', [['free:freetv/news', 'freepl', two[1].playlists[0].url]]]]);
 });

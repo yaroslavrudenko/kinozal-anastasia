@@ -34,13 +34,15 @@ var ListView = (function () {
       c = list[i];
       c.rows = ListRows.get(c.name);
       c.start = firstRow(c);
-      ListRows.fill(c.rows, c.view, c.start);
+      // The way the cursor moved (-1 / 1, 0 not at all), once per render: both fills carry it (review 7, Codex C7-2).
+      c.dir = last[c.name] === undefined || c.view.cursor === last[c.name] ? 0 : c.view.cursor < last[c.name] ? -1 : 1;
+      ListRows.fill(c.rows, c.view, c.start, c.dir);
     }
     for (i = 0; i < list.length; i++) { c = list[i]; c.h = c.rows[0].el.parentNode.clientHeight; if (c.h) c.box = measure(c.rows); }
     for (i = 0; i < list.length; i++) {
       c = list[i];
       var next = !c.h ? c.start : c.bottom !== undefined ? upTo(c) : startFor(c);
-      if (next !== c.start) { c.box = shifted(c.box, next - c.start); c.start = next; ListRows.fill(c.rows, c.view, c.start); }
+      if (next !== c.start) { c.box = shifted(c.box, next - c.start); c.start = next; ListRows.fill(c.rows, c.view, c.start, c.dir); }
     }
     for (i = 0; i < list.length; i++) {
       c = list[i];

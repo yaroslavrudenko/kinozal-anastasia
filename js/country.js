@@ -30,9 +30,9 @@ var Country = (function () {
   var IL_SET = lowerSet(IL_NAMES), UA_SET = lowerSet(UA_NAMES);
   function has(set, name) { return set[name.toLowerCase()] === true; }
 
-  // ch: { name, group, id }; nowTitle: what is on (optional). Returns { il: bool, ua: bool }.
+  // ch: { name, groupId (the provider's own group text), id }; nowTitle: what is on (optional). Returns { il: bool, ua: bool }.
   function detect(ch, nowTitle) {
-    var name = (ch.name || '').trim(), group = ch.group || '', id = String(ch.id || '').toLowerCase();
+    var name = (ch.name || '').trim(), group = ch.groupId || '', id = String(ch.id || '').toLowerCase();
     // iptv-org style: "Kan 11 (1080p) [Not 24/7]" is "Kan 11"; its guide id "Kan11.il@SD" ends in the country.
     var base = name.replace(NAME_SUFFIX, '').trim();
     var il = IL_TAG.test(name) || IL_GROUP.test(group) || IL_ID.test(id) || HEBREW.test(name) || has(IL_SET, base);

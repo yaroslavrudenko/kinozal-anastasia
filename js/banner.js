@@ -7,9 +7,9 @@ var Banner = (function () {
   var state = '';              // the state line; while set the banner does not hide
 
   function setState(text) { state = text; if (Overlay.isNone()) show(false); }
-  function connecting() { setState('Подключение…'); }
-  function loading(pct) { setState('Загрузка видео…' + (pct >= 0 ? ' ' + Math.round(pct) + '%' : '')); }
-  function retrying(n, delayMs) { setState('Нет сигнала — повтор через ' + Math.max(1, Math.round(delayMs / 1000)) + ' с (попытка ' + n + ')'); }
+  function connecting() { setState(I18n.t('b.connecting')); }
+  function loading(pct) { setState(I18n.t('b.loading') + (pct >= 0 ? ' ' + Math.round(pct) + '%' : '')); }
+  function retrying(n, delayMs) { setState(I18n.t('b.retry', Math.max(1, Math.round(delayMs / 1000)), n)); }
   // Playback is back after a stall: the line goes and the banner hides as usual.
   function resumed() { if (!state) return; state = ''; if (UI.bannerShown() && Overlay.isNone()) show(false); }
 
@@ -22,7 +22,7 @@ var Banner = (function () {
     if (fetchGuide) EPG.ensure(c.id, onGuide);
     if (techSel !== Playback.selection()) techUntil = 0;   // a newer choice (zap, archive, pause) ends the window
     var t = Playback.position(), archive = Playback.mode() !== 'live', left = techUntil - Date.now();
-    var m = model(c, { t: t, extra: archive ? 'Архив · ' + Util.hhmm(new Date(t)) : '', tech: state ? '' : left > 0 ? tech : Player.streamInfo(false) });
+    var m = model(c, { t: t, extra: archive ? I18n.t('b.archive', Util.hhmm(new Date(t))) : '', tech: state ? '' : left > 0 ? tech : Player.streamInfo(false) });
     m.state = state;
     UI.banner(m, state ? UI.STICKY : Math.max(CONFIG.BANNER_MS, left));
   }
@@ -60,11 +60,11 @@ var Banner = (function () {
   function model(c, at) {
     var t = at.t, nn = EPG.nowNext(c.id, t), cur = nn.cur, next = nn.next;
     return {
-      num: c.num, logo: c.logo, title: c.name + (at.extra ? '   ·   ' + at.extra : ''), tech: at.tech,
+      num: c.num, logo: c.logo, title: I18n.iso(c.name) + (at.extra ? '   ·   ' + at.extra : ''), tech: at.tech,
       // U+2060 word joiners keep "21:00–22:00" on one line when the title wraps.
       // The same programme and text as the menu row (EPG.shown / EPG.label); an ended one keeps «(шла до HH:MM)».
-      now: cur ? Util.hhmm(new Date(cur.start)) + '\u2060–\u2060' + Util.hhmm(new Date(cur.stop)) + '  ' + EPG.label(nn.shown) : '',
-      next: next ? 'Далее ' + Util.hhmm(new Date(next.start)) + '  ' + next.title : '',
+      now: cur ? '\u200e' + Util.hhmm(new Date(cur.start)) + '\u2060–\u2060' + Util.hhmm(new Date(cur.stop)) + '\u200e  ' + EPG.label(nn.shown) : '',
+      next: next ? I18n.t('b.next', Util.hhmm(new Date(next.start)), I18n.iso(next.title)) : '',
       progress: cur ? (t - cur.start) / (cur.stop - cur.start) * 100 : 0
     };
   }

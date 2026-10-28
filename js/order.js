@@ -4,8 +4,8 @@ var ORDER = {
   // Extra groups after "All channels", by the country Country.detect() gives each channel.
   // "numbered": these channels also open the whole list, sorted by the number in the name.
   PINNED: [
-    { name: "Израиль", flag: "il", numbered: true },
-    { name: "Украина", flag: "ua" }
+    { name: "Израиль", label: "g.il", flag: "il", numbered: true },
+    { name: "Украина", label: "g.ua", flag: "ua" }
   ],
   // The number in a channel name ("Channel 9" -> 9); names without one sort after all numbered ones.
   nameNumber: function (name) { var m = /\b(\d{1,3})\b/.exec(name); return m ? +m[1] : 1000; },

@@ -7,30 +7,30 @@ var CONFIG = {
   OTT_KEY: '__OTT_KEY__',
   PLAYLIST_URL: '__PLAYLIST_URL__',
   EPG_URL: '',                 // empty = use url-tvg from the playlist header
-  VERSION: '1.8.4',            // must equal config.xml's version
+  VERSION: '1.9.0',            // must equal config.xml's version
   BUILD: '__BUILD__',          // filled by build.sh: commit and date
   // «📡 Провайдеры» (owner, 2026-10-27: a source is a provider; inside it the channels are grouped as the
   // provider gives them; a provider that gives separate playlists is a source of playlists): OTT Club (key),
   // the free iptv-org provider with its playlists (its whole public list first, ~11 000 channels; it can never
   // be removed) and the viewer's own providers (an M3U link each).
   FREE_PROVIDERS: [
-    { id: 'iptvorg', name: 'iptv-org — бесплатные каналы', playlists: [
-      { id: 'all', name: 'Весь список — каналы со всего мира', url: 'https://iptv-org.github.io/iptv/index.m3u' },
-      { id: 'il', name: 'Израиль', url: 'https://iptv-org.github.io/iptv/countries/il.m3u' },
-      { id: 'ua', name: 'Украина', url: 'https://iptv-org.github.io/iptv/countries/ua.m3u' },
-      { id: 'rus', name: 'На русском языке', url: 'https://iptv-org.github.io/iptv/languages/rus.m3u' },
-      { id: 'eng', name: 'На английском — CNN, Bloomberg, DW, France 24, Euronews…', url: 'https://iptv-org.github.io/iptv/languages/eng.m3u' },
-      { id: 'news', name: 'Новости', url: 'https://iptv-org.github.io/iptv/categories/news.m3u' },
-      { id: 'kids', name: 'Детские', url: 'https://iptv-org.github.io/iptv/categories/kids.m3u' },
-      { id: 'music', name: 'Музыка', url: 'https://iptv-org.github.io/iptv/categories/music.m3u' },
-      { id: 'movies', name: 'Кино', url: 'https://iptv-org.github.io/iptv/categories/movies.m3u' },
-      { id: 'documentary', name: 'Познавательные', url: 'https://iptv-org.github.io/iptv/categories/documentary.m3u' },
-      { id: 'sports', name: 'Спорт', url: 'https://iptv-org.github.io/iptv/categories/sports.m3u' }
+    { id: 'iptvorg', playlists: [                       // names: I18n 'p.<id>' / 'pl.<id>'
+      { id: 'all', url: 'https://iptv-org.github.io/iptv/index.m3u' },
+      { id: 'il', url: 'https://iptv-org.github.io/iptv/countries/il.m3u' },
+      { id: 'ua', url: 'https://iptv-org.github.io/iptv/countries/ua.m3u' },
+      { id: 'rus', url: 'https://iptv-org.github.io/iptv/languages/rus.m3u' },
+      { id: 'eng', url: 'https://iptv-org.github.io/iptv/languages/eng.m3u' },
+      { id: 'news', url: 'https://iptv-org.github.io/iptv/categories/news.m3u' },
+      { id: 'kids', url: 'https://iptv-org.github.io/iptv/categories/kids.m3u' },
+      { id: 'music', url: 'https://iptv-org.github.io/iptv/categories/music.m3u' },
+      { id: 'movies', url: 'https://iptv-org.github.io/iptv/categories/movies.m3u' },
+      { id: 'documentary', url: 'https://iptv-org.github.io/iptv/categories/documentary.m3u' },
+      { id: 'sports', url: 'https://iptv-org.github.io/iptv/categories/sports.m3u' }
     ] }
   ],
 
   // channel list
-  PLAYLIST_REFRESH_MS: 6 * 3600 * 1000,
+  PLAYLIST_REFRESH_MS: 3600 * 1000,   // the channel list and its groups, every provider (owner 2026-10-27: «Нужно сделать раз в час»; was 6 h)
   SWITCH_PAINT_MS: 300,        // «Провайдеры»: the switch message is painted before the app starts again
   LIST_TIMEOUT_MS: 20000,
   LIST_RETRY_MIN_MS: 10000,
@@ -93,6 +93,11 @@ var CONFIG = {
   NUMBER_ENTRY_MS: 1800,
   EXIT_CONFIRM_MS: 2000,
   VISIBLE_ROWS: 13,
+  LOGO_DWELL_MS: 200,          // logos are asked for once the cursor stays this long (or at once after a pause)
+  LOGO_PARALLEL: 6,            // logo downloads at a time (Chromium 47 opens at most 6 per host)
+  LOGO_KEEP: 400,              // loaded logos kept in memory (the whole OTT Club list); beyond it the least recently shown go
+  LOGO_EVICT: 50,              // how many of the least recently shown go at once when LOGO_KEEP is passed
+  LOGO_TIMEOUT_MS: 8000,       // a logo download not answered by then is given up (its slot freed); asked again at the next hourly list
   SEARCH_ROWS: 9,
   SEARCH_LIMIT: 60,
   DIAG_FLUSH_MS: 30000,

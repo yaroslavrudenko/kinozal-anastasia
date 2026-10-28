@@ -38,7 +38,7 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
 ---
 
 > ### 📺 Watch free the moment you install it
-> Настин кинозал comes with a **free provider built in: [iptv-org](https://github.com/iptv-org/iptv)** — its whole public list (**~11 000 channels from all over the world**) and its ready playlists: 🇮🇱 Israel · 🇺🇦 Ukraine · in Russian · **in English (CNN, Bloomberg, DW, France 24, Euronews, NBC News NOW, ABC News Live…)** · News · Kids · Music · Movies · Documentary · Sport. A fresh install starts playing iptv-org's whole list at once — no key, no sign‑up. Pick a provider and a playlist in **📡 Провайдеры**; inside, the channels are grouped as the provider gives them, Israeli and Ukrainian ones first. You can also **add your own providers** (an M3U link each) and switch between all of them on the TV.
+> Настин кинозал comes with a **free provider built in: [iptv-org](https://github.com/iptv-org/iptv)** — its whole public list (**~11 000 channels from all over the world**) and its ready playlists: 🇮🇱 Israel · 🇺🇦 Ukraine · in Russian · **in English (CNN, Bloomberg, DW, France 24, Euronews, NBC News NOW, ABC News Live…)** · News · Kids · Music · Movies · Documentary · Sport. A fresh install opens **📡 Провайдеры** so you choose what to watch — an iptv-org playlist needs no key and no sign‑up (Back there starts iptv-org's whole list). Pick a provider and a playlist in **📡 Провайдеры**; inside, the channels are grouped as the provider gives them, Israeli and Ukrainian ones first. You can also **add your own providers** (an M3U link each) and switch between all of them on the TV.
 >
 > ### ➕ Add your own playlists — in three steps
 > 1. Press **OK** (the channel menu), then **Blue** — **📡 Провайдеры** opens.
@@ -50,7 +50,7 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
 > ### ⭐ Want more? Subscribe to OTT Club
 > For **389 channels, a 7‑day archive with a real timeline slider and the full programme guide**, subscribe to [OTT Club](https://www.ottclub.tv): it is built in, enter your key and it works. Another paid provider works today if it gives you an **M3U link**: add it as your own playlist. **Built‑in support like OTT Club's (key, guide and archive from the provider's API) is not there yet for other paid providers; we will add it if there is interest** — [tell us which one](https://github.com/yaroslavrudenko/nastin-kinozal/issues).
 >
-> The free channels come from the open [iptv-org](https://github.com/iptv-org/iptv) project (publicly available channels). The player shows every channel a source lists and filters nothing (the one exception is your own setting: the adult group stays hidden until you switch it on in «ℹ О программе»): a stream that does not play is the source's matter. No paid channels, keys or private playlists are included in this repository. [How it works ↓](#-providers-ott-club-iptv-org-and-your-own)
+> The free channels come from the open [iptv-org](https://github.com/iptv-org/iptv) project (publicly available channels). The player shows every channel a source lists and filters nothing (the one exception is your own setting: the adult group stays hidden until you switch it on in «⚙ Настройки»): a stream that does not play is the source's matter. No paid channels, keys or private playlists are included in this repository. [How it works ↓](#-providers-ott-club-iptv-org-and-your-own)
 
 ## Why you'll love it
 
@@ -60,14 +60,15 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus th
 | ⏪ **Rewind TV like a video** | Press ▲ while watching and a timeline slider appears. Hold ◀ ▶ to scrub (it speeds up as you hold), jump between shows with ▲ ▼, and press OK to watch from that moment. Up to 7 days back. |
 | 🔍 **Find any channel** | Type part of a name (or a number) in 🔍 Search at the top of the menu; results update as you type. |
 | 📡 **Providers: free, your own, OTT Club** | The free iptv-org provider (whole list + 10 playlists), your own providers added on the TV, and OTT Club with your key — all in one **📡 Провайдеры** menu. Built‑in providers cannot be deleted; your own can. |
-| 🖥 **The picture fits your screen** | Every stream is laid exactly over the TV's whole 1920×1080 screen and starts at the best quality your connection allows, then adapts. «Картинка во весь экран» in «ℹ О программе» is on by default; switch it off to keep a stream's own proportions (Green cycles the modes while watching). |
-| 📺 **Every channel, in order** | Every channel the source lists, nothing filtered or hidden (adult channels only after you switch them on in «ℹ О программе»). 🇮🇱 Israeli channels come first, then 🇺🇦 Ukrainian ones, in every source. Groups follow the playlist: a group with no channels (say, no Ukrainian or no music channels) simply is not there. With OTT Club: **389 channels**, Israel first, then National, News, Documentary, Movies, Kids, Sport and more. |
+| 🖥 **The picture fits your screen** | Every stream is laid exactly over the TV's whole 1920×1080 screen and starts at the best quality your connection allows, then adapts. «Картинка во весь экран» in «⚙ Настройки» is on by default; switch it off to keep a stream's own proportions (Green cycles the modes while watching). |
+| 📺 **Every channel, in order** | Every channel the source lists, nothing filtered or hidden (adult channels only after you switch them on in «⚙ Настройки»). 🇮🇱 Israeli channels come first, then 🇺🇦 Ukrainian ones, in every source. Groups follow the playlist: a group with no channels (say, no Ukrainian or no music channels) simply is not there. With OTT Club: **389 channels**, Israel first, then National, News, Documentary, Movies, Kids, Sport and more. |
 | ★ **Your own favourites** | Press ⏯ (or Yellow) on any channel to pin it to ★ Favourites. CH+/CH− inside Favourites zaps through favourites only. |
 | ⚡ **Instant on old hardware** | Virtualised lists keep a 1000‑channel playlist as fast as a 10‑channel one. The programme guide loads per channel, only when you look at it. |
 | 🔊 **Picture and sound under control** | Every channel switch shows the stream briefly: resolution, codec, bitrate and sound (for example `1920×1080 · H264 · 7,5 Мбит/с · звук стерео`). Choose the audio track and the picture mode (full screen, the stream's proportions or with borders). |
 | 🧭 **Always know where you are** | A soft, quiet scroll bar beside the groups and beside the channels shows where you are in each list and when it ends; lists never run into the hint bar at the bottom, on any TV size. |
 | 🔑 **Your key stays with OTT Club** | The OTT Club key is used exactly as you typed it and is only ever sent to OTT Club — never to a free or your own playlist (pinned by tests). The app never judges the key: OTT Club does. |
-| 👤 **From the author** | «ℹ О программе» → «Автор» → OK opens the author's LinkedIn profile in the TV's browser. |
+| 🌍 **Your language** | The whole interface in **Русский** (default), **Українська**, **עברית** (right to left) or **English** — «⚙ Настройки» → «🌐 Язык интерфейса» → OK opens the list of languages, each written in itself (Русский, Українська, עברית, English), the current one marked ✓; pick one with ▲▼ and OK, and the app starts again in it on the same channel and group (Back, or OK on the current one, changes nothing). Channel names and programmes stay as your provider gives them. |
+| 👤 **From the author** | «⚙ Настройки» → «Автор» → OK opens the author's LinkedIn profile in the TV's browser. |
 
 ## See it in action
 
@@ -181,7 +182,7 @@ The full before → after table and what is still to verify on the TV: **[docs/P
 
 ## 📡 Providers: OTT Club, iptv-org and your own
 
-**Open it:** press **OK** for the channel menu, then **Blue** (or pick the **📡 Провайдеры** row near the end of the groups, just above ℹ О программе). The list:
+**Open it:** press **OK** for the channel menu, then **Blue** (or pick the **📡 Провайдеры** row near the end of the groups, just above ⚙ Настройки). The list:
 
 | Row | What it is | What you can do |
 |---|---|---|
@@ -190,13 +191,13 @@ The full before → after table and what is still to verify on the TV: **[docs/P
 | **your providers** | M3U links you added | **OK** watches it; **Red twice** deletes it |
 | **+ Добавить провайдера** | add a link | type an `http://` or `https://` M3U link, **OK** |
 
-Switching starts the app again on the chosen provider (or playlist), with its channels and groups; each one remembers its own last channel and group. The row in blue with **● сейчас** is the one you are watching. In the channel menu, a soft scroll bar beside the groups and beside the channels shows where you are in each list and when it ends; no list ever runs into the hint bar at the bottom, on any TV size.
+Switching starts the app again on the chosen provider (or playlist), with its channels and groups; each one remembers its own last channel and group. The channel list and its groups are downloaded again every hour, and every list downloaded is read and shown as it is — the player never decides from a date or a size that a list is unchanged. The row in blue with **● сейчас** is the one you are watching. In the channel menu, a soft scroll bar beside the groups and beside the channels shows where you are in each list and when it ends; no list ever runs into the hint bar at the bottom, on any TV size.
 
-**The OTT Club key.** Enter it at any time in 📡 Источники with **Blue** (or OK on the OTT Club row); it is saved exactly as typed and used at once, and it is only ever sent to OTT Club — never to a free or your own playlist. The player never checks the key itself: OTT Club judges it, and a key it refuses shows OTT Club's own error picture in the stream. A link from your OTT Club account works too (the key is taken from it). You can also build the key in with `OTT_KEY=` in `build.local.env`.
+**The OTT Club key.** Enter it at any time in 📡 Провайдеры with **Blue** (or OK on the OTT Club row); it is saved exactly as typed and used at once, and it is only ever sent to OTT Club — never to a free or your own playlist. The player never checks the key itself: OTT Club judges it, and a key it refuses shows OTT Club's own error picture in the stream. A link from your OTT Club account works too (the key is taken from it). You can also build the key in with `OTT_KEY=` in `build.local.env`.
 
-**Groups follow the source.** They come from the playlist (`group-title`; iptv-org's `General;News` becomes «Новостные», common English group names read in Russian). 🇮🇱 Israel and 🇺🇦 Ukraine groups appear when the source has such channels, and their channels open the list. A group with no channels is not shown.
+**Groups follow the source.** The groups a provider gives are shown exactly as it gives them, in every interface language, even one it calls «Undefined» or «Без группы» (`group-title`; from iptv-org's `General;News` the specific `News` is taken). Channel names and programmes are never translated either. The groups the player forms itself — 🔍 Search, All channels, ★ Favourites, 🇮🇱 Israel, 🇺🇦 Ukraine, «No group» (channels the source gives no group), 📡 Providers, ⚙ Settings — are in the interface language. The adult group is the one exception to «nothing filtered»: it is hidden by default, always, until you switch it on in «⚙ Настройки» (owner, 2026-10-27: «Для взрослых нужно скрывать по умолчанию всегда»). Names in another script than the interface (Hebrew in a Russian menu, Latin in a Hebrew one) read as written, wrapped lines included. Israel and Ukraine appear when the source has such channels, and their channels open the list. A group with no channels is not shown.
 
-**Your own playlist from any provider**: add its **M3U link** in 📡 Источники, or build it in with `PLAYLIST_URL=` in `build.local.env` — typing a long URL with a TV remote is slow. A link that carries the provider's own key (`…/playlist/<key>/…`, `?key=…`, `get.php?username=…&password=…`) is used as it is. From a standard extended M3U the player takes:
+**Your own playlist from any provider**: add its **M3U link** in 📡 Провайдеры, or build it in with `PLAYLIST_URL=` in `build.local.env` — typing a long URL with a TV remote is slow. A link that carries the provider's own key (`…/playlist/<key>/…`, `?key=…`, `get.php?username=…&password=…`) is used as it is. From a standard extended M3U the player takes:
 
 | Playlist attribute | What it gives you |
 |---|---|
@@ -222,14 +223,14 @@ printf 'CERT_PROFILE=kinozal\nDEVICE_PROFILE=%s\nTV=<tv-ip>:26101\n' ~/tizen-stu
 ./build.sh                                                   # sign, push the device profile, install, start
 ```
 
-The daisy icon appears in your TV's apps. It starts on the free iptv-org channels at once; enter an OTT Club key or add your own playlists in **📡 Провайдеры**.
+The daisy icon appears in your TV's apps. On the very first launch it opens **📡 Провайдеры** so you choose what to watch: an iptv-org playlist (free), **OTT Club** (it asks for your key right away; Back returns to the choice) or **+ Add a provider** (your M3U link). **Back** with no choice starts the free iptv-org channels. From then on it always opens the last provider, group and channel; 📡 Провайдеры is there whenever you want to change. A TV built with a key or a playlist (`build.local.env`) skips the choice and starts on it. The choice also opens whenever no provider is usable any more — say, a TV that ran a build with a key built in and now runs one without it: the player never tries to load an empty link.
 
 **The TV's address can change** (the router hands it out): `./build.sh` and the TV test runs check the saved address and, if the TV is not there, scan the local network for it (`tools/find-tv.sh`; [docs/DEPLOY.md §3](docs/DEPLOY.md)).
 
 ## 🗺 Roadmap
 
 **A universal player for any provider**
-- [x] 📡 Источники: OTT Club, 10 free playlists, your own M3U playlists (added and deleted on the TV).
+- [x] 📡 Провайдеры: OTT Club, 10 free playlists, your own M3U playlists (added and deleted on the TV).
 - [ ] Other paid providers, if there is interest: Xtream Codes (server + login), and possibly Stalker/MAG portals.
 - [ ] Programme guide (XMLTV) by URL, independent of the playlist.
 - [ ] Catch-up formats (`flussonic`, `shift`, templates) always taken from the playlist itself.

@@ -13,7 +13,7 @@ var NumEntry = (function () {
   function tune() {
     var n = parseInt(text, 10), c = Channels.byNum(n);
     cancel();
-    if (c && Channels.isEligible(c)) Zap.pick(c); else UI.toast('Нет канала ' + n);
+    if (c && Channels.isEligible(c)) Zap.pick(c); else UI.toast(I18n.t('m.noChannel', n));
   }
 
   function cancel() { clearTimeout(timer); timer = null; text = ''; UI.numEntry(''); }

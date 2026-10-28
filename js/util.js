@@ -18,16 +18,19 @@ var Util = (function () {
   // false when the value could not be kept (quota, private mode; recorded once per key) or when its
   // JSON is longer than maxChars (optional; serialised once, the length checked before writing).
   function save(key, value, maxChars) {
-    try {
-      var json = JSON.stringify(value);
-      if (maxChars && json.length > maxChars) { Diag.note('save.' + key, 'too big: ' + json.length + ' chars'); return false; }
-      localStorage.setItem(key, json);
-      return true;
-    } catch (e) {
-      if (!saveFailed[key] && window.Diag) Diag.note('save.' + key, (e && e.name) || 'error');
-      saveFailed[key] = true;
-      return false;
-    }
+    var json;
+    try { json = JSON.stringify(value); } catch (e) { return notSaved(key, e); }
+    return saveJson(key, json, maxChars);
+  }
+  // The same for a value serialised already (a big one is serialised in a task of its own).
+  function saveJson(key, json, maxChars) {
+    if (maxChars && json.length > maxChars) { Diag.note('save.' + key, 'too big: ' + json.length + ' chars'); return false; }
+    try { localStorage.setItem(key, json); return true; } catch (e) { return notSaved(key, e); }
+  }
+  function notSaved(key, e) {
+    if (!saveFailed[key] && window.Diag) Diag.note('save.' + key, (e && e.name) || 'error');
+    saveFailed[key] = true;
+    return false;
   }
 
   function remove(key) {
@@ -55,11 +58,9 @@ var Util = (function () {
     el.className = on ? el.className.replace(/(^|\s)hidden(?=\s|$)/g, '').trim() : (el.className ? el.className + ' hidden' : 'hidden');
   }
 
-  // Russian plural: forms = [1, 2–4, 5+] («канал», «канала», «каналов»); 11–14 take the third form.
-  function plural(n, forms) {
-    var d = n % 10, h = n % 100;
-    return forms[d === 1 && h !== 11 ? 0 : d >= 2 && d <= 4 && (h < 12 || h > 14) ? 1 : 2];
-  }
+  // An <img>'s onerror: a picture that does not load (a 404, a dead host) is hidden by visibility — no broken-picture
+  // icon, its box kept, so nothing moves (review 4, D10). Whoever sets the next picture shows it again.
+  function hideBrokenImage() { this.style.visibility = 'hidden'; }
 
   function escChar(c) { return ESC[c]; }
   function esc(s) { return String(s).replace(/[&<>"]/g, escChar); }
@@ -89,6 +90,6 @@ var Util = (function () {
 
   return {
     MIN_MS: MIN_MS, DAY_MS: DAY_MS,
-    load: load, save: save, remove: remove, pad2: pad2, hhmm: hhmm, $: $, show: show, plural: plural, esc: esc, dict: dict,
+    load: load, save: save, saveJson: saveJson, remove: remove, pad2: pad2, hhmm: hhmm, $: $, show: show, hideBrokenImage: hideBrokenImage, esc: esc, dict: dict,
     idle: idle, dayStart: dayStart, addDays: addDays, backoff: backoff, openUrl: openUrl };
 }());

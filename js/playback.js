@@ -20,7 +20,7 @@ var Playback = (function () {
 
   // Plays channel c's archive from fromMs; near the live edge it plays live instead.
   function archive(c, fromMs) {
-    if (!Catchup.supported(c)) { UI.toast('Для этого канала архив недоступен'); return; }
+    if (!Catchup.supported(c)) { UI.toast(I18n.t('m.noArchiveHere')); return; }
     var now = Date.now();
     fromMs = Math.max(Catchup.earliest(c, now), fromMs);
     // Close to the live edge the archive would only arrive in short pieces: switch to live instead.
@@ -52,11 +52,11 @@ var Playback = (function () {
   function togglePause() {
     if (!ch) return;
     if (mode === 'paused') { resume(); return; }
-    if (mode === 'live' && !Catchup.supported(ch)) { UI.toast('Пауза недоступна: у канала нет архива'); return; }
+    if (mode === 'live' && !Catchup.supported(ch)) { UI.toast(I18n.t('m.noPause')); return; }
     selection++;
     frozenMs = position(); pausedAt = Date.now(); mode = 'paused';
     Player.pause();
-    UI.toast('⏸ Пауза', UI.STICKY);
+    UI.toast(I18n.t('m.paused'), UI.STICKY);
   }
 
   // A short pause resumes in place (the native pipeline kept the picture); a long one, or one whose
@@ -73,7 +73,7 @@ var Playback = (function () {
   // The single home of "back to live": STOP, BACK in the archive, the slider at the live edge.
   function goLive() {
     if (mode !== 'live') live(ch); else if (hooks.onBanner) hooks.onBanner();
-    UI.toast('Прямой эфир');
+    UI.toast(I18n.t('m.live'));
   }
 
   // The app went to the background (hidden = true) or came back.
@@ -103,11 +103,11 @@ var Playback = (function () {
   // RED: the next audio track of the stream (the choice starts over with every new stream).
   function cycleAudio() {
     var tracks = Player.audioTracks();
-    if (tracks.length < 2) { UI.toast(tracks.length ? 'Звук: ' + tracks[0].label + ' (одна дорожка)' : 'Звук: одна дорожка'); return; }
+    if (tracks.length < 2) { UI.toast(tracks.length ? I18n.t('m.soundOne', tracks[0].label) : I18n.t('m.soundOnlyOne')); return; }
     var next = (audioIdx + 1) % tracks.length;
-    if (!Player.selectAudio(tracks[next].index)) { UI.toast('Звук: не удалось переключить дорожку'); return; }
+    if (!Player.selectAudio(tracks[next].index)) { UI.toast(I18n.t('m.soundFail')); return; }
     audioIdx = next;
-    UI.toast('Звук: ' + tracks[audioIdx].label);
+    UI.toast(I18n.t('m.sound', tracks[audioIdx].label));
   }
 
   // Network lost / restored (TV only): a toast, and a reconnect that resumes where the picture was.
@@ -117,8 +117,8 @@ var Playback = (function () {
       var net = window.webapis && webapis.network;
       if (!net || !net.addNetworkStateChangeListener) return;
       net.addNetworkStateChangeListener(function (v) {
-        if (v === net.NetworkState.GATEWAY_CONNECTED) { UI.toast('Сеть восстановлена'); Player.reconnect(); Sources.onNetwork(); }
-        if (v === net.NetworkState.GATEWAY_DISCONNECTED) UI.toast('Нет сети', 5000);
+        if (v === net.NetworkState.GATEWAY_CONNECTED) { UI.toast(I18n.t('m.netBack')); Player.reconnect(); Sources.onNetwork(); }
+        if (v === net.NetworkState.GATEWAY_DISCONNECTED) UI.toast(I18n.t('m.netDown'), 5000);
       });
     } catch (e) { Diag.note('network', (e && (e.code || e.message)) || String(e)); }
   }

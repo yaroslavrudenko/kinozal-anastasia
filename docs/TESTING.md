@@ -81,7 +81,7 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 | A7 | Open with the server down and no copy | Error text with «Повтор через N с»; the list appears by itself when the server returns | — | MANUAL + HARNESS list-load | P1 |
 | A8 | The key expires (provider «no key» clip) | The provider's clip plays; menu → BLUE → a new key is used at once (DEC-2026-10-26-show-as-is) | — | MANUAL + HARNESS setup-and-key | P1 |
 | A9 | BLUE in the menu: change the key; BACK cancels | Old key kept on BACK; a new valid key reloads the app | — | MANUAL | P2 |
-| A10 | The list refreshes (6 h, or «now» refresh) while watching | Playing channel continues; order and groups unchanged; no flicker | C1 | AUTO-TV M11 + HARNESS refresh-now | P1 |
+| A10 | The list refreshes (every hour since 2026-10-27, was 6 h; or «now» refresh) while watching | Playing channel continues; order and groups unchanged; no flicker | C1 | AUTO-TV M11 + HARNESS refresh-now | P1 |
 
 ### B. Channel menu and groups
 | ID | Steps | Expected result | Set | Verified | P |
@@ -1982,4 +1982,433 @@ Owner: «у нас появились ползунки, поэтому есть 
 
 Replaced (they asserted the removed lines): `list end: a long group says «▼ ещё N каналов» …`, `list end: a group that fits one page says «Конец списка» at once`, `list end: with one-line rows a page holds 12 channels (was 13) and the line says «▼ ещё 33 канала» in the 13th slot`, `list end: after a channel is picked the line is not visible`, `list end: the menu says how many channels are below the page, and «Конец списка» on the last page`, `menu: a scroll bar and «▼ ещё N групп» …` → `scroll bar: in a long group the thumb starts at the top, moves down page by page and reaches the bottom; no list-end line under the menu`, `scroll bar: a group that fits one page shows no bar`, `list end: with one-line rows a page holds 12 channels (one row slot kept free above the hint bar)`, `scroll bar: after a channel is picked the bars are not visible`, `scroll bar: the menu's channel bar starts at the top and its thumb reaches the bottom on the last page (no list-end line in the menu)`, `menu: a scroll bar shows that the groups column goes on below`.
 
-**Author link (2026-10-27, owner: «перейти на пункт автора, нажать «Ввод», и открылся браузер с моим LinkedIn-профайлом»).** «О программе» starts with the item «Автор — Ярослав Руденко · linkedin.com/in/yaroslav-rudenko-2303 · OK — открыть в браузере»; OK opens https://www.linkedin.com/in/yaroslav-rudenko-2303 in the TV's browser through Tizen app control (`operation/view`; new privilege `application.launch` in config.xml; a new tab on the desktop). Test: `about: «Автор» is the first item; OK on it opens the author's LinkedIn profile in the TV's browser`.
+**Author link (2026-10-27, owner: «перейти на пункт автора, нажать «Ввод», и открылся браузер с моим LinkedIn-профайлом»).** «О программе» starts with the item «Автор — Ярослав Руденко · linkedin.com/in/yaroslav-rudenko-2303 · OK — открыть в браузере»; OK opens https://www.linkedin.com/in/yaroslav-rudenko-2303 in the TV's browser through Tizen app control (`operation/view`; new privilege `application.launch` in config.xml; a new tab on the desktop). Test: `about: «Автор» is the first item; OK on it opens the author's LinkedIn profile in the TV's browser` — renamed with the move to «⚙ Настройки» (the author is now the last item) to `settings: «Автор» (the last item) …` (`tests/picture-fit.test.js`).
+
+### Interface language: «⚙ Настройки» with Russian, Ukrainian, Hebrew and English (2026-10-27)
+
+Owner: «переименовать меню «О программе» в «Настройки» и добавить туда ещё возможность выбора языка … по умолчанию на русском, потом на украинском, потом на иврите, потом на английском»; «Мы переводим интерфейс. Название канала возвращает провайдер». `js/i18n.js` holds every text of the app's own in the four languages (one dictionary; Russian/Ukrainian plural forms, Hebrew/English one/other); `I18n.apply()` sets `lang` and `dir` on `<html>` and fills the page's marked texts (`data-t`, `data-tp`). Channel names, programmes and every group the provider gives (OTT Club's Russian groups, iptv-org's «News», any playlist's) are shown as given; only the groups the player forms itself are translated. «⚙ Настройки» (the menu's last row): «Язык интерфейса» (OK: Русский → Українська → עברית → English; saved; the app starts again in it), «Картинка во весь экран», «Каналы для взрослых», «Автор» (LinkedIn). Hebrew mirrors the layout (CSS `[dir="rtl"]`: the columns, scroll bars, highlight bars, banner, programme panel); time lines and switches keep running left to right. The playlist names left `config.js` (the dictionary is their one source).
+
+| Test (`tests/i18n.test.js`) | Proves |
+|---|---|
+| `i18n: the dictionary has a non-empty text in all four languages for every key, and the same {n} placeholders` | no missing or broken translation |
+| `i18n: Russian by default — the menu and «⚙ Настройки» are Russian` | the default |
+| `i18n: in «⚙ Настройки» OK on «Язык интерфейса» goes Русский → Українська → עברית → English → Русский; each choice is saved and a fresh app starts in it` | the setting, through a real restart |
+| `i18n: in English the menu, «Providers» and the free playlists are English; channel names stay as the provider gives them` | interface translated, provider data untouched |
+| `i18n: in English an iptv-org playlist shows its groups as given; Israel and Ukraine pinned groups are English` | groups |
+| `i18n: Hebrew is written right to left; Ukrainian uses its own plural forms` | direction and plurals |
+| `i18n: groups the provider gives are shown as given in every language — iptv-org's «News» and «Kids», any playlist's; our own groups are translated` | owner's rule on groups (below) |
+| `i18n: an entry with no name keeps the same key in every language (a favourite outlives a language change)` | keys never depend on the language |
+| `i18n: the language switch keeps the channel being watched, and a double OK moves one language only` | the restart loses nothing; one step per restart |
+| `i18n: every I18n key the code uses is in the dictionary` | no key missing (scan of `js/` and `index.html`) |
+| `i18n: the Ukrainian, Hebrew and English texts carry no Russian, and Hebrew and English carry no Cyrillic at all` | nothing left untranslated |
+| `i18n: Russian and Hebrew plural forms` | plurals |
+| `tests/browser/i18n-rtl.test.mjs` (4 tests) | in a real page: every `[data-t]` text and the search placeholder are translated in English and Hebrew; in Hebrew the groups column is on the right and RIGHT/LEFT move toward groups/channels; the banner bar and the scrub ends run left to right (start on the left) |
+
+**Review of the localization (2026-10-27): three auditors — native, localization, Codex (external).** All three REJECT; every finding is fixed in this tree:
+- groups keep a language-independent id (`groupId`), and the menu, the remembered zap group and the offline copy use it;
+- groups the provider gives are never translated (see the owner's rule below);
+- an unnamed entry's key uses «канал» in every language;
+- `I18n.t` fills placeholders in one pass, so a programme title containing `{1}` is not rewritten;
+- a double OK before the restart is ignored;
+- the current channel is saved before the restart;
+- in Hebrew the menu arrows are mirrored, and the banner bar and scrub ends run left to right;
+- the auditors' wording fixes for Hebrew, English and Ukrainian are applied (seconds/minutes «שנ׳/דק׳», LRM/RLM around Latin text, adult toasts, «network: {0}», the dedication on two lines), and the unused `st.title` is removed.
+
+**Owner's rule on groups (2026-10-27):** «Если группы возвращает провайдер — то мы их показываем как есть, если мы сами их формируем нашей логикой — то нужно переводить». Groups the provider gives — OTT Club's, iptv-org's categories, any playlist's — are shown as given in every language. Groups our logic forms — Search, All channels, Favourites, Israel, Ukraine, «No group», Providers, Settings — are in the interface language. The category translations (`c.*`, 24 keys) were removed from the dictionary.
+Restated the same day: «Если провайдер возвращает названия групп и названия каналов — мы их не переводим, мы переводим наши группы, которые мы сами искусственно создаём, текст интерфейса. То, что возвращается провайдером, не переводим и не можем перевести». So: the interface text and our own groups are translated; group names, channel names and programmes from the provider never are.
+
+Still open, waiting for the owner: whether to translate the app's name (recommended: keep «Настин кинозал»). `Util.plural` was removed on 2026-10-27 (the owner's «фикси все находки»; its test now checks `I18n.n`).
+
+Desktop screenshots (headless Chrome, this tree): the menu, «Настройки» and «Провайдеры» in Hebrew (right to left), English and Ukrainian — no overlap, the hint bars apart. Not yet on the TV.
+
+### Localization review 3: every finding fixed in one batch (2026-10-27)
+
+Owner: «Фикси все находки». Four reviewers (native technical, Codex external, the design expert, the performance engineer) reported 46 register items; this batch fixes every code item at once and records the rest below. Rules kept throughout: provider texts (channel names, programmes, groups — «Undefined» and «Без группы» included) are never translated; only the interface and our own groups are; mixed texts read as written and look the same; keys stay the same across languages and across the upgrade; the OTT Club key is never printed or logged; ES5 only (Chromium 47).
+
+**How a provider text keeps its own reading order (`js/i18n.js`, `js/listrows.js`, `css/app.css`).**
+- **Its direction** is the one of its first strong letter. Emoji and flags (UTF-16 surrogate pairs), digits (Arabic-Indic too), punctuation and symbols (× ★ ▶ «») are not letters and are skipped. A text with no letter at all (`123 · 456`) reads left to right.
+- **In the list columns** (channels, groups, «now» lines, programmes, search titles) each text sits in its own element (`.x`) inside a flex cell. A text in the other script than the interface gets its own `dir`; the cell keeps it at the interface's start edge, so single-line rows share one edge, and a wrapped one keeps its own start edge on every line. The title's ★ and ▶ are elements of their own beside it, so they stay at the interface's ends.
+- **In a sentence of ours** (the banner title and «now», search «group · programme», the panel and slider titles, «(… до HH:MM)», toasts) the provider text is embedded with LRE/RLE … PDF, and interface-direction marks (LRM/RLM) around it keep our · — ( ) on our side. Tizen 3's engine knows these; the isolate characters (FSI/LRI/RLI/PDI) are newer and are not used.
+- **Technical texts** (a provider's host name, the picture size 1920×1080) always read left to right (`I18n.ltr`).
+- **Hebrew hints** pin their arrow pairs left to right (LRM ◀ ▶ LRM, ▲ ▼, ← →), so they look as on the remote, and the search hint's arrow points the reading way («הקלידו שם ← OK»).
+
+**Groups and the upgrade.** A playlist's channels with no group form our «No group» (id `''`, menu key `none`, translated); a provider group named «Undefined» or «Без группы» is the provider's and is shown as given. Saved keys keep their frozen words («канал», «Без группы»). A zap group remembered by 1.8.4 under a Russian category name («grp:Новостные», «grp:Детские», «grp:Без группы») is found again (the group holding the channel being watched, else the first in the menu) and remembered by its new key once. An offline copy written by 1.8.4 (v1) reads its group ids back from the channel keys.
+
+**The offline copy (v2).** A row starts with the key and leaves out what the key or the place already gives: the number (its place), the id when the key holds it exactly (checked on write; an id with «|» or none is kept), and trailing empty values; an unnamed entry is written with an empty name and shown in the reader's language. Every channel comes back field for field (test below). The real 11 340-channel iptv-org list: see docs/PERFORMANCE.md (P-1). The copy stays a fallback and a first paint: the fresh list always downloads at boot and replaces it.
+
+| Test | Proves (register item) |
+|---|---|
+| `tests/browser/mixed-text.test.mjs`, per he / en / ru: `mixed text: <lang> — channel names (emoji- and flag-first, digits only, wrapped) read as written; ★ before, ▶ after, at the interface ends; one edge and font` | 1, 2, 3, 22: 16 names incl. 🇮🇱/📺/🎬-first, digit-only, two that wrap (both directions, every line at its own start edge), the direction each cell gets, ★ and ▶ sides, one edge and one font |
+| same file: `mixed text: <lang> — the «now» lines, the groups, the banner, search «group · programme», the programme panel, the archive title and «(… until HH:MM)» read as written` | 21, 22: every screen where provider text meets ours; panel titles that wrap in both directions keep one edge |
+| `tests/browser/i18n-rtl.test.mjs`: `i18n browser: in en/he every [data-t] text and the search placeholder are the dictionary's, in en/he (no Russian left)` (renamed from `… are translated (no Russian left)`) | 24: each page text equals the dictionary's, Hebrew texts carry Hebrew, English texts carry Latin and no Hebrew; literal placeholder and titles |
+| `i18n browser: in Hebrew the slider's «1 h 5 min behind live» reads right to left between its left-to-right ends` | 6 |
+| `i18n browser: in Hebrew the hints' arrow pairs look as on the remote (◀ left of ▶, ▲ before ▼) and the search arrow points from the name to OK` | 7 |
+| `i18n browser: the search results have no divider line beside them (no groups column there)` | 14 |
+| `i18n browser: in ru/uk/he/en a message in «⚙ Settings» and «📡 Providers» covers neither the icon, the title nor a row` | 15 / 35: messages on these two screens sit on the hint band |
+| `tests/browser/hint-gap.test.mjs`: `hint gap: on a 1280×720 screen in Hebrew the <screen> rows end at least 8 px (scaled) above the hint bar` (4 screens) | 13, 25: the canvas is on screen (scaled toward its right edge) and the gap holds |
+| `tests/i18n.test.js`: `iso: a text's direction is its first letter's — emoji and flags (surrogate pairs), digits (Arabic-Indic too) and punctuation are skipped`; `iso: a text with no letter at all (digits, signs) reads left to right — embedded so in Hebrew, as given otherwise` | 1, 2 (exact strings) |
+| `i18n: a provider of one's own (a host name) and the picture size read left to right in Hebrew; a track's language is wrapped as provider text` | 4, 5, 8, 29 (decimal separator from the dictionary) |
+| `i18n: the language row starts with 🌐 in every language …`; `i18n: Hebrew uses one quotation style (") and its arrow pairs are pinned left to right` | 17; 16, 7 |
+| `i18n: Russian and Hebrew plural forms` (now asserts the Hebrew words) | 20 |
+| `i18n: in «⚙ Настройки» OK on «Язык интерфейса» goes …` and `i18n: the language switch keeps the channel being watched …` (both now boot a successor app from the previous one's storage) · new `i18n: a language change keeps the channel and the group: three restarts in a row, each from the previous app's storage …` | 23 |
+| `i18n: an entry with no name is not taken for an Israeli channel in Hebrew (its placeholder «ערוץ» is not its name)` | found while fixing 9: `Country.detect` read the Hebrew placeholder as a name |
+| `tests/groups-and-copy.test.js` (25 tests at fix batch 4): groups «Undefined» / «Без группы» / none; «General;News»; the 1.8.4 zap group and v1 copy; the copy across languages field for field (unnamed, «#2» duplicates, an id with «|», archive); group kept by id; freshness pins (the boot download replaces a saved copy; ~~an unchanged playlist downloaded on schedule but not parsed~~ — removed in batch 2, item 2: every downloaded list is parsed and applied; a changed one applied on the next refresh; ~~no Last-Modified → parsed every time~~ — superseded (batch 3, item 3) by «every downloaded playlist is parsed and applied», whatever the headers; OTT Club's list always applied; the open menu re-reads «now» every 60 s) | 9, 10, 11, 12, 36, 38 and the owner's freshness rule |
+| `tests/logos-and-redraws.test.js` (6 tests): logos at once on the first opening and on a single step after a pause; none for pages flicked past, the resting page's after `NOW_QUIET_MS`, names and «now» lines never waiting; the menu laid out ahead after a failed first start; the banner logo not reloaded; one day read per panel key | 37, 39, 43, 44 |
+| `tests/list-end.test.js`: `list end: the Russian plural of «канал» …` (now through `I18n.n`) | 26 |
+| `tests/menu.test.js`: `eligibility (pin): an adult channel is not listed …` (default settings) | 32 (owner ruling below) |
+
+Replaced (old names → new): the 6 `mixed text: <he|en|ru> interface, playing «Channel 9 [RU]» / «כאן 11 (HD)» — provider names read as written, ▶ at the interface end, one edge and one font per column` → the 6 `mixed text: <lang> — …` tests above (the old ones read the cell's first text node, which the per-text element replaced, and skipped wrapped names); `i18n browser: in en/he every [data-t] text and the search placeholder are translated (no Russian left)` → `… are the dictionary's, in en/he (no Russian left)`.
+
+**Owner decision (2026-10-27): adult channels hidden by default.** Verbatim: «Для взрослых нужно скрывать по умолчанию всегда». The group «Для взрослых» is hidden until «Каналы для взрослых» is switched on in «⚙ Настройки» — the one exception to «не фильтруем». Pinned by `eligibility (pin): …` with default settings. Status: DEFERRED-USER-APPROVED (owner design).
+
+**By design: switches are not mirrored in Hebrew** (design review F9). «On» keeps the knob on the right in every language; the blue colour carries the state. Kept.
+
+**Register 2026-10-27 — status of every item** (file:line after this batch):
+
+| # | Item | Status |
+|---|---|---|
+| 1 | first-strong detection: surrogates, punctuation, Arabic-Indic digits | APPLIED — js/i18n.js:215-241 (firstStrong, otherDir, iso) |
+| 2 | no-letter names in RTL | APPLIED — js/i18n.js:231-234 (no letter: left to right) |
+| 3 | wrapped provider text: lines 2+ at the wrong edge | APPLIED — js/listrows.js:8-12, :33-54; css/app.css:66-72 |
+| 4 | host/URL provider labels | APPLIED — js/sources.js:73, :307 (`I18n.ltr`); js/overlays/sources.js (no `iso` on our own texts) |
+| 5 | track language | APPLIED — js/avtracks.js:41 |
+| 6 | Hebrew slider delta | APPLIED — css/app.css (`[dir="rtl"] .scrub-delta`) |
+| 7 | Hebrew arrow pairs, search arrow | APPLIED — js/i18n.js (h.menu, h.prog, h.search, h.scrub, h.first, h.firstDesktop, st.hint) |
+| 8 | 1920×1080 reversed in Hebrew | APPLIED — js/avtracks.js:20 (`I18n.ltr`) |
+| 9 | «Undefined» / no group / provider «Без группы» | APPLIED — js/m3u.js groupId, js/i18n.js group, js/channels.js rebuild (key `none`), js/ottclub.js:78 |
+| 10 | upgrade of `grp:<Russian>` and v1 copies | APPLIED — js/channels.js upgradedGroupKey, js/zap.js savedIndex, js/sources.js unpackV1, js/m3u.js groupIdOfKey |
+| 11 | `unnamed` lost in the copy | APPLIED — js/sources.js row/pack (empty name) |
+| 12 | copy writing the group id untested | APPLIED — tests/groups-and-copy.test.js |
+| 13 | 1280×720 Hebrew fit | APPLIED — js/ui.js:11-16 (boot applies the language before the first fit; a language change restarts the app) |
+| 14 | divider beside search results | APPLIED — css/app.css (`.search-wrap:before`) |
+| 15 | toast over the app icon | APPLIED (= 35) |
+| 16 | Hebrew quotation marks | APPLIED — js/i18n.js set.playlist |
+| 17 | 🌐 on the language row | APPLIED — js/i18n.js st.language (4 languages) |
+| 18 | switches not mirrored in Hebrew | owner design — kept (note above) |
+| 19 | Tizen Hebrew font weight / 24 px grey | OPEN-NEEDS-TV (below) |
+| 20–25 | tests | APPLIED — tables above |
+| 26 | dead `Util.plural`, `I18n.has`, `I18n.LANGS` | APPLIED — removed; list-end test on `I18n.n` |
+| 27 | `(groupId \|\| group)` fallbacks; duplicate eligibility rule | APPLIED — js/channels.js:12-13, js/country.js:35 (id only) |
+| 28 | `DEFAULT_NAME` module state; duplicated «Без группы» literal | APPLIED — js/m3u.js:6-8 (frozen key words named once; the name passed per parse) |
+| 29 | decimal separator outside the dictionary | APPLIED — js/i18n.js `num.decimal`, js/avtracks.js:11 |
+| 30 | orphan comment; stale test comment | APPLIED — js/i18n.js, tests/sources.test.js:53 |
+| 31 | docs | APPLIED — this section, README, docs/PERFORMANCE.md |
+| 32 | adult hidden by default | DEFERRED-USER-APPROVED (owner decision above) |
+| 33 | gap 40 px between groups and channels | APPLIED earlier — unchanged |
+| 34 | scroll bars 6 px | APPLIED earlier — unchanged |
+| 35 | toast over the icon | APPLIED — css/app.css (on «⚙ Настройки» and «📡 Провайдеры» a message sits on the hint band) |
+| 36 | P-1 offline copy over the cap | APPLIED — js/sources.js row/fromRow (v2) |
+| 37 | P-2 logos for every paged row | APPLIED — js/listrows.js setLogo/showLogos |
+| 38 | P-3 identical list re-parsed | APPLIED then **REMOVED in batch 2** (review 4, REGISTER2 item 2: the `Last-Modified` + length skip kept a same-length rewrite stale; every downloaded list is parsed and applied) |
+| 39 | P-4 menu laid out only at a first frame | APPLIED — js/app.js onError (laid out after a failed start; not at list time, so a starting stream keeps the bandwidth and the thread) |
+| 40 | P-5 unsliced split | OPEN-NEEDS-TV |
+| 41 | P-6 first layout before boot | OPEN-NEEDS-TV; the doc claim is corrected (docs/PERFORMANCE.md) |
+| 42 | P-7 favourite toggle 34 ms | no change (measured cost recorded in docs/PERFORMANCE.md) |
+| 43 | P-8 banner logo re-set | APPLIED — js/ui.js:28 |
+| 44 | P-9 day list twice per key | APPLIED — js/overlays/panel.js |
+| 45 | P-10 regexes per call | APPLIED — js/i18n.js `PLACEHOLDER`; the group regex is gone with item 9 |
+| 46 | P-11 doc cadence | APPLIED — docs/PERFORMANCE.md («now» policy: 60 s) |
+
+**Needs the TV** (the owner is away; the TV is not touched in this batch):
+- the Hebrew font on Tizen 3: a real 600/700 weight next to Latin, and the 24 px grey «now» lines from the sofa (item 19);
+- the localStorage quota on the TV (decides whether the 2.1 M-char copy of the default list is kept there) (P-1);
+- the first page layout before boot and the menu's first layout (P-4, P-6, item 41);
+- the 11 340-channel list on the TV: download time, the longest pause (the unsliced `split`, P-5, item 40), list ready;
+- logo decoding and memory while paging (P-2);
+- AVPlay's synchronous calls per zap (PE-23);
+- the whole batch on the device: mixed names, wrapped names, Hebrew hints and the slider line, the toast on «⚙ Настройки».
+
+**Added during the batch (owner, 2026-10-27).**
+- **Version 1.9.0** («Не забудь поднять версию приложения»): `config.xml` and `CONFIG.VERSION` 1.8.4 → 1.9.0 (pinned equal by `config (pin): CONFIG.VERSION equals the widget version in config.xml`). The «1.8.4» in `js/channels.js` and `tests/groups-and-copy.test.js` names the release whose saved data is upgraded, not the current version, so it stays.
+- **The channel list every hour** («Нужно сделать раз в час»): `PLAYLIST_REFRESH_MS` 6 h → 1 h, every provider. New test `refresh (owner 2026-10-27: «Нужно сделать раз в час»): the channel list and its groups are downloaded every hour, for every provider; a changed list is applied after one hour`. The «now» tests count the «now» requests (`?t=`) apart from the hourly catalog: `now refresh (A1, B1) …` still requires every re-read exactly 60 s after the previous answer, plus one immediate re-read after each catalog from the provider's cache (D6b); `now line: a refresh is one … request …` and `now line: every refresh is justified …` now expect 118 re-reads + 2 catalogs in 2 h with no «now» source more than 61 s from the next (was 119 re-reads, no catalog); `now retained … only 50 of 389 channels …` checks the marks within the first catalog hour (E+14/16/25; the hourly catalog names every channel again). The outage tests do not count an aborted request (cancelled by the catalog download and sent again after it) as a failed attempt.
+- **A defect the hourly refresh exposed, fixed:** the catalog download aborts a «now» request in flight; when that download failed, nothing re-armed the «now» governor and the 60 s retries stopped (40 attempts in 61 min). `NowLines.cancel()` re-arms after an abort (`js/nowlines.js`). Pinned by the outage tests (mutation M56).
+- **The first launch** («А если я первый раз установил плеер и запустил — мне он должен предложить выбрать источник — то меню, что мы сделали»; «Если я выбрал ОТТ Клуб — ещё и ввести код»): with nothing saved and nothing built in, «📡 Провайдеры» opens titled «Выберите, что смотреть» and nothing plays or downloads behind it. OK on a playlist starts it (the one switch), and every later launch opens the last source, group and channel. OK on OTT Club with no key opens the key screen at once (the key is saved exactly as typed and goes only to OTT Club); Back from the key screen returns to the choice. Back on the choice starts the free iptv-org channels, so the screen is never left with nothing. A key or playlist built in (`build.local.env`) is not a first launch. **This replaces Codex R7's behaviour** (a fresh install played the first free playlist at once). Tests: `tests/first-launch.test.js` (6); `fresh install (no key, no playlist): iptv-org's whole list plays at once — free out of the box` → renamed `fresh install (no key, no playlist): «📡 Провайдеры» opens to choose; Back plays iptv-org's whole list — free out of the box`.
+- **Found while fixing, fixed:** an unnamed entry's Hebrew placeholder «ערוץ» made `Country.detect` take it for an Israeli channel (it jumped to the top in Hebrew); the Hebrew providers note read «iptv-org · OTT Club בחינם» (two Latin names merged into one run; an RLM separates them; pinned in `i18n browser: in Hebrew the hints' arrow pairs …`); on «⚙ Настройки» the message now takes the whole hint band instead of half-covering its words.
+- **Residual (LOW, recorded):** a wrapped sentence of ours that holds provider text (the slider's «channel · programme» title, the banner title) still wraps its second line to the interface's edge; the per-text fix (item 3) is in the list cells. A logo that fails to load shows the browser's broken-image box (pre-existing; desktop screenshots, where the logo hosts are not reachable).
+
+**Mutation proofs (VG-6), 2026-10-27.** Each mutant: the pattern counted exactly once before writing, the change verified on disk, the named tests run, the file restored and compared byte for byte with a copy taken before (`cmp` rc 0 for every row). 51 mutants, all **killed** after two corrections of the tests themselves: M21 (`EPG.label` without `iso`) first **survived**, because the mixed-text test compared only letters and digits and its titles had no neutral edges; the test now compares every visible character and has titles like «שידור חי!», «20:00 החדשות», «Live!», «(HD) Discovery», and M21 is killed (3 of 6). M59 (the watching hint over the first-launch choice) survived because the toast was checked after it had gone; it is checked at 3 s now and is killed. Three mutants (M1, M1b, M7) were first refused by the count guard (their pattern held `\u` escapes the spec had turned into characters) and ran after the spec was fixed.
+
+**Desktop screenshots** of this tree (headless Chrome, not the TV): the menu, «⚙ Настройки» with a message, the programme panel, the slider, search, the banner with mixed names — in Hebrew and English; the menu with mixed names in Russian; the first-launch choice in Hebrew and English.
+
+## Fix batch 2 — review 4 of 1.9.0 (2026-10-27)
+
+Four reviewers (native, Codex, performance, design) read the whole uncommitted 1.9.0 change; their register is
+`scratchpad/review4/REGISTER2.md` (33 items). Items 1–30 were fixed in one pass; 31–33 are the owner's decisions and the
+code is unchanged for them. Version stays **1.9.0**. The stream path (AVPlay open/close, buffers, retry timings) is unchanged;
+only *when* the hidden menu is laid out on a failing stream moved (item 13). No refresh interval was lengthened, no download is
+skipped, no cache was added — one was removed (item 2).
+
+**Coordinator decisions applied.** Item 2: the «skip the parse when `Last-Modified` and the length are unchanged» shortcut is
+removed; every downloaded list is parsed and applied (owner: «Нужно сохранить баланс между производительностью и
+достоверностью информации … актуальные списки каналов и групп»; «избыточного кеширования тоже не должно быть»). Item 1: any
+state with no usable source goes to the source choice. Item 13: the menu is prepared from the player's 4th attempt. Item 21: a
+fixed-width icon box, not `⚙️` (see the row). Item 22: a first-launch key prompt `set.keyFirst`.
+
+| # | Item | Status | Where |
+|---|---|---|---|
+| 1 | no source + a saved last channel: request to '', fatal loop, empty own provider, menu unreachable | APPLIED | js/sources.js:27 `firstLaunch() = !mode()`; js/sources.js:84 `addUser` ignores an empty link; js/app.js:61-67 |
+| 2 | skip-parse by `Last-Modified` + length kept a changed list | APPLIED (removed) | js/sources.js:132-147 (every list parsed and applied); js/net.js back to `done(err, text)` |
+| 3 | 1.8.4 «Новостные» with both «News» and a literal «Новостные» | APPLIED | js/channels.js:58-81 `upgradedGroupKey` (the group holding the channel watched decides) |
+| 4 | v1 migration stripped a genuine «#N» (Music#2) | APPLIED | js/m3u.js:9, :133-139 (`shown` tells a repeat's «#2» from the group's own) |
+| 5 | non-spacing marks taken for strong letters | APPLIED | js/i18n.js:223-232 `MARK` (Unicode 16 Mn + Me, generated) |
+| 6 | dead `!fromSaved` in the skip | APPLIED (gone with item 2) | js/sources.js:132-147 |
+| 7 | `Zap.group()` wrote storage while answering a query | APPLIED | js/zap.js:91-103 (`savedIndex` pure; `onListApplied` migrates once); js/app.js:81 |
+| 8 | v1 unnamed entry kept «Канал» | APPLIED (cheap) | js/sources.js:270-280 `unpackV1` (no id + key head «канал» → unnamed, named in the interface language) |
+| 9 | no freshness pin for the playlist's guide on refresh | APPLIED (test) | tests/groups-and-copy.test.js «the playlist's own guide (url-tvg) is handed to the guide with every hourly list …» |
+| 10 | search «group · programme» untested | APPLIED (test) | tests/browser/mixed-text.test.mjs (order asserted; group «Paramount+») |
+| 11 | logo tests passed with no rows drawn | APPLIED (test) | tests/logos-and-redraws.test.js `wrongLogos` (≥ 12 rows, identity, name, logo, visible) |
+| 12 | P4-1 offline-copy write one 52–58 ms task | APPLIED | js/sources.js:223-240 (three idle tasks; no write during a switch); js/util.js:20-34 `saveJson` |
+| 13 | P4-2 menu prepared on the first player error | APPLIED | js/app.js:24-31 (from attempt 4) |
+| 14 | P4-3 guide walk for a playlist with no guide URL | APPLIED | js/sources.js:192-197 `guideFrom` |
+| 15 | P4-5 deferred logos for a closed menu | APPLIED | js/listrows.js:74-99 (`showLogos` skips a closed menu; a reopened one draws its waiting logos) |
+| 16 | P4-4 doc numbers of the copy write | APPLIED | docs/PERFORMANCE.md P-1 row (correction) and the review-4 rows |
+| 17 | TV-R1 single-sample TV rows | OPEN-NEEDS-TV | three repeat runs of `s-fullnav`, `s-stream`, the archive scenario on 1.9.0; judge by the median (coordinator's TV series) |
+| 18 | Hebrew dedication in fake italic | APPLIED | css/app.css:244-245 |
+| 19 | dead `direction: ltr` on `.switch` and `.scrub-bar` | APPLIED | css/app.css:236-243 (comment says why the rest stays) |
+| 20 | `.setup-text` unbounded (uk 1761 px) | APPLIED | css/app.css:106 |
+| 21 | «⚙» small, its name 14 px off | APPLIED (icon box) | js/overlays/menu.js:60-66; css/app.css:73-76. `⚙️` (U+FE0F) was **not** used: whether Tizen 3's fonts draw it as an emoji cannot be shown without the TV (not touched in this batch); the box aligns the names whatever the glyph's size |
+| 22 | first-launch key prompt spoke of a saved key | APPLIED | js/i18n.js:56 `set.keyFirst` (4 languages); js/overlays/setup.js:18-19 |
+| 23 | toast band rule fragile (specificity, 72 px ×3, z-index outside the block) | APPLIED | css/app.css:159 (`.about` in the z-index block), :162-168, :180-181 (72 px named both places) |
+| 24 | a top toast over the menu covered rows 1–2 | APPLIED | css/app.css:162-168 (over the menu's hint band) |
+| 25 | broken-image icon for a logo that fails | APPLIED | js/util.js:61-63 `hideBrokenImage`; js/listrows.js:21; js/ui.js:19, :26-30 |
+| 26 | wrapped other-script text keeps its own start edge | no change (owner-accepted rule) | — |
+| 27 | «⚙ Настройки» opens a screen titled «Настин кинозал» | owner decision (item 32) | — |
+| 28 | `I18n.code` / `I18n.table` exported for tests only | APPLIED | js/i18n.js:259-264 (`code` no longer exported; `table` kept as a declared test seam) |
+| 29 | free playlists built twice | APPLIED | js/sources.js:42-50, :66-73 (`list()` filters `freePlaylists()`) |
+| 30 | «Без группы» literal repeated | APPLIED | js/m3u.js:141 exports `KEY_NO_GROUP`, `KEY_UNNAMED`; js/sources.js:277; js/channels.js:69 |
+| 31 | Settings opens on the language row (one OK restarts in another language) | DEFERRED — owner decision | below |
+| 32 | Settings title «Настин кинозал» vs «⚙ Настройки» | DEFERRED — owner decision | below |
+| 33 | Hebrew weight 600 on Tizen's fallback font | OPEN-NEEDS-TV | below |
+
+**Owner decisions** (code unchanged; the owner decides):
+- **31.** «⚙ Настройки» opens with the cursor on «🌐 Язык интерфейса»; one accidental OK restarts the app in the next language, and coming back takes three more restarts. Options: open on another row (e.g. «Картинка во весь экран»), or ask for a second OK to confirm.
+- **32.** The screen opened by «⚙ Настройки» is titled «Настин кинозал» (the app's name, with the dedication), not «Настройки».
+- **33.** On the TV, Hebrew falls back from SamsungOne to a system font; whether weight 600 is real or synthetic there, and how the 24 px grey «now» lines read from the sofa, can only be judged on the TV (old register #19).
+
+**Tests** (new names; nothing else renamed): `first-launch` «no source but a last channel saved …», «own providers: a link that is empty is never saved …», «the key prompt for OTT Club says what applies …»; `groups-and-copy` «every downloaded playlist is parsed and applied …», «the playlist's own guide (url-tvg) …», «a 1.8.4 «Новостные» on a list holding both …», «Zap.group() is a query …», «a 1.8.4 offline copy — a provider group «Music#2» …», «a switch to another provider under way keeps no copy …», «a copy longer than SNAPSHOT_MAX_CHARS is not kept …»; `logos-and-redraws` «logos (P4-5) …»; `i18n` «iso: a non-spacing mark …», «iso: the marks skipped are exactly Unicode's non-spacing marks …», «our rows with an icon are «<icon> <name>» …»; `sources` «providers: with two free providers each lists only its own playlists …»; new file `tests/browser/screen-details.test.mjs` (5: the Hebrew dedication, the key prompt width and first-launch text, the icon rows' edge, the toast over the menu, a logo that fails).
+Renamed (old → new): `menu (P-4): a first channel that does not play — the menu is laid out ahead anyway, before any picture` → `menu (P-4): a first channel that does not play — the menu is laid out ahead from its 4th attempt («no signal»), never during the three silent retries (review 4, P4-2)`; `refresh (freshness): an unchanged playlist (same Last-Modified, same length) is downloaded on schedule but not parsed again; a changed one is applied on the next refresh` → `refresh (freshness): every downloaded playlist is parsed and applied — one rewritten with the same length under the same Last-Modified too (review 4, Codex 1: no validator stands in for the text)`.
+Strengthened, same names: the two immediate-logo tests (Codex 2), the search sentence in the three `mixed text: <lang> — the «now» lines …` tests (F3), `i18n` tests reading the page's `lang` instead of `I18n.code()`.
+
+**Evidence (desktop; the TV was not touched).** ES5 gate (acorn, ecmaVersion 5): 37 of 37 js files parse, rc 0. Full suite with the
+browser tests: **350 tests, 350 pass, 0 fail**, rc 0 (JUnit `scratchpad/r28.xml`). By name against the 331 of `r27.xml`: newly
+failing 0; newly absent 2 (the two renames above); 21 new names. Mutation proofs (VG-6), run on a private copy of the finished
+tree: each pattern counted exactly once before writing, the change checked on disk, the named tests run, the file restored and
+compared byte for byte with the tree (`cmp` rc 0 on every row). **29 mutants: 28 killed, 1 survived** — M26 (`guideFrom`
+keeping an empty pending guide for a playlist with no `url-tvg`) is equivalent by behaviour (`EPG.load('')` does nothing); the
+change it undoes is a cost change, proven by measurement (`PERSIST onFirstFrame sync` 16–17 → 0–0.5 ms at 6×). Mutants that first
+survived and the test fixed for them: M14 (a reopened menu that does not draw its waiting logos — the test reopened on another
+page; it now flicks back to the first page before closing), M16 (the search group without its embedding — the fixture's groups
+were all read right by the bidi algorithm without it; a group «Paramount+» ending in a neutral sign is the case), M27 (free
+playlists not filtered by provider — equivalent with one provider; a two-provider test was added), M29 (the copy's size cap —
+untested before this batch; pinned now). M11 was first refused by the count guard (wrong pattern) and ran after the spec was
+fixed.
+
+**Desktop screenshots** (headless Chrome 1920×1080, not the TV; the stand refuses every stream and logo, and the buffering spinner
+is hidden by an injected style): `scratchpad/shots-batch2/<he|uk|en>-01-settings-dedication`, `-02-key-prompt`,
+`-03-key-prompt-first-launch`, `-04-menu-settings-row`, `-05-menu-toast`, `-06-menu-missing-logos` (18 files).
+
+**Needs the TV** (added by this batch): the three-step copy write and the hourly parse of the 11 340-channel list on the device
+(desktop 6×: tasks 15–23 / 31–36 / 15–22 ms; parse 203–220 ms wall, no long task); whether the menu laid out at «no signal»
+(attempt 4) is noticed; the ⚙ icon box next to 🔍 📡 in Tizen's fonts; register item 17 (three repeat runs of the TV
+scenarios, judged by the median) and item 33.
+
+## Fix batch 3 — review 5 of 1.9.0 (2026-10-28)
+
+Review 5 of fix batch 2: native APPROVE, performance APPROVE, design APPROVE, Codex REJECT (batch 2 item 15 incomplete). The
+coordinator's register `scratchpad/batch3/REGISTER3.md` holds 7 items; all 7 were fixed in one pass. Version stays **1.9.0**.
+The stream path (`js/player.js`, `js/playback.js`, `js/avtracks.js`), `js/net.js` and the banner are byte-identical to the
+pre-batch tree. Every downloaded list is still parsed and applied every hour; the only work now skipped is rewriting the
+offline copy when the downloaded text is byte-identical to the text that copy was written from (item 5).
+
+| # | Item | Status | Where |
+|---|---|---|---|
+| 1 | Codex 15: logos loaded into the hidden menu rows while «📡 Провайдеры» (BLUE), «⚙ Настройки» or «🔍 Поиск» was open over it (13 picture requests) | APPLIED | js/listrows.js:6-7 (each row pool names the overlay that shows it); js/listrows.js:94-99 (`showLogos` serves only the pools of the overlay open now) |
+| 2 | NB-1: the 1.8.4 group upgrade re-ran on every hourly list, so a literal «Новостные» kept by the first list (or picked in 1.9) could become «News» when the provider moved the channel | APPLIED | js/zap.js:6-10 (`zapGroupsSettled`: the keys 1.9 picked or already looked at), js/zap.js:57 (a pick settles its key), js/zap.js:99-109 (a list upgrades only a key not settled yet, then settles the result). Per key, not one flag: a source switched to brings back its own group, possibly one 1.8.4 wrote, and that one is still upgraded |
+| 3 | NB-2: the «no Last-Modified → parsed every time» pin was still listed | APPLIED (wording) | this file, the `tests/groups-and-copy.test.js` row of the localization review 3 section |
+| 4 | NB-3: during a provider switch the copy's rows and JSON idle steps still ran | APPLIED | js/sources.js:228-243 (`dropped(p)` checked at each of the three steps; the write-time check kept) |
+| 5 | N5-2: every hourly apply rewrote the 2.14 M-char copy even when the list was unchanged | APPLIED | js/sources.js:9-12, :148, :178, :190-193 (the copy is wanted only when the downloaded text differs from `copiedFrom`, byte for byte), :245-251 (`copiedFrom` is set only by a successful write, reset by a failed one). The list itself is parsed and applied every time |
+| 6 | NB-4 + design N1: the menu's toast stood 12 px above the hint band (72 vs 60 px) and grew upward | APPLIED | css/app.css:172-175 (`min-height: 60px; padding: 8px 40px` — one line is exactly the band; the text still wraps, never truncates) |
+| 7 | design N2: the focused group row drew its ⚙ about 3 px further toward the edge | APPLIED | css/app.css:90-93 (a focused group grows from its start edge: `transform-origin` 0 / 100% in Hebrew). The focus scale itself is kept; the focused band now stays flush with the column's start edge and grows toward its end |
+
+**New tests (9; none renamed, none removed):**
+- `logos (P4-5): «📡 Провайдеры» (BLUE), «⚙ Настройки» or «🔍 Поиск» opened over the menu while its logos wait …` (red before: 13 logo writes).
+- `upgrade: the 1.8.4 group is upgraded once …` — the first list keeps the literal, a later list and a restart do not move it, a group picked in 1.9 is not moved (red before: `grp:News`).
+- `upgrade: a source switched to brings back its own group remembered by 1.8.4 — upgraded then …`.
+- `offline copy: a switch under way stops the copy at the next idle step …` — before the rows: no rows, no JSON; during the rows: no JSON (red before: rows and JSON built).
+- `offline copy (freshness): a downloaded list byte-identical to the one the copy was written from is parsed and applied, and the copy is not written again; the first list of a page life always writes it` — two identical hours: 3 parses, 3 applies, 1 write; one byte changed at the same length: written (red before: 3 writes).
+- `offline copy (freshness): a list B whose copy is still being built when the list A … comes back — B's copy is dropped, A's stays`.
+- `offline copy (freshness): a list whose copy could not be kept (too big) leaves none — the list the old copy came from, downloaded again, writes it again`.
+- `screen details: a message over the channel menu ends where its hint band ends, one line exactly as tall; every message, in all four languages, wraps in at most 2 lines and never reaches the rows` — the 41 message keys on the code's toast lines, read from the code, each with a 63-character argument (red before: 984–1056 vs the band 996–1056).
+- `screen details: the focused «⚙ Настройки» row draws its icon where the unfocused one does (within 1 px) — ru and he` (red before: 78.6 vs 82 px).
+
+**Suite:** 359/359 (`tests/run.sh --browser`), by name against review 5's r29: 0 newly failing, 0 newly absent, 9 new.
+
+**Mutation evidence:** 17 mutants on a private copy, each pattern counted once before writing, verified on disk, the named tests
+run, the file restored and compared with `cmp` (rc 0 on every row): **17 killed, 0 survived.** A first design of item 2 (one
+«upgraded» flag for all keys) was replaced before the final run: it would have left a 1.8.4 group remembered for another source
+un-upgraded after a switch; the per-source test pins it (mutant N16).
+
+**Desktop screenshots** (headless Chrome 1920×1080, not the TV; streams refused, the spinner hidden by an injected style, logos
+served as numbered data-URI badges): `scratchpad/shots-batch3/<ru|he>-01-providers-over-menu`, `-02-menu-reopened-logos`,
+`<ru|he|uk|en>-03-menu-toast-one-line`, `-04-menu-toast-two-lines`, `<ru|he>-05-settings-row-focused`, `-06-settings-row-unfocused`.
+
+**Needs the TV:** the toast band against Tizen's font for the hint (60 px = 10 + 39 + 10 + 1 on desktop; the hint's `line-height`
+is `normal`, so a different font could make the band 1–3 px taller or shorter than the toast); the held previous list text
+(about 2.58 M chars, a two-byte string, ≈ 4.9 MB) in the TV's memory budget.
+
+## Fix batch 4 — review 6 of 1.9.0 (2026-10-28)
+
+Review 6 of fix batch 3: native APPROVE, performance APPROVE, Codex REJECT (batch 3 item 2 regression), design REJECT (batch 3
+item 7 regression). The coordinator's register `scratchpad/batch4/REGISTER4.md` holds 4 items; all 4 were fixed in one pass.
+Version stays **1.9.0**. The stream path (`js/player.js`, `js/playback.js`, `js/avtracks.js`), `js/net.js` and the banner are
+untouched. Every downloaded list is still parsed and applied every hour.
+
+| # | Item | Status | Where |
+|---|---|---|---|
+| 1 | Codex (batch 3 item 2 regression): the «already looked at» marks were kept by group key only, so OTT Club's own «Новостные», once settled, kept another source's 1.8.4 «Новостные» from becoming «News» after a switch | APPLIED | js/zap.js:8-12 (the marks are per source: `'<source id>\n<key>'`, as each source keeps its own group in `lastBySource`), js/zap.js:106 (the list checks the mark of the source on screen), js/zap.js:111-112 (`settle` / `mark`) |
+| 2 | design (batch 3 item 7 regression): the focused group grew 1.02 from its start edge only; the column (`overflow: hidden`) cut its far end square (7.6 px) and the count jumped 7.2 px | APPLIED | css/app.css:90-93 (rule at :93) — a focused group does not grow (`transform: none`); the two `transform-origin` rules are gone. Channel rows keep their 1.02 |
+| 3 | perf F3-1: the text the copy was written from could be a second 4.9 MB string equal to the one the list on screen holds | APPLIED | js/sources.js:194-196 (line :196) — a byte-identical download becomes the held text (`===` kept, no hash) |
+| 4 | native N6-1: the `tests/groups-and-copy.test.js` row said 11 tests | APPLIED (wording) | this file, the localization review 3 section: 25 tests |
+
+**Tests:** one new, one renamed (none removed):
+- new `upgrade: OTT Club's own «Новостные» settled does not settle another source's 1.8.4 «Новостные» — upgraded to «News» after the switch (review 6, Codex)` — Codex's reproduction, and back to OTT Club its literal group is kept (red before: `grp:Новостные` instead of `grp:News`).
+- renamed and extended: `screen details: a focused group does not grow — «⚙ Настройки» draws its icon and count where the unfocused row does, its band within the column, both ends round — ru and he (review 5, D-N2; review 6)` (was `… draws its icon where the unfocused one does (within 1 px) …`): computed transform `none`, icon and count within 1 px, band inside the column.
+
+**Mutation evidence:** 9 mutants on a private copy (count 1 asserted, verified on disk, restored, `cmp` rc 0): **9 killed.** B1
+(marks by key only again) is killed by the new test; the five batch-3 mutants of item 2 still die; N14/N15 now pin «no scale on
+`.grow.focus`» (N15, the batch-3 rules back, measured 82.4 / 425.2 / band 60–447.6 against the column 60–440). Item 3 is not
+observable from a test (string identity); its mutant is shown by the heap retainers probe instead: with the line,
+`copiedFrom` shares the string the list's 42 167 slices point at; without it, a second 4.91 MB string.
+
+**Desktop measurement** (headless Chrome 1920×1080, not the TV), the same row focused and unfocused: icon, label and count shift
+0.0 px in Russian and Hebrew, the band equals the column (60–440 / 1480–1860), radius 14 px at both ends. Screenshots:
+`scratchpad/shots-batch4/<ru|he>-b4-band-end-focused`, `-band-start-focused`, `-groups-column-focused`,
+`-groups-column-row-unfocused`, `-settings-focused`.
+
+### Fix batch 4, item 6 — the language is picked from a list (owner, 2026-10-28)
+
+Owner: «когда ты нажимаешь кнопку на выбор языка, появилось какое-то меню или отдельная страница со всеми возможными
+языками. Я там этот язык выбираю, и он применяется» — one OK moved to the next language, so reaching Ukrainian took several
+restarts. Now «⚙ Настройки» → «🌐 Язык интерфейса» (its state reads «Русский · OK — выбрать») → OK opens the language list
+(js/overlays/lang.js, markup in index.html `#lang`, the providers list's row style): Русский, Українська, עברית, English,
+each written in itself in its own direction, all four starting on the interface's start edge (owner, 2026-10-28: «Выровняй
+все языки по одному краю»; the row, its cursor bar and the ✓ follow the interface). The current one is marked ✓ and under the cursor. ▲▼
+move (the list wraps), OK on another language applies it (the same restart as before: the channel being watched is
+remembered, the language saved, the toast, the reload — the app comes back on the same channel and group), OK on the
+current one or Back returns to «⚙ Настройки» on the language row with nothing changed; a second OK before the restart does
+nothing. One OK never changes the language any more (this also answers the earlier risk of one accidental OK restarting in
+another language). `I18n.next` is gone (no caller left); `I18n.langs`, `I18n.dirOf` and `I18n.code` serve the list.
+
+**Tests** (red first: all 7 failed on the tree before the change — «OK on the language row did not open the language list»
+×6 and the «OK — next» text):
+- new `tests/lang-list.test.js` (7): the list opens with four rows in their own names, current marked and focused, nothing
+  changed (all four languages); from English ▼ ▼ OK on Українська → Ukrainian once, same channel and group after the
+  restart; Back (after moving) → settings on the language row, nothing changed, reopened on the current one; OK on the
+  current one → no restart, nothing written; a double OK → one switch; each name in its own direction (dir/lang) in Russian
+  and in Hebrew; the settings row no longer says «next» in any language.
+- `tests/i18n.test.js`: `i18n: in «⚙ Настройки» OK on «Язык интерфейса» goes Русский → Українська → עברית → English → Русский; …`
+  is renamed `i18n: in «⚙ Настройки» → «Язык интерфейса» the next language picked from the list each time — Українська, עברית,
+  English, Русский; each choice is saved and a fresh app starts in it`; `… keeps the channel being watched, and a double OK
+  moves one language only` and `… three restarts in a row …` keep their names and now pick through the list.
+- `tests/browser/i18n-rtl.test.mjs`: new `i18n browser: the language list — all four names start on the interface's start
+  edge (±1 px), each written in its own direction; the ✓ of the current one on the interface's end — ru and he (REGISTER4 #6)`; the
+  toast check over full screens now includes the language list.
+- `tests/browser/hint-gap.test.mjs`: the language list is one more screen (3 new tests: 1920×1080, 1280×720, Hebrew).
+- `tests/menu.test.js`: the «one overlay at a time» check now includes `lang`.
+
+**Mutation evidence:** 11 mutants (L1–L11: no list on OK, no double-OK guard, OK on the current restarts, Back to the menu,
+cursor on the first row, names in the interface's direction, current not marked, the channel not remembered, the Hebrew
+alignment rule removed, the empty ✓ box's margin kept, «OK — next» back): **11 killed**, every file restored (`cmp` rc 0).
+After the owner's «Выровняй все языки по одному краю» the names align to the interface's start edge (`#lang .src-t` left,
+right under `[dir="rtl"]`); 4 more mutants: the per-name alignment back, no Hebrew-interface rule, names without their own
+direction — killed; the empty ✓ box's `display: none` — survived (with every name on the start edge the empty box at the
+end moves nothing), so that rule was removed as dead CSS.
+
+**Desktop screenshots** (headless Chrome 1920×1080, not the TV): `scratchpad/shots-batch4/<ru|he>-b6-settings-language-row`,
+`-b6-language-list`, `-b6-language-list-cursor-moved`.
+
+### Fix batch 4, item 5 — channel logos stay (owner, 2026-10-28; DEC-2026-10-28-logos-page-plus-next)
+
+Owner: «иконки каналов … пропадают и появляются … когда я пролистываю список и возвращаюсь обратно, они заново загружаются,
+как будто их и не было»; later: «иконки не должны мерцать, не должны прыгать, не должны исчезать и появляться». Design:
+`scratchpad/batch4/LOGO-DESIGN.md` (performance expert), ported from its prototype. Cause, proven by trace: every redraw
+within 1 s of the previous one hid each row's logo and dropped its `src` (`listrows.js` `setLogo`), and the pictures came
+back 1 s after the last key — blank even with every picture in memory (145 of 222 frames in the owner's case).
+
+Now `js/logos.js` owns every channel logo for the page's life: a loaded URL is painted in the frame its name is drawn in,
+with no request; anything else leaves the fixed 72×48 box empty until it arrives — never another channel's picture; the
+page on screen and the next one in the direction of travel are asked for after a pause or once the cursor stays 200 ms
+(`LOGO_DWELL_MS`), 6 at a time, latest wish wins, nothing for a screen nobody sees (the menu laid out at the first frame
+still loads its own page, as before); a 404 is asked once; the hourly list keeps unchanged URLs and forgets dropped ones;
+the banner uses the same path. `docs/PERFORMANCE.md` records the logo-cache exception and the before/after numbers.
+
+**Tests:**
+- the harness has an image model (`tests/harness.js`): downloads per URL (`app.images.requests`), in-flight sharing, the
+  page's memory cache, 404s not cached, `el.showing` = the picture painted (a new `src` keeps the previous one until the
+  new one arrives; `removeAttribute('src')` drops it). It breaks no existing test.
+- new `tests/logos-cache.test.js` (10). Red on the tree before the change: 6 (flick back: «page 1 at the key: empty ×13»;
+  requests: 13 ≠ 26; nothing started after the key; a 404 asked again; the old picture not kept during an hourly change;
+  the banner showed the previous channel's picture). Added while proving mutants: a menu closed while the opening's
+  pictures are on their way starts none after (in test 8), a new wish shares downloads under way (test 9 of 10), and a URL
+  the hourly list dropped is forgotten (in test 7).
+- `tests/logos-and-redraws.test.js`, re-expected under the decision id, names unchanged: `writes` counts downloads, not
+  `src` writes (the P4-5 tests keep `=== 0`); «CH− held through 10 pages …» presses every 150 ms (under the 200 ms dwell),
+  `after <= 39` (the page after the first press + the page and the next at rest), and a row shows its own picture or an
+  empty box.
+- new `tests/browser/logo-box.test.mjs`: shown, empty (failed) and no-logo rows have the same 72×48 box and name edge, ru
+  and he.
+
+**Mutation evidence:** 12 mutants: 11 killed (404 not remembered, keep-old ignored, no gate, no `removeAttribute` before
+the shared load, dwell 0, loaded logo not shown at once, no next-page prefetch, the wish in the key's task, the banner's
+old code, no `retain`, in-flight sharing skipped). 1 survives by design: not keeping the loaded `Image` — the harness's
+memory cache does not depend on it; on the TV it is what keeps the picture in Blink's memory cache (LOGO-DESIGN §9 P1/P2).
+
+**Desktop, per frame** (6× CPU, 150 ms logos, `logo-probe.mjs`, before = the pre-batch tree): frames with a blank row —
+owner's flick ↓3 ↑3 145 → 6 (0 requests on the way back), ▼ ×20 197 → 0, group change 74 → 0, CH− after a pause 9 → 0,
+restart CH− ×2 69 → 0; hourly 1 changed URL: 1 request, 0 blank frames. Menu key latency unchanged (PERFORMANCE.md row).
+Screenshots 40 ms after the last CH+ of the owner's flick (numbered badge logos): `scratchpad/shots-batch4/<ru|he>-b5-flick-back-40ms`.
+**Needs the TV:** LOGO-DESIGN §9 P1 (Chromium 47 image semantics; R1/R2 alternatives ready), P2–P5.
+
+## Fix batch 5 — review 7 of 1.9.0 (2026-10-28)
+
+Review 7 of batch 4: native REJECT, Codex REJECT, performance APPROVE, design APPROVE. The register
+`scratchpad/batch5/REGISTER5.md` holds 8 items; all 8 were fixed in one pass. Version stays **1.9.0**; the stream path is
+untouched.
+
+| # | Item | Status | Where |
+|---|---|---|---|
+| 1 | native F1: a logo that failed for a passing reason (503, Wi-Fi not up after standby) stayed empty for the page's life | APPLIED — DEC-2026-10-28-logo-retry-hourly | js/logos.js `retain`: a failed URL still in the list is forgotten at each hourly list, so it is asked for once more when wanted — never within the hour |
+| 2 | native F2 (PF-13 T3): a logo download had no timeout; six that never answered held every slot | APPLIED | js/logos.js `load`: after `LOGO_TIMEOUT_MS` (8000, js/config.js) the download is given up — handlers detached, every element sharing it lets it go (`drop`), the slot freed (`done(url, im, false)`, once); the URL waits for the next hourly list (item 1) |
+| 3 | Codex C7-1: a pooled row that passed to another channel wanting the same new URL kept the previous channel's picture while it loaded | APPLIED | js/logos.js `put(img, url, key)`: the `<img>` knows the channel it shows; only the same channel keeps its old picture while a new URL loads; js/listrows.js `setLogo` passes the key |
+| 4 | Codex C7-2: the second (layout-correcting) fill of a page up was read as a move down, so the page below was asked for | APPLIED | js/listview.js `columns`: the direction is the cursor's, once per render, passed to both fills; js/listrows.js `schedule`/`wantPending` use it (kept when the cursor did not move; at the top, the page below) |
+| 5 | native F3 + perf R7-P2: the banner's one-logo wish and the menu's page replaced each other | APPLIED | js/logos.js: one wish per consumer (`want(who, urls, open)`), the banner's first; js/listrows.js asks as its column (`channels`, `search`) and asks for nothing when its screen is not open; js/ui.js asks as `banner` |
+| 6 | design N6-1 (owner: «не должны прыгать»): the focused channel row still grew 1.02, its logo moved ~12.8 px | APPLIED | css/app.css: `.focus` has no transform (the `.grow.focus` rule of batch 4 is now the same rule, removed) |
+| 7 | native F4: eviction untested (E1/E2 survived) | APPLIED (test) | tests/logos-cache.test.js «beyond LOGO_KEEP …» |
+| 8 | native F5 + perf R7-P1: the 4.9 MB text compared twice | APPLIED | js/sources.js: `if (!fromSaved && !copyFor) copiedFrom = text;` — one comparison |
+
+**Tests** (red first on the tree before the change, `scratchpad/batch5/red.txt`):
+- `tests/logos-cache.test.js`: the 404 test is renamed under DEC-2026-10-28-logo-retry-hourly («… asked for once within the hour — …
+  the next hourly list asks for it once more …»; red: asked once only); new: a 503 shown after the next hourly list (red);
+  a download that never answers given up after `LOGO_TIMEOUT_MS` (red: the rest of page 2 never started); a pooled row
+  passing to another channel with the same new URL (red: «wrong:14»); page up with the layout's correcting fill asks for
+  the page above, and at the top the page below (red: the page above not asked for); the banner and the menu keep their
+  own wishes (red: the menu's page dropped by the banner; the banner's own logo dropped by the menu's leftover timer once
+  the banner is not redrawn); eviction beyond `LOGO_KEEP` (green before: a pin, kills E1/E2); a row whose picture arrived
+  on screen keeps it while the hourly list's new URL loads (a pin).
+- `tests/groups-and-copy.test.js` «a list B whose copy is still being built …»: also asserts the copy on disk is not
+  written again (a pin for item 8, same name).
+- `tests/browser/logo-box.test.mjs`: new «the focused channel row does not grow …» (red on the tree before: the row scaled).
+- `tests/harness.js`: `imageStatus` may answer `'hang'` (a host that never answers).
+
+**Mutation evidence** (`scratchpad/batch5/mut-out.txt`, `mut-out2.txt`): 16 mutants, 13 killed (no hourly retry, retry
+within the hour, no timeout, timeout without freeing the slot, put ignoring the channel, no cursor direction, never the
+page above, nothing at the top, one wish for all, a closed menu emptying the banner's wish, native E1, native E2, the
+focused row growing again, the held text following a changed list). 2 survive with a reason: a finished download putting
+without the row's channel (every following redraw restores it — no visible effect found); the `copiedFrom` line removed
+(memory only, as in batch 4 item 3).
+
+**Desktop measurements** (not the TV): the designer's per-frame pixel probe (`review7/design-probe/frames.mjs`, 6× CPU):
+0 wrong pictures in every phase; the owner's flick ↓3 ↑3 10 and 11 frames with a blank row (before 12; batch 4 10–11), 0 on
+the flick repeated. Focused vs unfocused channel row: logo box and name edge shift 0 px in Russian and Hebrew. Copy writes
+per unchanged hour 0. Menu key latency unchanged. Screenshots: `scratchpad/shots-batch5/<ru|he>-b5-focused-channel-row`,
+`-b5-same-row-unfocused`.

@@ -8,13 +8,12 @@ const assert = require('node:assert/strict');
 const { createApp, KEYS } = require('./harness');
 const f = require('./fixtures');
 
-const FORMS = ['канал', 'канала', 'каналов'];
-
+// The line's count goes through the one plural rule of the dictionary (I18n.n), Russian by default.
 test('list end: the Russian plural of «канал» — 1 канал, 2 канала, 5 каналов, 11 каналов, 21 канал', () => {
-  const plural = createApp().ctx.Util.plural;
+  const I18n = createApp().ctx.I18n;
   const cases = [[1, 'канал'], [2, 'канала'], [4, 'канала'], [5, 'каналов'], [11, 'каналов'], [12, 'каналов'], [14, 'каналов'],
     [21, 'канал'], [22, 'канала'], [25, 'каналов'], [101, 'канал'], [111, 'каналов'], [112, 'каналов'], [123, 'канала'], [0, 'каналов']];
-  assert.deepEqual(cases.map(([n]) => n + ' ' + plural(n, FORMS)), cases.map(([n, w]) => n + ' ' + w));
+  assert.deepEqual(cases.map(([n]) => I18n.n(n, 'channel')), cases.map(([n, w]) => n + ' ' + w));
 });
 
 test('scroll bar: the menu\'s channel bar starts at the top and its thumb reaches the bottom on the last page (no list-end line in the menu)', () => {

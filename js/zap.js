@@ -3,14 +3,19 @@
 // landing channel gets a guide request (once the zapping has settled and its picture is up); everything
 // started for the channels passed is aborted.
 var Zap = (function () {
-  var GROUP_STORE = 'zapGroup';
+  var GROUP_STORE = 'zapGroup', SETTLED_STORE = 'zapGroupsSettled';
   var groupKey = savedGroup(); // the group the viewer last picked a channel in (by identity): zapping stays inside it
+  // The group keys this version has picked, or looked at for a 1.8.4 name already ({ '<source id>\n<key>': true }): never
+  // upgraded again. By key, not once for all: a source switched to brings back its own remembered group, maybe one 1.8.4
+  // wrote; and per source, as each keeps its own (review 6, Codex: OTT Club's own «Новостные» settled kept another
+  // source's 1.8.4 «Новостные» from becoming «News»).
+  var settled = Util.load(SETTLED_STORE) || {};
   var pending = null, timer = null, lastStepAt = 0, prevKey = null, saveTimer = null, settleTimer = null;
 
   function step(dir) {
     var from = pending || Playback.current();
     var key = Channels.nextVisible(from ? from.key : null, dir, group());
-    if (!key) { UI.toast('Нет других доступных каналов'); return; }
+    if (!key) { UI.toast(I18n.t('m.noOther')); return; }
     var c = Channels.get(key), now = Date.now(), burst = now - lastStepAt < CONFIG.ZAP_IDLE_MS;
     lastStepAt = now;
     NowLines.cancel();
@@ -43,7 +48,7 @@ var Zap = (function () {
   // remembered group missing from it) changes nothing, and Zap.group() falls back to «Все каналы».
   function remember(c, groupIdx) {
     if (groupIdx === undefined) {
-      var g = Channels.groups()[Channels.groupIndex(groupKey)], i = Channels.indexOfKey(c.key);
+      var g = Channels.groups()[savedIndex()], i = Channels.indexOfKey(c.key);
       if (!g || i < 0 || g.items.indexOf(i) >= 0) return;
       groupIdx = Channels.allIdx();
     }
@@ -51,6 +56,7 @@ var Zap = (function () {
     if (key === groupKey) return;
     groupKey = key;
     Util.save(GROUP_STORE, key);
+    settle(key);
   }
   function savedGroup() { var k = Util.load(GROUP_STORE); return typeof k === 'string' ? k : ''; }
 
@@ -89,10 +95,25 @@ var Zap = (function () {
   }
 
   // The zap group as an index into Channels.groups() (it survives rebuilds that add or remove groups).
-  function group() { return Channels.groupOrAll(groupKey); }
+  function group() { var g = savedIndex(); return g < 0 ? Channels.allIdx() : g; }
+  // The remembered group's index, or -1.
+  function savedIndex() { return Channels.groupIndex(groupKey); }
+  // A list was applied: a group remembered by an older version under its translated name is found by what it was named
+  // for (and by the channel being watched) and remembered anew by its key — here, not in the queries above. Once per
+  // key in each source: a key the first list kept, or one picked since, is never moved by a later list (review 5, NB-1:
+  // a literal «Новостные» became «News» when the provider moved the channel watched).
+  function onListApplied() {
+    if (settled[mark(groupKey)] === true) return;
+    var c = Playback.current(), now = Channels.upgradedGroupKey(groupKey, c && c.key);
+    if (now) { groupKey = now; Util.save(GROUP_STORE, now); }
+    settle(groupKey);
+  }
+  function settle(key) { var m = mark(key); if (settled[m] !== true) { settled[m] = true; Util.save(SETTLED_STORE, settled); } }
+  function mark(key) { return Sources.activeId() + '\n' + key; }
 
   // true while a burst of presses is still choosing (the banner shows the channel being passed).
   function choosing() { return !!timer; }
 
-  return { GROUP_STORE: GROUP_STORE, step: step, cancel: cancel, choosing: choosing, pick: pick, previous: previous, onFirstFrame: onFirstFrame, group: group };
+  return { GROUP_STORE: GROUP_STORE, step: step, cancel: cancel, choosing: choosing, pick: pick, previous: previous, onFirstFrame: onFirstFrame, group: group,
+    onListApplied: onListApplied };
 }());

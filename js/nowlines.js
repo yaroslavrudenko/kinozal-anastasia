@@ -25,7 +25,9 @@ var NowLines = (function () {
 
   function setHooks(h) { hooks = h; }
   function loaded() { at = Date.now(); sampled = Util.dict(); }   // the full list just brought "now" lines (not a fresh sample)
-  function cancel() { if (req) { req.abort(); req = null; } asap = false; }
+  // A request aborted (a zap, a list download, the background) would have re-armed the governor with its answer: it is
+  // re-armed here, and its gates (list load, zap burst, background) hold the retry until it may go.
+  function cancel() { var aborted = !!req; if (req) { req.abort(); req = null; } asap = false; if (aborted) arm(); }
   // A channel starting frees the bandwidth for its stream, except from the one re-read of a cached list.
   function landed() { if (!asap) cancel(); landedAt = Date.now(); arm(); }
   // Not counted toward the floor: the fresh answer is asked for right away (one request, parsed at idle).

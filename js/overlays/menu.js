@@ -28,8 +28,8 @@
   }
   // Once, at idle after the first picture, while hidden: the rows are built and laid out as the menu would
   // open (the first layout of fonts and the ★ ▶ glyphs is paid here), so the first opening is a paint.
-  var prepared = false;
-  function prepare() { if (!prepared && Channels.count() && Overlay.isNone()) { prepared = true; place(); render(); } }
+  var prepared = false, ahead = false;
+  function prepare() { if (!prepared && Channels.count() && Overlay.isNone()) { prepared = true; place(); ahead = true; render(); ahead = false; } }
   function close() { NowLines.watch(null); UI.show('guide', false); }
 
   // The channel ids of the rows on screen (whose "now" lines must stay current).
@@ -45,10 +45,11 @@
     cursor = clamp(cursor, g.items.length);            // a refresh may have shortened the group
     var playing = playingIdx(), now = Date.now();
     ListView.columns([{ name: 'groups', view: { total: groups().length, cursor: gi, active: focus === 'groups', row: groupRow } },
-      { name: 'channels', view: { total: g.items.length, cursor: cursor, active: focus === 'channels', row: function (i) {
-        var c = Channels.at(g.items[i]), on = EPG.label(EPG.shown(c.id, now));   // the banner's lookup and text too
-        return { num: c.num, logo: c.logo, title: (Favs.has(c.key) ? '★ ' : '') + c.name + (g.items[i] === playing ? '  ▶' : ''),
-          sub: on, playing: g.items[i] === playing };
+      { name: 'channels', view: { total: g.items.length, cursor: cursor, active: focus === 'channels', ahead: ahead, logo: function (i) { return Channels.at(g.items[i]).logo; }, row: function (i) {
+        // The banner's lookup and text too; a programme on air is the provider's text alone, an ended one is ours around it.
+        var c = Channels.at(g.items[i]), sh = EPG.shown(c.id, now), onAir = !!sh && !sh.ended;
+        return { num: c.num, key: c.key, logo: c.logo, pre: Favs.has(c.key) ? '★ ' : '', title: c.name, own: true, post: g.items[i] === playing ? '  ▶' : '',
+          sub: onAir ? sh.p.title : EPG.label(sh), subOwn: onAir, playing: g.items[i] === playing };
       } } }]);
     // Where the viewer is in each column: the scroll bars (owner 2026-10-27: «по ползункам уже понятно, где мы» —
     // the «▼ ещё N …» lines under the menu's columns are gone; the search results keep theirs).
@@ -56,12 +57,15 @@
     UI.scrollBar('channels-bar', ListView.shown('channels'));
     NowLines.update();
   }
+  // own: a provider's group. Our rows with an icon («🔍 Поиск», «★ Избранное», «📡 Провайдеры», «⚙ Настройки» — I18n's
+  // «<icon> <name>») show it in a box of its own (css .grow .t > i), so a small ⚙ and a wide 🔍 leave their names on one
+  // edge (review 4, D6).
   function groupRow(i) {
-    var g = groups()[i];
-    return { num: '', logo: '', title: g.name, sub: g.search || g.about || g.sources ? '' : g.items.length };
+    var g = groups()[i], icon = g.search || g.fav || g.sources || g.about ? g.name.indexOf(' ') + 1 : 0;
+    return { num: '', logo: '', pre: g.name.substring(0, icon), title: g.name.substring(icon), own: !!g.own, sub: g.search || g.about || g.sources ? '' : g.items.length };
   }
 
-  // Search and «О программе» are rows of the group column that open their own screens.
+  // Search, «📡 Провайдеры» and «⚙ Настройки» are rows of the group column that open their own screens.
   function openSpecial(g) {
     if (g.search) { Overlay.open('search'); return true; }
     if (g.about) { Overlay.open('about'); return true; }
@@ -77,8 +81,8 @@
     else if (k === K.DOWN) move(1);
     else if (k === K.CH_UP || k === K.PG_UP) page(-1);
     else if (k === K.CH_DOWN || k === K.PG_DOWN) page(1);
-    else if (k === K.LEFT) focus = 'groups';
-    else if (k === K.RIGHT) { if (focus === 'groups' && openSpecial(g)) return; focus = 'channels'; }
+    else if (k === (I18n.rtl() ? K.RIGHT : K.LEFT)) focus = 'groups';           // toward the groups column, on whichever side it is
+    else if (k === (I18n.rtl() ? K.LEFT : K.RIGHT)) { if (focus === 'groups' && openSpecial(g)) return; focus = 'channels'; }
     else if (k === K.ENTER) {
       if (focus === 'groups') { if (openSpecial(g)) return; focus = 'channels'; cursor = 0; }
       else { var c = Channels.at(g.items[cursor]), gi = groupIdx(); Overlay.close(); if (c) Zap.pick(c, gi); return; }
@@ -109,7 +113,7 @@
     Channels.rebuild();                  // the browsed group is kept by identity
     var at = group().items.indexOf(Channels.indexOfKey(c.key));
     cursor = at >= 0 ? at : clamp(cursor, group().items.length);
-    UI.toast(on ? 'Добавлено в избранное' : 'Убрано из избранного');
+    UI.toast(I18n.t(on ? 'm.favAdded' : 'm.favRemoved'));
   }
 
   // Desktop preview: a click selects a group or tunes a channel.

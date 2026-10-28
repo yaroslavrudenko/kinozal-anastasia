@@ -33,10 +33,12 @@ function providerApp(opts) {
     const start = Math.floor((t - off) / len) * len + off;
     return { start, stop: start + len, title: 'Шоу ' + id + ' ' + hhmm(start) };
   };
-  const body = (t) => {
+  // fresh: a «now» answer (?t=). A partial answer («only») is a «now» answer that leaves channels out; the catalog
+  // (the plain list, downloaded hourly) still lists every channel.
+  const body = (t, fresh) => {
     const d = {};
     ids.forEach((id) => {
-      if (app.fault && app.fault.only && !app.fault.only.has(id)) return;
+      if (fresh && app.fault && app.fault.only && !app.fault.only.has(id)) return;
       const p = (o.record && o.record(ids.indexOf(id), id, t)) || show(id, t), r = Object.assign({}, base[id]);
       if (app.fault === 'no-programmes') { delete r.name; delete r.time; delete r.time_to; } else Object.assign(r, { name: p.title, time: p.start / 1000, time_to: p.stop / 1000 });
       d[id] = r;
@@ -51,7 +53,7 @@ function providerApp(opts) {
     if (app.fault === 'empty') return { body: '', delay };
     if (app.fault === 'not-json') return { body: '<html>502 Bad Gateway</html>', delay };
     if (app.fault === '{}') return { body: '{}', delay };
-    return { body: body(app.clock.now - (fresh ? 0 : 3 * MIN)), delay };
+    return { body: body(app.clock.now - (fresh ? 0 : 3 * MIN), fresh), delay };
   });
   if (o.guide === 'all') app.net.route((u) => f.isGuide(u), () => ({ body: JSON.stringify({ epg_data: o.guideOf() }), delay: 300 }));
   app.ids = ids; app.show = show; app.base = base;
@@ -59,7 +61,9 @@ function providerApp(opts) {
   f.untilPlaying(app);
   return app;
 }
-const lists = (app, fromSeq) => app.net.requests((r) => f.isList(r.url) && r.sendSeq > (fromSeq || 0));
+// «Now» refreshes: the provider-fresh list (?t=, js/nowlines.js). The plain list URL is the scheduled list download
+// (Sources, hourly since 2026-10-27: «Нужно сделать раз в час»), not a «now» refresh.
+const lists = (app, fromSeq) => app.net.requests((r) => f.isList(r.url) && r.url.indexOf('?t=') > 0 && r.sendSeq > (fromSeq || 0));
 const playingId = (app) => vm.runInContext('Playback.current().id', app.ctx);
 const nameOf = (app, id) => app.base[id].channel_name;
 const rows = (app) => app.rowsDetailed('channels');
@@ -84,7 +88,7 @@ function bannerNow(app) {
 // re-asked every NOW_RECHECK_MS, never faster and never stopping. The first good answer clears every mark.
 // recoverMs: from the provider's return to the next eligible attempt's painted answer (60 s retry tier after
 // a failure; 5 min missing tier for rows a partial answer left out) plus the 3 s answer and the redraw.
-function outageRun(fault, channels, recoverMs) {
+function outageRun(fault, channels, recoverMs, marks) {
   const app = providerApp({ channels: channels || 40 });
   app.advance(10 * SEC);
   app.press(KEYS.ENTER, 5000);
@@ -93,7 +97,7 @@ function outageRun(fault, channels, recoverMs) {
   const seq = app.seq();
   app.fault = typeof fault === 'function' ? fault(app, id) : fault;
   const out = { empty: [], wrong: [], banner: [] };
-  for (const m of [14, 16, 30, 60]) {
+  for (const m of marks || [14, 16, 30, 60]) {
     app.advance(end + m * MIN - app.clock.now);
     redraw(app);
     const e = emptyRows(app);
@@ -104,11 +108,14 @@ function outageRun(fault, channels, recoverMs) {
     const b = bannerNow(app);
     if (!sub || b.indexOf(sub) < 0 || (m >= 15) !== (b.indexOf(MARK) >= 0)) out.banner.push('E+' + m + ': row «' + sub + '», banner «' + b + '»');
   }
-  const during = lists(app, seq);
+  // A request aborted by the hourly list download got no answer: it is not a failure (it is sent again after the download).
+  const during = lists(app, seq).filter((r) => !r.aborted);
   out.gaps = during.slice(1).map((r, i) => r.sentAt - (during[i].endedAt || r.sentAt)).filter((g) => g < CONFIG_RECHECK);
   out.attempts = during.length;
   app.fault = null;
   app.advance(recoverMs || 70 * SEC);
+  out.afterCatalog = (rowOf(app, id) || { cells: [] }).cells[3];   // the catalog has come by now (E+60 + recovery > 1 h)
+  out.catalogShow = app.show(id, app.clock.now - 3 * MIN).title;  // what the catalog (3 min behind the provider) names
   out.recoveredMarks = markedRows(app);
   out.recoveredRow = (rowOf(app, id) || { cells: [] }).cells[3];
   out.want = app.show(id, app.clock.now).title;
@@ -130,12 +137,15 @@ for (const fault of ['500', 'timeout', 'empty', 'not-json', '{}', 'no-programmes
 }
 
 test('now retained (DEC-2026-10-26-now-refresh-2): every answer names only 50 of 389 channels, none on screen — no row is lost or blank for 60 min; past the linger they are marked; a full answer clears the marks', () => {
-  const r = outageRun((app) => ({ only: new Set(app.ids.filter((x) => visibleIds(app).indexOf(x) < 0).slice(0, 50)) }), 389, 5 * MIN + 10 * SEC);
+  // Marks are checked within the first hour (E is up to 30 min after the start): then the hourly catalog download
+  // (owner 2026-10-27: «Нужно сделать раз в час») names every channel again — see `afterCatalog` below.
+  const r = outageRun((app) => ({ only: new Set(app.ids.filter((x) => visibleIds(app).indexOf(x) < 0).slice(0, 50)) }), 389, 5 * MIN + 10 * SEC, [14, 16, 25]);
   assert.deepEqual(r.empty, [], 'empty rows');
   assert.deepEqual(r.wrong, [], 'the playing row');
   assert.deepEqual(r.banner, [], 'banner ≠ row');
   assert.deepEqual(r.recoveredMarks, [], 'marks left 70 s after full answers came back');
   assert.equal(r.recoveredRow, r.want);
+  assert.ok(r.afterCatalog === r.want || r.afterCatalog === r.catalogShow, 'after the hourly catalog the row shows «' + r.afterCatalog + '»');
 });
 
 // B2 at the store: 389 channels known, then an answer naming 50 — the other 339 keep their line.
@@ -236,7 +246,7 @@ test('now healthy (DEC-2026-10-26-now-refresh-2): after 30, 40 and 60 min on one
   for (const at of [30, 40, 60]) {
     app.advance(t0 + at * MIN - app.clock.now);
     app.press(KEYS.LEFT, 100);
-    for (let gi = 1; gi < groups.length - 2; gi++) {          // the last two rows: 📡 Источники, ℹ О программе
+    for (let gi = 1; gi < groups.length - 2; gi++) {          // the last two rows: 📡 Провайдеры, ⚙ Настройки
       if (gi > 1) app.press(KEYS.DOWN, 100);
       app.press(KEYS.RIGHT, 100);
       for (let shown = 0; shown < groups[gi]; ) {
@@ -322,9 +332,15 @@ test('now refresh (A1, B1): with a show ending every minute off screen and none 
   const all = lists(app), c0 = all[all.length - 1].endedAt;  // the last answer: the window starts there
   app.advance(c0 + HOUR - app.clock.now);
   const r = lists(app).filter((x) => x.sentAt > c0);
-  const gaps = r.map((x, i) => x.sentAt - (i ? r[i - 1] : all[all.length - 1]).endedAt);
+  // The hourly catalog download (owner 2026-10-27: «Нужно сделать раз в час») comes from the provider's cache, so its
+  // «now» data is re-read fresh at once (D6b): one more request right after each catalog, besides the cadence.
+  const catalog = app.net.requests((x) => f.isList(x.url) && x.url.indexOf('?t=') < 0 && x.sentAt > c0);
+  const afterCatalog = (x) => catalog.some((c) => c.endedAt && x.sentAt >= c.endedAt && x.sentAt - c.endedAt < 5 * SEC);
+  const cadence = r.filter((x) => !afterCatalog(x)), gaps = r.map((x, i) => [x, x.sentAt - (i ? r[i - 1] : all[all.length - 1]).endedAt]).filter(([x]) => !afterCatalog(x)).map(([, g]) => g);
+  assert.equal(catalog.length, 1, 'catalog downloads in the hour');
+  assert.equal(r.length - cadence.length, catalog.length, 'fresh re-reads right after the catalog');
   // Re-reads every 60 s + the 3 s answer: 57 in the hour (3600 / 63), each exactly NOW_OPEN_REREAD_MS after the previous answer.
-  assert.equal(r.length, 57, 'requests in 1 h: ' + r.map((x) => new Date(x.sentAt).toISOString().slice(11, 19)).join(' '));
+  assert.equal(cadence.length, 57, 'requests in 1 h: ' + r.map((x) => new Date(x.sentAt).toISOString().slice(11, 19)).join(' '));
   assert.deepEqual(gaps.filter((g) => g !== MIN), [], 'gaps other than 60 s');
 });
 

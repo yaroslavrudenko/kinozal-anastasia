@@ -182,7 +182,7 @@ var Player = (function () {
   function mediaTimeMs() { return mediaMs; }
 
   // Technical line for the banner: read once per attempt at its first frame ('' before it).
-  // fresh = true re-reads it (BLUE key, «О программе»: the bitrate may have changed).
+  // fresh = true re-reads it (BLUE key, «⚙ Настройки»: the bitrate may have changed).
   function streamInfo(fresh) {
     if (fresh && firstFrame) info = readInfo();
     return firstFrame ? info : '';

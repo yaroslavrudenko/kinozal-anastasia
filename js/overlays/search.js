@@ -35,12 +35,12 @@
 
   function render() {
     var items = result.items, capped = result.total > items.length, cur = Playback.current(), curKey = cur ? cur.key : null, now = Date.now();
-    ListView.column('search', { total: items.length, cursor: cursor, active: inList, row: function (i) {
+    ListView.column('search', { total: items.length, cursor: cursor, active: inList, logo: function (i) { return Channels.at(items[i]).logo; }, row: function (i) {
       var c = Channels.at(items[i]), on = EPG.label(EPG.shown(c.id, now));   // the menu's and the banner's text
       // A capped result says so on its last row instead of hiding the rest silently.
-      var sub = capped && i === items.length - 1 ? 'Показаны первые ' + items.length + ' из ' + result.total + ' — уточните запрос'
-        : c.group + (on ? ' · ' + on : '');
-      return { num: c.num, logo: c.logo, title: c.name, sub: sub, playing: c.key === curKey };
+      var sub = capped && i === items.length - 1 ? I18n.t('search.capped', items.length, result.total)
+        : (c.groupId ? I18n.iso(c.group) : c.group) + (on ? ' · ' + on : '');   // a provider's group, or our «no group»
+      return { num: c.num, key: c.key, logo: c.logo, title: c.name, own: true, sub: sub, playing: c.key === curKey };
     } });
     UI.listEnd('search-more', ListView.rest('search'), ListView.end('search'));
     NowLines.update();

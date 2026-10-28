@@ -43,15 +43,15 @@
     var pct = function (x) { return Math.max(0, Math.min(100, (x - from) / (to - from) * 100)); };
     var behind = Math.round((now - t) / Util.MIN_MS);
     UI.scrub({
-      title: c.name + (p ? '  ·  ' + p.title : ''),
-      time: t >= now - CONFIG.LIVE_SNAP_MS ? 'прямой эфир' : hhmmss(new Date(t)),
+      title: I18n.iso(c.name) + (p ? '  ·  ' + I18n.iso(p.title) : ''),
+      time: t >= now - CONFIG.LIVE_SNAP_MS ? I18n.t('sc.live') : hhmmss(new Date(t)),
       start: Util.hhmm(new Date(from)), end: Util.hhmm(new Date(to)),
-      delta: behind > 0 ? '−' + fmtMin(behind) + ' от эфира' : '',
+      delta: behind > 0 ? I18n.t('sc.behind', fmtMin(behind)) : '',
       playedPct: pct(Math.min(now, to)), nowPct: now >= from && now <= to ? pct(now) : null, knobPct: pct(t)
     });
   }
   function hhmmss(d) { return Util.hhmm(d) + ':' + Util.pad2(d.getSeconds()); }
-  function fmtMin(m) { return m >= 60 ? Math.floor(m / 60) + ' ч ' + (m % 60) + ' мин' : m + ' мин'; }
+  function fmtMin(m) { return m >= 60 ? I18n.t('sc.hm', Math.floor(m / 60), m % 60) : I18n.t('sc.m', m); }
 
   Overlay.register('scrub', { open: open, close: close, onKey: onKey, render: render });
 }());
