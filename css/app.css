@@ -181,7 +181,7 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
    focus of the Basic list. The table or list takes the room above the hint bar and scrolls with the cursor when taller. */
 .about { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; padding: 36px 120px 104px; display: -webkit-flex; display: flex;
   -webkit-flex-direction: column; flex-direction: column; -webkit-align-items: center; align-items: center; background: #06090f; text-align: center; }
-.about-icon { -webkit-flex: none; flex: none; width: 72px; height: 72px; border-radius: 16px; }
+.about-icon { -webkit-flex: none; flex: none; width: 180px; height: 180px; border-radius: 40px; }   /* 2.5x the old 72 px (owner 2026-10-28: «почти не видно») */
 .about-title { -webkit-flex: none; flex: none; font-size: 56px; line-height: 64px; font-weight: 700; color: #4da3ff; margin: 4px 0 8px; }
 .about-dedication { -webkit-flex: none; flex: none; white-space: pre-line; font-size: 30px; line-height: 38px; color: #eef1f6; font-style: italic; margin-bottom: 14px; }
 .about-table { position: relative; -webkit-align-self: stretch; align-self: stretch; min-height: 0; overflow: hidden; text-align: left; border-top: 1px solid rgba(255,255,255,.12); }
