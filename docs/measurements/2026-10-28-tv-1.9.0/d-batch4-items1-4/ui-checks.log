@@ -1,0 +1,10 @@
+port 55045
+0.1s start {"st":"PLAYING","n":389,"ch":"Channel 12 (Израиль)"} heap {"usedMB":9.5,"totalMB":9.5,"limitMB":756}
+1.6s hint band {"t":1004,"b":1056,"l":60,"r":1860}
+1.9s toast 1-line {"t":996,"b":1056,"l":60,"r":1860} "fav.added"
+2.2s toast long {"t":952,"b":1056,"l":60,"r":1860}
+2.2s last row {"t":900,"b":970,"l":480,"r":1860}
+5.9s gear unfocused null
+8.4s gear focused {"focus":true,"l":82,"r":126,"font":"SamsungOne, 'Samsung Sans', Roboto, Arial, sans-serif"}
+8.4s heap after menu {"usedMB":9.5,"totalMB":9.5,"limitMB":756}
+9.2s restored {"ov":"none","st":"PLAYING","ch":"Channel 12 (Израиль)"}

@@ -1,0 +1,8 @@
+port 46262
+0.1s at the key (30 ms) {"shown box 72x48 name@668":12}
+3.1s settled {"shown box 72x48 name@668":12}
+3.2s CH- 1 (60 ms) {"shown box 72x48 name@668":6}
+3.4s CH- 2 (60 ms) {"shown box 72x48 name@668":6}
+3.5s CH- 3 (60 ms) {"shown box 72x48 name@668":6}
+6.5s settled {"shown box 72x48 name@668":6}
+8.3s restored {"ov":"none","st":"PLAYING"}

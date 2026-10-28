@@ -1,0 +1,10 @@
+port 46916
+0.1s label after version 1.9.0 state PLAYING channels 389
+4.2s 1 open menu                                  {"imgRequests":5,"how":{"200":5},"frames":243,"framesWithBlankRow":0,"maxBlankRows":0,"wrongRowFrames":0,"vanished":0,"keyMs":"107","files":"377.png,378.png,379.png,380.png,381.png"}
+9.1s 2 CH- x3 then CH+ x3, 250 ms (owner case)    {"imgRequests":0,"how":{},"frames":287,"framesWithBlankRow":0,"maxBlankRows":0,"wrongRowFrames":0,"vanished":0,"keyMs":"65 27 33 55 43 22","files":""}
+14.1s 3 the same again (all pages seen)            {"imgRequests":0,"how":{},"frames":288,"framesWithBlankRow":0,"maxBlankRows":0,"wrongRowFrames":0,"vanished":0,"keyMs":"71 32 25 66 32 23","files":""}
+16.7s 4 single CH- after rest                      {"imgRequests":0,"how":{},"frames":154,"framesWithBlankRow":0,"maxBlankRows":0,"wrongRowFrames":0,"vanished":0,"keyMs":"56","files":""}
+19.3s 5 CH+ back                                   {"imgRequests":0,"how":{},"frames":150,"framesWithBlankRow":0,"maxBlankRows":0,"wrongRowFrames":0,"vanished":0,"keyMs":"92","files":""}
+24.4s 6 down x12, 150 ms                           {"imgRequests":0,"how":{},"frames":289,"framesWithBlankRow":0,"maxBlankRows":0,"wrongRowFrames":0,"vanished":0,"keyMs":"66 45 50 45 45 46 23 33 22 19 32 23","files":""}
+27.9s 7 close + reopen                             {"imgRequests":0,"how":{},"frames":204,"framesWithBlankRow":0,"maxBlankRows":0,"wrongRowFrames":0,"vanished":0,"keyMs":"77","files":""}
+28.7s restored {"ov":"none","st":"PLAYING","ch":3}

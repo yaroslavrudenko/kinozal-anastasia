@@ -1,0 +1,17 @@
+port 49233
+node:internal/deps/undici/undici:14902
+      Error.captureStackTrace(err);
+            ^
+
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:14902:13
+    at async file:///private/tmp/claude-501/-Users-yaroslavr/40bd8e7a-b591-426c-be3d-f3bef355966b/scratchpad/tv5/cdp.mjs:4:21 {
+  [cause]: Error: read ECONNRESET
+      at TCP.onStreamRead (node:internal/stream_base_commons:216:20) {
+    errno: -54,
+    code: 'ECONNRESET',
+    syscall: 'read'
+  }
+}
+
+Node.js v22.22.0

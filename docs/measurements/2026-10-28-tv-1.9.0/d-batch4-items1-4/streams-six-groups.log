@@ -1,0 +1,10 @@
+port 59490
+0.1s start 3 Channel 12 (Израиль) group 2
+32.7s stream Израиль     {"ch":"2 Channel 11 (Израиль)","toPlayingMs":1125,"toPictureMs":1125,"spinnerAtStartMs":869,"bufferingEventsAtStart":1,"watch30s":{"spinnerMs":0,"bufferingEvents":0,"bufferingMs":222},"state":"PLAYING"}
+65.6s stream Украина     {"ch":"20 ICTV","toPlayingMs":1332,"toPictureMs":1332,"spinnerAtStartMs":1050,"bufferingEventsAtStart":1,"watch30s":{"spinnerMs":0,"bufferingEvents":0,"bufferingMs":107},"state":"PLAYING"}
+98.5s stream Новостные   {"ch":"64 BBC News UK","toPlayingMs":1380,"toPictureMs":1380,"spinnerAtStartMs":1141,"bufferingEventsAtStart":1,"watch30s":{"spinnerMs":0,"bufferingEvents":0,"bufferingMs":171},"state":"PLAYING"}
+131.5s stream Кино        {"ch":"139 Fox","toPlayingMs":1357,"toPictureMs":1357,"spinnerAtStartMs":1042,"bufferingEventsAtStart":1,"watch30s":{"spinnerMs":0,"bufferingEvents":0,"bufferingMs":214},"state":"PLAYING"}
+164.6s stream Детские     {"ch":"234 JimJam","toPlayingMs":1559,"toPictureMs":1559,"spinnerAtStartMs":1216,"bufferingEventsAtStart":1,"watch30s":{"spinnerMs":0,"bufferingEvents":0,"bufferingMs":160},"state":"PLAYING"}
+197.8s stream Спорт       {"ch":"256 Setanta Sports+","toPlayingMs":1549,"toPictureMs":1549,"spinnerAtStartMs":1303,"bufferingEventsAtStart":1,"watch30s":{"spinnerMs":0,"bufferingEvents":0,"bufferingMs":374},"state":"PLAYING"}
+207.6s archive start      {"ch":"3 Channel 12 (Израиль)","mode":"archive","toPlayingMs":1508,"toPictureMs":1508,"spinnerMs":600,"state":"PLAYING"}
+216.4s back to live       {"toPlayingMs":1301,"name":"3 Channel 12 (Израиль)","mode":"live","sameGroup":true,"lastChIsOriginal":true}

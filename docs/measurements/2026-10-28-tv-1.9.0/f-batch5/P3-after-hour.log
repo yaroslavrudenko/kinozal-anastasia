@@ -1,0 +1,5 @@
+port 53345
+8.2s after-hour boot {"st":"PLAYING","n":389,"v":"1.9.0"} image requests through boot + menu laid out {"n":14,"how":{"0":1,"200":13}}
+11.2s after-hour first menu opening {"n":5,"how":{"200":5},"frames":177,"framesWithBlankRow":0,"maxBlankRows":0}
+14.3s after-hour CH- x2 (1.5 s apart) {"n":0,"how":{}}
+15.1s after-hour restored {"ov":"none","st":"PLAYING","ch":3}

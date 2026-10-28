@@ -1,0 +1,6 @@
+port 45651
+0.9s settings {"ov":"about","focus":null}
+3.2s on language row {"ov":"about","focus":null}
+3.8s language list {"shown":true,"ov":"lang","rows":[{"t":"Русский","l":280,"r":1604,"dir":"ltr"},{"t":"Українська","l":280,"r":1620,"dir":"ltr"},{"t":"עברית","l":280,"r":1620,"dir":"rtl"},{"t":"English","l":280,"r":1620,"dir":"ltr"}],"focus":null}
+4.8s after Back {"ov":"about","lang":"ru","same":true}
+5.4s closed {"ov":"menu","st":"PLAYING"}

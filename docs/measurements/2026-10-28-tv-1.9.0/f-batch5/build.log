@@ -1,0 +1,61 @@
+Author certficate: /Users/yaroslavr/tizen-studio-data/keystore/kinozal-anastasia/v2/author.p12
+Distributor1 certificate : /Users/yaroslavr/tizen-studio-data/keystore/kinozal-anastasia/v2/distributor.p12
+Excludes File Pattern: {.manifest.tmp, .delta.lst}
+Ignore File: /Users/yaroslavr/Developer/Projects/AI/kinozal-anastasia/.buildResult/.manifest.tmp
+Package File Location: /Users/yaroslavr/Developer/Projects/AI/kinozal-anastasia/.buildResult/Настин кинозал.wgt
+WARNING: Your data are to be sent over an unencrypted connection and could be read by others.
+pushed             device-profile.xml	  0%	      0 B	    0KB/spushed             device-profile.xml	100%	   2404 B	    0KB/s
+1 file(s) pushed. 0 file(s) skipped.
+/Users/yaroslavr/tizen-studio-data/keystore/kinozal-anastasia/v2/device-profile.xml   44KB/s (2404 bytes in 0.052s)
+WARNING: Your data are to be sent over an unencrypted connection and could be read by others.
+pushed                    package.wgt	  0%	      0KB	    0KB/spushed                    package.wgt	100%	    226KB	    0KB/s
+1 file(s) pushed. 0 file(s) skipped.
+.buildResult/package.wgt         3070KB/s (231632 bytes in 0.073s)
+install Yr0ttPlay1.OttClubPlayer
+package_path /home/owner/share/tmp/sdk_tools/package.wgt
+was_install_app return WAS_TRUE
+app_id[Yr0ttPlay1.OttClubPlayer] install start
+app_id[Yr0ttPlay1.OttClubPlayer] installing[8]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[10]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[13]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[16]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[18]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[21]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[24]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[27]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[29]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[32]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[35]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[37]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[40]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[43]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[45]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[48]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[51]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[54]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[56]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[59]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[62]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[64]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[67]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[70]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[72]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[75]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[78]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[81]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[83]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[86]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[89]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[91]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[94]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[97]
+app_id[Yr0ttPlay1.OttClubPlayer] installing[100]
+app_id[Yr0ttPlay1.OttClubPlayer] install completed
+spend time for wascmd is [3086]ms
+cmd_ret:0
+staged /home/owner/share/tmp/sdk_tools/package.wgt overwritten with an empty file (the installed app is not affected)
+launch app Yr0ttPlay1.OttClubPlayer
+app_id[Yr0ttPlay1.OttClubPlayer] launch start
+app_id[Yr0ttPlay1.OttClubPlayer] launched
+spend time for wascmd is [178]ms
+build rc=0

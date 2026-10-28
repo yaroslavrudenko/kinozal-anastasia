@@ -1,0 +1,6 @@
+port 39036
+2.6s menu now-lines {"rows":13,"withGuide":13,"match":13,"stale":0,"mismatch":[],"noGuide":0,"soon":[{"num":3,"stopIn":197,"title":"משדר הבחירות של ישראל 2026"},{"num":7,"stopIn":197,"title":"ישיר! בוסטון - ברוקלין"},{"num":8,"stopIn":797,"title":"קליפ טיים - פרק 14"}]}
+2.6s banner (as last drawn) {"ch":"Channel 12 (Израиль)","guide":"משדר הבחירות של ישראל 2026","banner":"00:15⁠–⁠04:15  משדר הבחירות של ישראל 2026"}
+2.6s waiting for the programme change on 3 משדר הבחירות של ישראל 2026 in 197 s (+75 s)
+287.9s after the boundary {"num":3,"before":"משדר הבחירות של ישראל 2026","rowNow":"משדר הבחירות של ישראל 2026","check":{"rows":13,"match":13,"stale":0,"mismatch":[]}}
+288.7s restored {"ov":"none","st":"PLAYING","ch":"Channel 12 (Израиль)","same":true}

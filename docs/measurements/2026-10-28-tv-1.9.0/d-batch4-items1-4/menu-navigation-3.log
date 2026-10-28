@@ -1,0 +1,16 @@
+port 34970
+0.0s start 3 Channel 12 (Израиль) group 2
+5.0s open menu (OK)                     {"keys":1,"medianMs":100,"maxMs":100,"all":"100","longestFrameGapMs":83,"requests":0,"mode":"menu","focus":"Channel 12 (Израиль)  ▶"}
+9.9s channels ▼ ×12                     {"keys":12,"medianMs":35,"maxMs":61,"all":"31 29 27 23 20 24 36 40 35 61 44 55","longestFrameGapMs":33,"requests":0,"mode":"menu","focus":"KAN23 (Израиль)"}
+12.3s channels ▲ ×6                      {"keys":6,"medianMs":32,"maxMs":37,"all":"26 32 37 33 22 20","longestFrameGapMs":17,"requests":0,"mode":"menu","focus":"HOP! (Израиль)"}
+15.7s channels CH− page ×5               {"keys":5,"medianMs":25,"maxMs":51,"all":"51 25 24 29 19","longestFrameGapMs":33,"requests":0,"mode":"menu","focus":"HOT HBO (Израиль)"}
+19.0s channels CH+ page ×5               {"keys":5,"medianMs":39,"maxMs":74,"all":"74 69 39 20 25","longestFrameGapMs":67,"requests":0,"mode":"menu","focus":"Channel 9 (Израиль)"}
+19.4s to groups (◀)                      {"keys":1,"medianMs":41,"maxMs":41,"all":"41","longestFrameGapMs":17,"requests":0,"mode":"menu","focus":"Израиль"}
+25.5s groups ▼ through all (14)          {"keys":13,"medianMs":40,"maxMs":62,"all":"55 42 40 34 29 36 52 45 29 62 49 21 30","longestFrameGapMs":50,"requests":0,"mode":"menu","focus":"⚙ Настройки"}
+30.3s groups ▲ back ×13                  {"keys":13,"medianMs":38,"maxMs":74,"all":"33 52 38 38 36 34 41 31 45 30 29 74 59","longestFrameGapMs":50,"requests":0,"mode":"menu","focus":"🔍 Поиск"}
+31.9s group ▼ ×2 + into channels (▶)     {"keys":3,"medianMs":25,"maxMs":42,"all":"42 22 25","longestFrameGapMs":17,"requests":0,"mode":"menu","focus":"Channel 9 (Израиль)"}
+33.2s channels ▼ ×3                      {"keys":3,"medianMs":25,"maxMs":27,"all":"25 25 27","longestFrameGapMs":17,"requests":0,"mode":"menu","focus":"Channel 13 (Израиль)"}
+34.5s pick channel (OK)                  {"menuClosedMs":225,"keyToPlayingMs":1351,"now":"4 Channel 13 (Израиль)","group":2}
+38.5s reopen menu (OK)                   {"keys":1,"medianMs":89,"maxMs":89,"all":"89","longestFrameGapMs":83,"requests":0,"mode":"menu","focus":"Channel 13 (Израиль)  ▶"}
+39.1s close menu (Back)                  {"keys":1,"medianMs":31,"maxMs":31,"all":"31","longestFrameGapMs":17,"requests":0,"mode":"none","focus":"Channel 13 (Израиль)  ▶"}
+43.9s restored {"name":"3 Channel 12 (Израиль)","sameGroup":true,"lastChIsOriginal":true,"state":"PLAYING","mode":"none"}

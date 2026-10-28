@@ -1,0 +1,5 @@
+port 46570
+4.1s settled {"vis":13,"blank":1,"map":"1111111111110"}
+8.7s flick down 3 + up 3 {"frames":273,"framesWithBlankRows":273,"maxBlankRows":13,"imgRequests":6}
+8.7s after {"vis":13,"blank":1,"map":"1111111111110"}
+9.5s restored {"ov":"none","st":"PLAYING","ch":"Channel 12 (Израиль)"}

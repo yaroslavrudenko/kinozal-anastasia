@@ -1,0 +1,4 @@
+port 38222
+3.1s state {"v":"1.9.0","src":"ott","ch":"3 Channel 12 (Израиль)","grp":"Израиль","n":389,"state":"PLAYING","lang":"ru","ov":"none","refreshH":1} time advanced 3013 ms in 3 s
+4.3s menu {"ov":"menu","groups":14,"focus":"Channel 12 (Израиль)  ▶"}
+5.1s after back {"ov":"none","state":"PLAYING"}

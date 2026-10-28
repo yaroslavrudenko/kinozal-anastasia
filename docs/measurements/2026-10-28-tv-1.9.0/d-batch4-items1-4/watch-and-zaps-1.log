@@ -1,0 +1,9 @@
+port 41712
+0.1s start {"name":"3 Channel 12 (Израиль)","grp":2,"n":389,"state":"PLAYING","src":"ott"}
+0.1s storage use {"keys":15,"chars":53608,"lastList":0}
+93.8s watch 90 s on 3 Channel 12 (Израиль) {"spinnerVisibleMs":0,"spinnerAppearances":0,"stateSamples":{"PLAYING":360}}
+97.5s zap 1 {"to":"4 Channel 13 (Израиль)","keyToPlayingMs":1157,"spinnerMs":876,"spinnerShows":1,"state":"PLAYING"}
+104.3s zap 2 {"to":"5 Channel 14 (Израиль)","keyToPlayingMs":1387,"spinnerMs":1036,"spinnerShows":1,"state":"PLAYING"}
+111.2s zap 3 {"to":"6 Channel 24 (Израиль)","keyToPlayingMs":1318,"spinnerMs":1068,"spinnerShows":1,"state":"PLAYING"}
+117.9s zap 4 {"to":"7 5Sport (Израиль)","keyToPlayingMs":1237,"spinnerMs":958,"spinnerShows":1,"state":"PLAYING"}
+125.6s restored picked {"name":"3 Channel 12 (Израиль)","grp":2,"sameGroup":true,"lastChIsOriginal":true,"state":"PLAYING"}

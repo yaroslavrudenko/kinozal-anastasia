@@ -1,0 +1,6 @@
+port 53514
+2.6s menu now-lines {"rows":13,"withGuide":13,"match":13,"stale":0,"mismatch":[],"noGuide":0,"soon":[{"num":1,"stopIn":550,"title":"\"Понять. Простить\". \"Школьные годы\"."},{"num":3,"stopIn":850,"title":"משדר הבחירות של ישראל 2026"},{"num":7,"stopIn":850,"title":"ישיר! בוסטון - ברוקלין"}]}
+2.6s banner (as last drawn) {"ch":"Channel 12 (Израиль)","guide":"משדר הבחירות של ישראל 2026","banner":"00:15⁠–⁠04:15  משדר הבחירות של ישראל 2026"}
+2.6s waiting for the programme change on 1 "Понять. Простить". "Школьные годы". in 550 s (+75 s)
+633.2s after the boundary {"num":1,"before":"\"Понять. Простить\". \"Школьные годы\".","rowNow":"\"Понять. Простить\". \"Вторая попытка\".","check":{"rows":13,"match":13,"stale":0,"mismatch":[]}}
+634.0s restored {"ov":"none","st":"PLAYING","ch":"Channel 12 (Израиль)","same":true}

@@ -1,0 +1,16 @@
+port 38800
+0.0s start 188 Киномикс group 7
+5.0s open menu (OK)                     {"keys":1,"medianMs":110,"maxMs":110,"all":"110","longestFrameGapMs":100,"requests":0,"mode":"menu","focus":"Киномикс  ▶"}
+10.1s channels ▼ ×12                     {"keys":12,"medianMs":46,"maxMs":77,"all":"22 23 35 39 19 71 55 77 47 49 42 46","longestFrameGapMs":67,"requests":0,"mode":"menu","focus":"Детектив"}
+12.5s channels ▲ ×6                      {"keys":6,"medianMs":30,"maxMs":39,"all":"30 39 37 28 26 29","longestFrameGapMs":17,"requests":0,"mode":"menu","focus":"sci-fi"}
+16.1s channels CH− page ×5               {"keys":5,"medianMs":59,"maxMs":86,"all":"86 63 59 33 23","longestFrameGapMs":67,"requests":0,"mode":"menu","focus":"BCU"}
+19.6s channels CH+ page ×5               {"keys":5,"medianMs":66,"maxMs":84,"all":"84 66 42 44 69","longestFrameGapMs":67,"requests":0,"mode":"menu","focus":"red"}
+20.0s to groups (◀)                      {"keys":1,"medianMs":35,"maxMs":35,"all":"35","longestFrameGapMs":17,"requests":0,"mode":"menu","focus":"Кино"}
+26.1s groups ▼ through all (14)          {"keys":13,"medianMs":32,"maxMs":101,"all":"73 43 49 35 27 101 26 26 32 17 31 33 17","longestFrameGapMs":83,"requests":0,"mode":"menu","focus":"⚙ Настройки"}
+31.0s groups ▲ back ×13                  {"keys":13,"medianMs":43,"maxMs":86,"all":"31 61 39 38 36 51 64 38 38 47 43 86 64","longestFrameGapMs":67,"requests":0,"mode":"menu","focus":"🔍 Поиск"}
+32.7s group ▼ ×2 + into channels (▶)     {"keys":3,"medianMs":27,"maxMs":32,"all":"32 27 24","longestFrameGapMs":50,"requests":0,"mode":"menu","focus":"Channel 9 (Израиль)"}
+33.9s channels ▼ ×3                      {"keys":3,"medianMs":31,"maxMs":33,"all":"29 31 33","longestFrameGapMs":17,"requests":0,"mode":"menu","focus":"Channel 13 (Израиль)"}
+35.1s pick channel (OK)                  {"menuClosedMs":205,"keyToPlayingMs":1232,"now":"4 Channel 13 (Израиль)","group":2}
+39.0s reopen menu (OK)                   {"keys":1,"medianMs":76,"maxMs":76,"all":"76","longestFrameGapMs":67,"requests":0,"mode":"menu","focus":"Channel 13 (Израиль)  ▶"}
+39.7s close menu (Back)                  {"keys":1,"medianMs":19,"maxMs":19,"all":"19","longestFrameGapMs":17,"requests":0,"mode":"none","focus":"Channel 13 (Израиль)  ▶"}
+43.5s restored {"name":"188 Киномикс","sameGroup":true,"lastChIsOriginal":true,"state":"PLAYING","mode":"none"}

@@ -1,0 +1,10 @@
+port 42785
+0.1s label before version 1.9.0 state PLAYING channels 389
+4.2s 1 open menu                                  {"imgRequests":0,"how":{},"frames":244,"framesWithBlankRow":0,"maxBlankRows":0,"wrongRowFrames":0,"vanished":0,"keyMs":"105","files":""}
+9.1s 2 CH- x3 then CH+ x3, 250 ms (owner case)    {"imgRequests":6,"how":{"200":6},"frames":281,"framesWithBlankRow":96,"maxBlankRows":12,"wrongRowFrames":0,"vanished":0,"keyMs":"104 27 24 57 28 30","files":"48.png,377.png,378.png,379.png,380.png,381.png"}
+14.0s 3 the same again (all pages seen)            {"imgRequests":0,"how":{},"frames":284,"framesWithBlankRow":92,"maxBlankRows":12,"wrongRowFrames":0,"vanished":6,"keyMs":"64 33 29 65 39 28","files":""}
+16.6s 4 single CH- after rest                      {"imgRequests":0,"how":{},"frames":152,"framesWithBlankRow":0,"maxBlankRows":0,"wrongRowFrames":0,"vanished":0,"keyMs":"59","files":""}
+19.2s 5 CH+ back                                   {"imgRequests":0,"how":{},"frames":150,"framesWithBlankRow":0,"maxBlankRows":0,"wrongRowFrames":0,"vanished":0,"keyMs":"79","files":""}
+24.2s 6 down x12, 150 ms                           {"imgRequests":0,"how":{},"frames":284,"framesWithBlankRow":181,"maxBlankRows":12,"wrongRowFrames":0,"vanished":0,"keyMs":"68 49 45 44 44 47 25 32 22 32 19 29","files":""}
+27.6s 7 close + reopen                             {"imgRequests":0,"how":{},"frames":204,"framesWithBlankRow":0,"maxBlankRows":0,"wrongRowFrames":0,"vanished":0,"keyMs":"83","files":""}
+28.5s restored {"ov":"none","st":"PLAYING","ch":3}

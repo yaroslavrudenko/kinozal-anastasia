@@ -1,0 +1,3 @@
+63.8s state {"__exception":"{\"text\":\"Uncaught TypeError: I18n.code is not a function\",\"url\":\"\",\"line\":1,\"column\":241,\"scriptId\":\"87\"}"} time advanced 3016 ms in 3 s
+65.1s menu {"ov":"menu","groups":14,"focus":"Киномикс  ▶"}
+65.9s after back {"ov":"none","state":"PLAYING"}

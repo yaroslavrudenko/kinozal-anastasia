@@ -1,0 +1,8 @@
+port 57148
+0.1s start 3 Channel 12 (Израиль) group 2 archive days 7
+47.4s ◀ ×3 (≈1.5 min back)           {"slider":"прямой эфир","programme":"","toPlayingMs":null,"toMovingMs":null,"spinnerStartMs":0,"positionVsTargetS":null,"watch15s":{"spinnerMs":0,"bufEvents":0,"bufMs":0,"freezes":0},"mode":"live","state":"PLAYING"}
+70.7s ◀ held ×20 (≈1 h back)         {"slider":"01:23:17","behind":"−1 ч 3 мин от эфира","programme":"‎‫משדר הבחירות של ישראל 2026‬‎","toPlayingMs":1511,"toMovingMs":1624,"spinnerStartMs":1230,"positionVsTargetS":0,"watch15s":{"spinnerMs":0,"bufEvents":0,"bufMs":229,"freezes":0},"mode":"archive","state":"PLAYING"}
+91.1s ▲ previous programme ×2        {"slider":"22:50:00","behind":"−3 ч 37 мин от эфира","programme":"‎‫ארץ נהדרת - המגה מגה מגה מדגם‬‎","toPlayingMs":1420,"toMovingMs":1531,"spinnerStartMs":1069,"positionVsTargetS":-1,"watch15s":{"spinnerMs":0,"bufEvents":0,"bufMs":77,"freezes":0},"mode":"archive","state":"PLAYING"}
+122.8s ◀ held ×60 (≈8 h back)         {"slider":"15:07:15","behind":"−11 ч 20 мин от эфира","programme":"‎‫בחירות 2026 עם אופירה אוחנה סרי‬‎","toPlayingMs":1527,"toMovingMs":1639,"spinnerStartMs":1254,"positionVsTargetS":-1,"watch15s":{"spinnerMs":0,"bufEvents":0,"bufMs":182,"freezes":0},"mode":"archive","state":"PLAYING"}
+144.3s in archive: ▶ ×4 forward       {"slider":"15:09:30","behind":"−11 ч 18 мин от эфира","programme":"‎‫בחירות 2026 עם אופירה אוחנה סרי‬‎","toPlayingMs":1473,"toMovingMs":1586,"spinnerStartMs":1215,"positionVsTargetS":-1,"watch15s":{"spinnerMs":0,"bufEvents":0,"bufMs":149,"freezes":0},"mode":"archive","state":"PLAYING"}
+148.2s back to live {"toPlayingMs":1384,"name":"3 Channel 12 (Израиль)","mode":"live","sameGroup":true,"lastChIsOriginal":true}

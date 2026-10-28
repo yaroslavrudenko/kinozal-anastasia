@@ -1,0 +1,6 @@
+port 52624
+2.6s menu now-lines {"rows":13,"withGuide":13,"match":13,"stale":0,"mismatch":[],"noGuide":0,"soon":[{"num":1,"stopIn":812,"title":"\"Понять. Простить\". \"Школьные годы\"."},{"num":4,"stopIn":212,"title":"ישראל בוחרת 13 - אודי סגל ודוריה למפל"},{"num":12,"stopIn":152,"title":"בתים במיליון דולר 15 - פרק 2"},{"num":13,"stopIn":212,"title":"הצבעה ראשונה"}]}
+2.6s banner (as last drawn) {"ch":"Channel 12 (Израиль)","guide":"משדר הבחירות של ישראל 2026","banner":"00:15⁠–⁠04:15  משדר הבחירות של ישראל 2026"}
+2.6s waiting for the programme change on 12 בתים במיליון דולר 15 - פרק 2 in 152 s (+75 s)
+242.9s after the boundary {"num":12,"before":"בתים במיליון דולר 15 - פרק 2","rowNow":"בגרות באמהות: מפגש משפחתי 2 - פרק 9","check":{"rows":13,"match":13,"stale":0,"mismatch":[]}}
+243.7s restored {"ov":"none","st":"PLAYING","ch":"Channel 12 (Израиль)","same":true}

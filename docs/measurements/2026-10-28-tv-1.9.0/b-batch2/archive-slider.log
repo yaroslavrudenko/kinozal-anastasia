@@ -1,0 +1,6 @@
+port 33417
+0.1s start 188 Киномикс group 7 archive days 7
+48.1s ◀ ×3 (≈1.5 min back)           {"slider":"прямой эфир","programme":"","toPlayingMs":null,"toMovingMs":null,"spinnerStartMs":0,"positionVsTargetS":null,"watch15s":{"spinnerMs":0,"bufEvents":0,"bufMs":0,"freezes":0},"mode":"live","state":"PLAYING"}
+71.8s ◀ held ×20 (≈1 h back)         {"slider":"23:00:53","behind":"−1 ч 3 мин от эфира","programme":"Х/ф \"Райский город\".","toPlayingMs":1639,"toMovingMs":1751,"spinnerStartMs":1460,"positionVsTargetS":0,"watch15s":{"spinnerMs":0,"bufEvents":0,"bufMs":233,"freezes":0},"mode":"archive","state":"PLAYING"}
+92.6s ▲ previous programme ×2        {"slider":"19:00:00","behind":"−5 ч 4 мин от эфира","programme":"Х/ф \"Дыхание шторма\".","toPlayingMs":1672,"toMovingMs":1785,"spinnerStartMs":1520,"positionVsTargetS":0,"watch15s":{"spinnerMs":0,"bufEvents":0,"bufMs":314,"freezes":0},"mode":"archive","state":"PLAYING"}
+ws closed 1006 

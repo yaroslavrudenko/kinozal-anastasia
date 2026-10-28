@@ -1,0 +1,6 @@
+port 47911
+2.6s menu now-lines {"rows":13,"withGuide":13,"match":13,"stale":0,"mismatch":[],"noGuide":0,"soon":[{"num":1,"stopIn":245,"title":"Т/с \"Обручальное кольцо\", 701 с."}]}
+2.6s banner (as last drawn) {"ch":"Channel 12 (Израиль)","guide":"משדר הבחירות של ישראל 2026","banner":"04:15⁠–⁠06:00  משדר הבחירות של ישראל 2026"}
+2.6s waiting for the programme change on 1 Т/с "Обручальное кольцо", 701 с. in 245 s (+75 s)
+332.9s after the boundary {"num":1,"before":"Т/с \"Обручальное кольцо\", 701 с.","rowNow":"Т/с \"Обручальное кольцо\", 702 с.","check":{"rows":13,"match":13,"stale":0,"mismatch":[]}}
+333.7s restored {"ov":"none","st":"PLAYING","ch":"Channel 12 (Израиль)","same":true}

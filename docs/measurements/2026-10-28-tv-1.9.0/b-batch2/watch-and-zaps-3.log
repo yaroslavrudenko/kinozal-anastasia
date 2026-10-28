@@ -1,0 +1,9 @@
+port 54983
+0.1s start {"name":"188 Киномикс","grp":7,"n":389,"state":"PLAYING","src":"ott"}
+0.1s storage use {"keys":13,"chars":52846,"lastList":0}
+94.7s watch 90 s on 188 Киномикс {"spinnerVisibleMs":0,"spinnerAppearances":0,"stateSamples":{"PLAYING":360}}
+98.8s zap 1 {"to":"189 Amedia Premium","keyToPlayingMs":1505,"spinnerMs":1337,"spinnerShows":1,"state":"PLAYING"}
+105.6s zap 2 {"to":"190 ТВ XXI","keyToPlayingMs":1325,"spinnerMs":958,"spinnerShows":1,"state":"PLAYING"}
+112.5s zap 3 {"to":"191 Amedia Hit","keyToPlayingMs":1393,"spinnerMs":1201,"spinnerShows":1,"state":"PLAYING"}
+119.3s zap 4 {"to":"192 Киносемья","keyToPlayingMs":1231,"spinnerMs":942,"spinnerShows":1,"state":"PLAYING"}
+126.0s restored picked {"name":"188 Киномикс","grp":7,"sameGroup":true,"lastChIsOriginal":true,"state":"PLAYING"}
