@@ -32,6 +32,55 @@
   so that in her free time she can switch on the TV, rest, enjoy life and simply have a wonderful time.</i>
 </p>
 
+## See it in action
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/basic-cards.jpg" alt="Large menu: every group as a big card, three by three, with its channel count"></td>
+    <td><img src="docs/screenshots/basic-list.jpg" alt="Large menu, Kids group: big rows with real logos, what is on now, minutes left, a progress bar, a favourite star and the playing channel"></td>
+  </tr>
+  <tr><td align="center"><b>Large menu · groups</b>: big cards, easy to read from the sofa, made for low vision</td><td align="center"><b>Large menu · channels</b>: real logos, what's on now, minutes left, ★ favourites, ▶ playing</td></tr>
+  <tr>
+    <td><img src="docs/screenshots/advanced-menu.jpg" alt="Detailed menu: groups on the left, channels with logos, numbers and what is on now on the right"></td>
+    <td><img src="docs/screenshots/ui-search.jpg" alt="Search: typing a few letters lists the matching channels"></td>
+  </tr>
+  <tr><td align="center"><b>Detailed menu</b>: groups and channels side by side, with real logos and what's on now</td><td align="center"><b>🔍 Search</b>: results as you type</td></tr>
+</table>
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/settings.jpg" alt="Settings: interface language, full-screen picture, adult channels, fast channel switching and the menu view"></td>
+    <td><img src="docs/screenshots/providers.jpg" alt="Providers: OTT Club, the free iptv-org channels with their notice, and adding your own M3U provider"></td>
+    <td><img src="docs/screenshots/about.jpg" alt="About: the dedication, version, build, provider and the free-channel notice"></td>
+  </tr>
+  <tr><td align="center"><b>⚙ Settings</b>: pick the large or the detailed menu, language, picture</td><td align="center"><b>📡 Providers</b>: OTT Club, free channels, your own playlists</td><td align="center"><b>ℹ About</b>: version, provider and what free channels promise</td></tr>
+</table>
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/ui-slider.jpg" alt="Archive slider over the picture: scrub to any minute of the show"></td>
+    <td><img src="docs/screenshots/ui-panel-1plus1.jpg" alt="Programme panel over 1+1 Україна: today's shows, the one on air highlighted"></td>
+  </tr>
+  <tr><td align="center"><b>▲ Archive slider</b>: scrub to any minute</td><td align="center"><b>▼ Programme guide</b>: past shows play from the archive</td></tr>
+  <tr>
+    <td><img src="docs/screenshots/channel-natgeowild.jpg" alt="Nat Geo Wild: a Nile crocodile close up, in full HD"></td>
+    <td><img src="docs/screenshots/channel-discovery.jpg" alt="Discovery: sailing boats on the sea"></td>
+  </tr>
+  <tr><td align="center"><b>Nat Geo Wild</b> · full HD</td><td align="center"><b>Discovery</b> · documentary</td></tr>
+  <tr>
+    <td><img src="docs/screenshots/channel-channel9.jpg" alt="Channel 9, Israel, news"></td>
+    <td><img src="docs/screenshots/channel-m1.jpg" alt="М1, Ukrainian music channel"></td>
+  </tr>
+  <tr><td align="center"><b>Channel 9</b> · Israel</td><td align="center"><b>М1</b> · Ukrainian music</td></tr>
+  <tr>
+    <td><img src="docs/screenshots/channel-cartoons90.jpg" alt="Cartoons 90: cartoons of the 90s"></td>
+    <td><img src="docs/screenshots/channel-cartoonsshort.jpg" alt="Cartoons Short: classic animation"></td>
+  </tr>
+  <tr><td align="center"><b>Cartoons 90</b> · cartoons of the 90s</td><td align="center"><b>Cartoons Short</b> · classic animation</td></tr>
+</table>
+
+<sub>The interface screenshots show the default Russian interface with real OTT Club channels. The menu and service screens of 1.9.4 were taken in the desktop preview, so <b>ℹ About</b> shows the browser player; on the TV it shows the TV model and its hardware player.</sub>
+
 ---
 
 ## The pitch
@@ -100,6 +149,19 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't: menus th
 
 ## ✨ What's new
 
+### 1.9.4
+
+- **A large menu for low vision.** A new setting, **⚙ Settings → Menu view**, switches between **Large** («Крупный») and **Detailed** («Подробный», the default and the menu you know).
+- **Large menu, channels.** OK on the picture opens the channel list of the group you are watching, on the channel you are watching. Every channel has its own band with a big logo and a big name, what is on now under it (long titles wrap, nothing is cut off), **minutes left** with the programme's progress bar under them, ★ for favourites and ▶ for the channel playing. ◀ ▶ turn pages, as CH+ / CH− do; ◀ on the first page goes back to the groups, ▶ on the last page stops.
+- **Large menu, groups.** Back shows every group as a big card, three by three: one word for the name and the channel count on one line, so the eye finds both at once. **🔍 Search**, **📡 Providers**, **⚙ Settings** and **ℹ About** are cards too, and a help bar at the bottom names the keys.
+- **A gentle cursor.** The focus in the large menu is a calm, soft fill, and the detailed menu's bright blue cursor is now a gentle slate too (white text at 7.2:1 contrast).
+- **Larger ⚙ Settings, 📡 Providers and ℹ About** in both menus: bigger text, taller rows.
+- **A scroll bar on every list**: groups, channels, the large menu's cards and list, search results, the programme guide, the language list, Settings, Providers and About.
+- **The free channels say what they are.** Under the free iptv-org provider in **📡 Providers**, and in **ℹ About**, in all four languages: free channels play as their sources serve them, in their quality, with no guarantee of continuity; guaranteed quality and support come with the paid OTT Club.
+- **Keys on the picture are unchanged** in both menus: ◀ ▶ change the channel, ▲ opens the archive slider, ▼ the programme guide.
+- **Steadier menus.** Logos never arrive on screen after CH+ / CH− on the group cards, and after the hourly list refresh the cursor stays on the same channel.
+- **Measured on the TV, 1.9.1 → 1.9.4** (detailed menu, OTT Club, 372 channels): open the menu **94 → 88 ms**; ▼ held ×30 **38.4 → 35.5 ms** per key; CH+ ×12 back **48.7 → 43.5 ms**; channel switch, key → picture **984 → 982 ms** (median of 12); **0** logos arriving on screen while scrolling the list.
+
 ### 1.9.3
 
 - **⚙ Settings and ℹ About are two separate rows of the menu.** Settings holds only what you switch; About holds the dedication, the version, the TV and the author.
@@ -144,44 +206,13 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't: menus th
 | 📺 **"Now on air" you can trust** | Every row of the menu shows what is on now. A row turns over to the next programme at its end by itself; the provider is asked only for the rows on screen. A row never goes blank: if the provider goes quiet, the last programme stays, marked **(ended HH:MM)** once it is over. |
 | 🏷 **Banner** | Channel, programme on air with its time range, what comes **Next**, a progress bar and, after every channel switch, a short tech line (for example `1920×1080 · H264 · 25 fps · 7.5 Mbps · sound stereo`). While a stream connects, the banner says what is happening (**Connecting…**, **Loading video… N%**, **No signal — retry in N s**), so a black screen is never silent. |
 | 🔊 **Sound and picture** | Red picks the audio track; Green cycles **Full screen → Auto → Letterbox**. |
-| 🧭 **Scroll bars** | A quiet scroll bar beside groups and channels shows where you are and where the list ends; lists never run into the hint bar on any screen size. |
+| 🔠 **Large menu for low vision** | **⚙ Settings → Menu view → Large**: groups as big full‑screen cards, and a channel list in big type with big logos, what is on now, minutes left and a progress bar. ◀ ▶ turn its pages. |
+| 🧭 **Scroll bars** | A quiet scroll bar beside every list, on every screen, shows where you are and where the list ends; lists never run into the hint bar on any screen size. |
 | 💾 **Remembers you** | Each provider keeps your last channel and group; the app opens where you left off. |
 | 🛡 **Survives bad networks** | Every stall, error or network drop reconnects with backoff (0.5 s up to 15 s). If the list server is down, the last list is shown and updates by itself. |
 | 🔑 **Your key stays with OTT Club** | Used exactly as typed and only ever sent to OTT Club (pinned by tests). |
 | 🔒 **Private** | No account, no ads, no analytics code. Three TV permissions only: internet, the remote's keys and opening the author's link (`config.xml`). The diagnostic counters are kept on the TV and never sent anywhere (`js/diag.js`). |
 | 👤 **About** | **ℹ About** shows the version, build, TV model, Tizen and engine version, player, provider, channel count and buffer settings; **Author** opens the author's LinkedIn profile in the TV's browser. |
-
-## See it in action
-
-<table>
-  <tr>
-    <td><img src="docs/screenshots/ui-menu.jpg" alt="Channel menu: search, groups, channels with logos and what is on now"></td>
-    <td><img src="docs/screenshots/ui-search.jpg" alt="Search: typing a few letters lists the matching channels"></td>
-  </tr>
-  <tr><td align="center"><b>OK · Channel menu</b>: groups, logos, what's on now</td><td align="center"><b>🔍 Search</b>: results as you type</td></tr>
-  <tr>
-    <td><img src="docs/screenshots/ui-slider.jpg" alt="Archive slider over the picture: scrub to any minute of the show"></td>
-    <td><img src="docs/screenshots/ui-panel-1plus1.jpg" alt="Programme panel over 1+1 Україна: today's shows, the one on air highlighted"></td>
-  </tr>
-  <tr><td align="center"><b>▲ Archive slider</b>: scrub to any minute</td><td align="center"><b>▼ Programme guide</b>: past shows play from the archive</td></tr>
-  <tr>
-    <td><img src="docs/screenshots/channel-natgeowild.jpg" alt="Nat Geo Wild: a Nile crocodile close up, in full HD"></td>
-    <td><img src="docs/screenshots/channel-discovery.jpg" alt="Discovery: sailing boats on the sea"></td>
-  </tr>
-  <tr><td align="center"><b>Nat Geo Wild</b> · full HD</td><td align="center"><b>Discovery</b> · documentary</td></tr>
-  <tr>
-    <td><img src="docs/screenshots/channel-channel9.jpg" alt="Channel 9, Israel, news"></td>
-    <td><img src="docs/screenshots/channel-m1.jpg" alt="М1, Ukrainian music channel"></td>
-  </tr>
-  <tr><td align="center"><b>Channel 9</b> · Israel</td><td align="center"><b>М1</b> · Ukrainian music</td></tr>
-  <tr>
-    <td><img src="docs/screenshots/channel-cartoons90.jpg" alt="Cartoons 90: cartoons of the 90s"></td>
-    <td><img src="docs/screenshots/channel-cartoonsshort.jpg" alt="Cartoons Short: classic animation"></td>
-  </tr>
-  <tr><td align="center"><b>Cartoons 90</b> · cartoons of the 90s</td><td align="center"><b>Cartoons Short</b> · classic animation</td></tr>
-</table>
-
-<sub>The interface screenshots show the default Russian interface.</sub>
 
 ## 🆓 Start watching — free, in a minute
 
@@ -268,6 +299,7 @@ OK (channel menu) → **⚙ Settings**, the row after **📡 Providers**. ▲ �
 | **Fast channel switching** | keeps the player between channels for faster switching | on |
 | **Full-screen picture** | yes — the picture fits the screen exactly · no — the stream's own proportions | yes |
 | **Adult channels** | shown in the menu · hidden | hidden |
+| **Menu view** | **Large** — full‑screen group cards and a channel list in big type, for low vision · **Detailed** — groups and channels side by side | Detailed |
 
 **ℹ About**, the last row of the groups, shows the dedication, the version, build, TV, player, provider, channels and buffer settings. **Author** opens the author's LinkedIn profile in the TV's browser.
 
@@ -322,7 +354,7 @@ Performance never costs freshness: no refresh is made rarer to look faster, and 
 
 | | |
 |---|---|
-| **Automated tests** | **437 tests, all passing**, in 51 files: 39 behaviour suites and 12 headless‑browser layout suites. The browser suites check wrapping, paging, scroll bars, logo boxes, mixed‑direction text and the Hebrew right‑to‑left layout. |
+| **Automated tests** | **492 tests, all passing**, in 53 files: 40 behaviour suites and 13 headless‑browser layout suites. The browser suites check wrapping, paging, scroll bars, logo boxes, mixed‑direction text, the Hebrew right‑to‑left layout and both menu views. |
 | **Mutation‑proven fixes** | For every fix, the guard is removed and the test must turn red, then the guard is restored and it must turn green again. |
 | **Independent reviews** | Every batch is reviewed by people who did not write it: a native code reviewer, Codex as an external reviewer, and a performance analyst (plus a designer for layout). The first full review raised 230 findings, and every one was given a status. |
 | **On the real TV** | Every release is measured on a 2017 UE50MU7000. The scenarios drive the app with remote key events through its inspector and read the results inside the TV page, on one clock. The raw logs are committed next to each scenario. |
