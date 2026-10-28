@@ -5,7 +5,9 @@ var Catchup = (function () {
   var FLUSSONIC_TS = /\/mpegts(?=\?|$)/;
 
   function supported(ch) { return ch.catchupDays > 0 || !!ch.catchup || !!ch.catchupSource; }
-  function days(ch) { return ch.catchupDays || CONFIG.ARCHIVE_DAYS; }
+  // A playlist declaring catch-up without days is not assumed to keep ARCHIVE_DAYS: older moments answered 404 after the
+  // whole archive timeout (review3 F-S13). OTT Club always declares its days.
+  function days(ch) { return ch.catchupDays || CONFIG.ARCHIVE_DAYS_UNDECLARED; }
   // The earliest moment the app opens: the provider's window minus a safety margin (its oldest minutes
   // are already gone by the time a stream opens — a moment at the very edge never starts, TV test D1).
   function earliest(ch, nowMs) { return nowMs - days(ch) * Util.DAY_MS + CONFIG.ARCHIVE_EDGE_MARGIN_MS; }
@@ -41,17 +43,30 @@ var Catchup = (function () {
     return ch.url + (ch.url.indexOf('?') < 0 ? '?' : '&') + 'utc=' + start + '&lutc=' + now;
   }
 
-  // t: template; v: { start, now, dur } in seconds. Every token may carry a "$" and a "(b)" prefix.
+  // t: template; v: { start, now, dur } in seconds. Every token may carry a "$" and a "(b)" prefix. The formatted forms of
+  // OTT Navigator / Kodi playlists (review3 F-S14): {utc:YmdHMS}, {utcend:…}, {lutc:…} in UTC (as their names say),
+  // {start:…}, {end:…}, {now:…}, {timestamp:…} in local time like the plain {Y}…{S}; {duration:X} / {offset:X} in units of X s.
   function fill(t, v) {
-    var d = new Date(v.start * 1000);
-    var dateTokens = { Y: d.getFullYear(), m: Util.pad2(d.getMonth() + 1), d: Util.pad2(d.getDate()),
-      H: Util.pad2(d.getHours()), M: Util.pad2(d.getMinutes()), S: Util.pad2(d.getSeconds()) };
-    return t.replace(/\$?\{(utc|start|timestamp)\}/g, v.start)
+    var tokens = dateTokens(new Date(v.start * 1000), false);
+    return t.replace(/\$?\{(utc|lutc|utcend|start|now|end|timestamp):([^}]*)\}/g, function (all, k, format) { return formatted(k, format, v); })
+            .replace(/\$?\{(duration|offset):([1-9]\d*)\}/g, function (all, k, unit) { return Math.floor((k === 'duration' ? v.dur : v.now - v.start) / +unit); })
+            .replace(/\$?\{(utc|start|timestamp)\}/g, v.start)
             .replace(/\$?\{(lutc|now)\}/g, v.now)
             .replace(/\$?\{(utcend|end)\}/g, v.start + v.dur)
             .replace(/\$?\{duration\}/g, v.dur)
             .replace(/\$?\{offset\}/g, v.now - v.start)
-            .replace(/\$?\{(?:\(b\))?([YmdHMS])\}/g, function (all, k) { return dateTokens[k]; });
+            .replace(/\$?\{(?:\(b\))?([YmdHMS])\}/g, function (all, k) { return tokens[k]; });
+  }
+  function dateTokens(d, utc) {
+    var g = utc ? 'getUTC' : 'get';
+    return { Y: d[g + 'FullYear'](), m: Util.pad2(d[g + 'Month']() + 1), d: Util.pad2(d[g + 'Date']()), H: Util.pad2(d[g + 'Hours']()),
+      M: Util.pad2(d[g + 'Minutes']()), S: Util.pad2(d[g + 'Seconds']()) };
+  }
+  // {k:format}: the moment k names, its Y m d H M S letters in format replaced by their values ("Y-m-d_H.M.S").
+  function formatted(k, format, v) {
+    var sec = k === 'lutc' || k === 'now' ? v.now : k === 'utcend' || k === 'end' ? v.start + v.dur : v.start;
+    var tokens = dateTokens(new Date(sec * 1000), k.indexOf('utc') >= 0);
+    return format.replace(/[YmdHMS]/g, function (c) { return tokens[c]; });
   }
 
   return { supported: supported, days: days, earliest: earliest, url: url };

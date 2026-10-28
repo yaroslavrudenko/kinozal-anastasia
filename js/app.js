@@ -1,6 +1,6 @@
 // Boot, wiring of the modules' hooks, and the remote-control keys while watching.
 (function () {
-  var lastBack = 0, guideNoticeShown = false;
+  var lastBack = 0, guideNoticeShown = false, failures = 0;
 
   // Optional platform setup: a throw is recorded and boot carries on (a TV refusing one of these calls
   // must never leave the screen black).
@@ -12,8 +12,9 @@
     I18n.apply();                      // the interface language (RU by default) and its writing direction
     Overlay.onBeforeOpen(function () { NumEntry.cancel(); Zap.cancel(); });
     Player.init({
-      // The state line on the banner while there is no picture (not over a zap burst's preview).
-      onBuffering: function (on) { UI.spinner(on); if (!on) Banner.resumed(); else { if (!Zap.choosing()) Banner.connecting(); } },
+      // The state line on the banner while there is no picture (not over a zap burst's preview), at once; the big spinner
+      // only when the wait is long (streamSpinner).
+      onBuffering: function (on, phase) { streamSpinner(on, phase); if (!on) Banner.resumed(); else { if (!Zap.choosing()) Banner.connecting(); } },
       onLoading: function (pct) { if (!Zap.choosing()) Banner.loading(pct); },
       // The picture is up: the banner with this stream's technical line, at once.
       onFirstFrame: function () {
@@ -25,15 +26,20 @@
       // From the fourth, «no signal»: the menu is laid out ahead now (it would be at the first frame), so the viewer
       // reaching for it finds it ready. During the silent retries the stream keeps the bandwidth (logos) and the thread
       // (layout) to itself (review 4, P4-2).
+      // The backoff wait shows no spinner: the banner says «Нет сигнала — повтор через N с» (review3 S-6).
       onError: function (n, delay) {
-        if (n >= 4) { if (Overlay.isNone()) UI.toast(I18n.t('m.noSignal', n), delay + 500); Util.idle(prepareMenu); }
+        failures = n;
+        UI.spinner(false);
+        if (n >= CONFIG.NO_SIGNAL_AFTER) { if (Overlay.isNone()) UI.toast(I18n.t('m.noSignal', n), delay + 500); Util.idle(prepareMenu); }
         if (!Zap.choosing()) Banner.retrying(n, delay);
       },
       onEnded: Playback.onEnded,
       onMutedStart: function () { UI.toast(I18n.t('m.soundAfterKey'), 6000); },
+      onFrozen: function (on) { streamSpinner(on, 'rebuffer'); },
       retryTarget: Playback.retryTarget
     });
-    Playback.setHooks({ onOpened: function () { Banner.show(false); }, onBanner: function () { Banner.show(true); } });
+    Playback.setHooks({ onOpened: function () { Banner.show(false); Diag.mark('banner'); }, onBanner: function () { Banner.show(true); },
+      onUnplayable: function () { UI.spinner(false); UI.toast(I18n.t('m.unplayable'), 5000); } });
     NowLines.setHooks({ onUpdate: Overlay.refreshQuiet });
     Sources.setHooks({ onApplied: onListApplied, onFatal: UI.fatal, onSpinner: UI.spinner, onGuide: Overlay.refresh,
       onNotice: function (text) { UI.toast(text, 5000); } });
@@ -42,6 +48,7 @@
       onXmltvFailed: function () { if (!guideNoticeShown) UI.toast(I18n.t('m.guideDown'), 5000); guideNoticeShown = true; }
     });
     document.addEventListener('keydown', function (e) {
+      Diag.key();
       if (Player.unmute()) UI.toast(I18n.t('m.soundOn'), 1200);
       onKey(e);
     });
@@ -57,6 +64,18 @@
   }
 
   function prepareMenu() { Overlay.prepare('menu'); }
+
+  // The big centre spinner of a stream (review3 S-1, S-6; owner 2026-10-27: the viewer must not keep seeing it, buffering
+  // stays): an open shows it once buffering lasted SPINNER_GRACE_START_MS, a rebuffer SPINNER_GRACE_REBUFFER_MS; it goes
+  // at once when playback moves. A retry after NO_SIGNAL_AFTER failures in a row shows none: «no signal» stays static.
+  function streamSpinner(on, phase) {
+    if (!on) { UI.spinner(false); return; }
+    if (phase === 'open') failures = 0;
+    if (phase === 'open' || phase === 'retry') {
+      UI.spinner(false);
+      if (failures < CONFIG.NO_SIGNAL_AFTER) UI.spinnerAfter(CONFIG.SPINNER_GRACE_START_MS);
+    } else if (phase === 'rebuffer') UI.spinnerAfter(CONFIG.SPINNER_GRACE_REBUFFER_MS);
+  }
 
   // The list loads and the saved channel starts (in its own task right after this one). With no source (a first launch:
   // nothing chosen or built in; or a source built into an older build only) «📡 Провайдеры» opens to choose it, with

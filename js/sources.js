@@ -299,7 +299,7 @@ var Sources = (function () {
     var ott = !x.url, name = x.name || I18n.t('m.channel');
     return { key: x.key, num: x.num, id: x.id, name: name, nameLc: String(name).toLowerCase(), unnamed: !x.name, logo: x.logo || '',
       groupId: x.groupId, group: I18n.group(x.groupId), url: ott ? OttClub.streamUrl(x.id) : x.url, catchup: x.catchup || '',
-      catchupSource: x.catchupSource || '', catchupDays: x.catchupDays || 0, il: !!x.il, ua: !!x.ua, dead: false };
+      catchupSource: x.catchupSource || '', catchupDays: x.catchupDays || 0, il: !!x.il, ua: !!x.ua, dead: !ott && M3U.unplayable(x.url) };
   }
 
   // done(result | null): the offline copy, or the raw list text written by versions before 1.8.

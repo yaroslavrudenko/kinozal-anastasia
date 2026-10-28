@@ -1,0 +1,4 @@
+port 33359
+3.1s state {"v":"1.9.0","src":"ott","ch":"1 Channel 9 (Израиль)","grp":"Israel","n":389,"state":"PLAYING","lang":"en","ov":"none","refreshH":1} time advanced 3011 ms in 3 s
+4.3s menu {"ov":"menu","groups":14,"focus":"Channel 9 (Израиль)  ▶"}
+5.1s after back {"ov":"none","state":"PLAYING"}

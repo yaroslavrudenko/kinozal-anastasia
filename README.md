@@ -2,217 +2,273 @@
   <img src="docs/icon.png" width="160" alt="Настин кинозал icon: a white daisy with the name Настя">
 </p>
 
-<h1 align="center">Настин кинозал</h1>
+<h1 align="center">Настин кинозал · Nastin Kinozal</h1>
 
 <p align="center">
-  <b>Your old Samsung TV deserves a cinema that never freezes.</b><br>
-  <b>Watch free TV the moment you install it</b> — ~11 000 free channels built in · <b>add your own playlists</b> · OTT Club for 389 channels and a 7‑day archive · zero stalls in 30 minutes of film playback.
+  <b>A fast, modern IPTV player for the Samsung TV you already own — even a 2017 one.</b><br>
+  Free channels from the first minute · your own playlists · OTT Club with a 7‑day archive · four interface languages.
 </p>
 
 <p align="center">
-  <i>💐 Dedicated to my wife, Anastasia.<br>
-  So that in her free time she can switch on the TV, rest, enjoy life and simply have a wonderful time.</i>
-</p>
-
-<p align="center">
-  <img alt="Samsung Tizen 3.0+" src="https://img.shields.io/badge/Samsung%20Tizen-3.0%2B-1428A0?style=for-the-badge">
-  <img alt="Pure ES5, no build step" src="https://img.shields.io/badge/ES5-no%20build%20step-2f7ee8?style=for-the-badge">
-  <img alt="Hardware playback" src="https://img.shields.io/badge/playback-hardware%20AVPlay-34a853?style=for-the-badge">
-  <img alt="Stalls measured" src="https://img.shields.io/badge/stalls-0%20in%2030%20min-brightgreen?style=for-the-badge">
+  <img alt="Samsung Tizen 3.0+ (2017)" src="https://img.shields.io/badge/Samsung%20Tizen-3.0%2B%20·%202017%20TVs-1428A0?style=for-the-badge">
+  <img alt="Chromium 47 engine, plain ES5" src="https://img.shields.io/badge/Chromium%2047-plain%20ES5-2f7ee8?style=for-the-badge">
+  <img alt="Hardware playback" src="https://img.shields.io/badge/playback-hardware%20AVPlay-34a853?style=for-the-badge"><br>
+  <img alt="Four interface languages" src="https://img.shields.io/badge/interface-RU%20·%20UK%20·%20HE%20(RTL)%20·%20EN-8e44ad?style=for-the-badge">
+  <img alt="Free channels built in" src="https://img.shields.io/badge/free%20channels-~11%20000%20built%20in-f39c12?style=for-the-badge">
+  <img alt="Channel switch about 1 s on the TV" src="https://img.shields.io/badge/channel%20switch-~1.0%20s%20on%20the%20TV-brightgreen?style=for-the-badge">
 </p>
 
 <p align="center">
   <img src="docs/screenshots/channel-1plus1-voice-coaches.jpg" width="900" alt="1+1 Україна — «Голос країни»: the four coaches in the red chairs, in full HD">
 </p>
 
----
-
-## ▶ Turn your TV into a cinema tonight
-
-That 2017 Samsung on your wall still has a great panel. Its apps don't. Menus throw JavaScript errors, channels freeze, and nothing gets updated any more.
-
-**Настин кинозал (Nastin Kinozal) fixes that in one install.** It is a player written for the web engine your TV actually has, and it plays through the TV's own hardware decoder. Everything you open is fast, and every stream heals itself.
-
-**[⬇ Install it on your TV](#-install) · [⭐ Star the repo](https://github.com/yaroslavrudenko/nastin-kinozal) · [💬 Tell us your TV model](https://github.com/yaroslavrudenko/nastin-kinozal/issues)**
+<p align="center">
+  <i>💐 Dedicated to my wife, Anastasia —<br>
+  so that in her free time she can switch on the TV, rest, enjoy life and simply have a wonderful time.</i>
+</p>
 
 ---
 
-> ### 📺 Watch free the moment you install it
-> Настин кинозал comes with a **free provider built in: [iptv-org](https://github.com/iptv-org/iptv)** — its whole public list (**~11 000 channels from all over the world**) and its ready playlists: 🇮🇱 Israel · 🇺🇦 Ukraine · in Russian · **in English (CNN, Bloomberg, DW, France 24, Euronews, NBC News NOW, ABC News Live…)** · News · Kids · Music · Movies · Documentary · Sport. A fresh install opens **📡 Провайдеры** so you choose what to watch — an iptv-org playlist needs no key and no sign‑up (Back there starts iptv-org's whole list). Pick a provider and a playlist in **📡 Провайдеры**; inside, the channels are grouped as the provider gives them, Israeli and Ukrainian ones first. You can also **add your own providers** (an M3U link each) and switch between all of them on the TV.
->
-> ### ➕ Add your own playlists — in three steps
-> 1. Press **OK** (the channel menu), then **Blue** — **📡 Провайдеры** opens.
-> 2. Choose **«+ Добавить провайдера»** and type (or paste) the **M3U link** your provider gave you — `http://…` or `https://…`. Press **OK**.
-> 3. It plays at once and stays in the list; switch to it, to iptv-org or to OTT Club any time. **Red twice** on it removes it — only your own can be removed; the built‑in ones always stay.
->
-> Each provider remembers your last channel and group, and the app always opens where you left off.
->
-> ### ⭐ Want more? Subscribe to OTT Club
-> For **389 channels, a 7‑day archive with a real timeline slider and the full programme guide**, subscribe to [OTT Club](https://www.ottclub.tv): it is built in, enter your key and it works. Another paid provider works today if it gives you an **M3U link**: add it as your own playlist. **Built‑in support like OTT Club's (key, guide and archive from the provider's API) is not there yet for other paid providers; we will add it if there is interest** — [tell us which one](https://github.com/yaroslavrudenko/nastin-kinozal/issues).
->
-> The free channels come from the open [iptv-org](https://github.com/iptv-org/iptv) project (publicly available channels). The player shows every channel a source lists and filters nothing (the one exception is your own setting: the adult group stays hidden until you switch it on in «⚙ Настройки»): a stream that does not play is the source's matter. No paid channels, keys or private playlists are included in this repository. [How it works ↓](#-providers-ott-club-iptv-org-and-your-own)
+## The pitch
 
-## Why you'll love it
+That 2017 Samsung on your wall still has a great panel. Its apps don't: menus throw JavaScript errors, channels freeze, and nothing is updated any more. Samsung's firmware is locked, so the TV's web engine will never be upgraded.
+
+**Настин кинозал is written for the engine your TV actually has.** It plays through the TV's own hardware decoder, comes with free channels ready to watch, speaks your language, and was measured on a real 2017 TV at every release.
+
+**[⬇ Install it](#-install) · [⭐ Star the repo](https://github.com/yaroslavrudenko/nastin-kinozal) · [💬 Tell us your TV model](https://github.com/yaroslavrudenko/nastin-kinozal/issues)**
+
+## Why you'll want it
 
 | | |
 |---|---|
-| 🎬 **Films never stop** | Hardware H.264 decoding, a 10‑second safety buffer, and a watchdog that reconnects a stalled stream on its own. Measured: three movie channels for 10 minutes each, **0 stalls, 0 rebuffers, 0 reconnects**. |
-| ⏪ **Rewind TV like a video** | Press ▲ while watching and a timeline slider appears. Hold ◀ ▶ to scrub (it speeds up as you hold), jump between shows with ▲ ▼, and press OK to watch from that moment. Up to 7 days back. |
-| 🔍 **Find any channel** | Type part of a name (or a number) in 🔍 Search at the top of the menu; results update as you type. |
-| 📡 **Providers: free, your own, OTT Club** | The free iptv-org provider (whole list + 10 playlists), your own providers added on the TV, and OTT Club with your key — all in one **📡 Провайдеры** menu. Built‑in providers cannot be deleted; your own can. |
-| 🖥 **The picture fits your screen** | Every stream is laid exactly over the TV's whole 1920×1080 screen and starts at the best quality your connection allows, then adapts. «Картинка во весь экран» in «⚙ Настройки» is on by default; switch it off to keep a stream's own proportions (Green cycles the modes while watching). |
-| 📺 **Every channel, in order** | Every channel the source lists, nothing filtered or hidden (adult channels only after you switch them on in «⚙ Настройки»). 🇮🇱 Israeli channels come first, then 🇺🇦 Ukrainian ones, in every source. Groups follow the playlist: a group with no channels (say, no Ukrainian or no music channels) simply is not there. With OTT Club: **389 channels**, Israel first, then National, News, Documentary, Movies, Kids, Sport and more. |
-| ★ **Your own favourites** | Press ⏯ (or Yellow) on any channel to pin it to ★ Favourites. CH+/CH− inside Favourites zaps through favourites only. |
-| ⚡ **Instant on old hardware** | Virtualised lists keep a 1000‑channel playlist as fast as a 10‑channel one. The programme guide loads per channel, only when you look at it. |
-| 🔊 **Picture and sound under control** | Every channel switch shows the stream briefly: resolution, codec, bitrate and sound (for example `1920×1080 · H264 · 7,5 Мбит/с · звук стерео`). Choose the audio track and the picture mode (full screen, the stream's proportions or with borders). |
-| 🧭 **Always know where you are** | A soft, quiet scroll bar beside the groups and beside the channels shows where you are in each list and when it ends; lists never run into the hint bar at the bottom, on any TV size. |
-| 🔑 **Your key stays with OTT Club** | The OTT Club key is used exactly as you typed it and is only ever sent to OTT Club — never to a free or your own playlist (pinned by tests). The app never judges the key: OTT Club does. |
-| 🌍 **Your language** | The whole interface in **Русский** (default), **Українська**, **עברית** (right to left) or **English** — «⚙ Настройки» → «🌐 Язык интерфейса» → OK opens the list of languages, each written in itself (Русский, Українська, עברית, English), the current one marked ✓; pick one with ▲▼ and OK, and the app starts again in it on the same channel and group (Back, or OK on the current one, changes nothing). Channel names and programmes stay as your provider gives them. |
-| 👤 **From the author** | «⚙ Настройки» → «Автор» → OK opens the author's LinkedIn profile in the TV's browser. |
+| 📺 **Runs on old TVs** | Built for Samsung Tizen 3.0 — the 2017 TVs and their Chromium 47 web engine. The whole app is plain ES5 (checked with `acorn --ecma5`), with no build step and no modern JavaScript that an old TV cannot run. Developed and measured on a Samsung UE50MU7000 from 2017. |
+| ⚡ **Fast** | Measured on that TV: a channel switch takes **about 1.0 s** from key to picture; menu keys answer in **37–49 ms**; channel logos never pop in while you scroll; scrolling is smoother than in 1.8.4 (long frames when holding ▼: **15 → 2**). [The numbers ↓](#-performance-what-improved-and-why) |
+| 🎬 **Quality picture, no fuss** | Hardware decoding up to 1080p, laid exactly over the whole screen; the buffering spinner only appears when a channel is really slow (over ~1.6 s); a stalled stream reconnects by itself. |
+| ⏪ **TV you can rewind** | Up to 7 days of archive (with OTT Club or a playlist that has catch‑up): a timeline slider to scrub to any minute, and a programme guide where past shows play from the archive. |
+| 🔄 **Always current** | Channel lists and groups are fetched again every hour and always applied. The "now on air" line in every row matched the guide in every TV check (**13 of 13 rows, 0 stale**). |
+| 🌍 **Localized** | The whole interface in **Russian, Ukrainian, Hebrew** (full right‑to‑left layout) or **English**. Channel names and programmes stay exactly as your provider writes them, in any script. |
+| 🆓 **Free streams out of the box** | The free provider **iptv-org** is built in with **11 ready playlists** — about 11 000 public channels from around the world. No key, no sign‑up. |
+| 📡 **Your providers too** | Add any provider's M3U link on the TV, or enter your **OTT Club** key for 389 channels, the full guide and the 7‑day archive. |
+
+## ✨ What's new
+
+### 1.9.1
+
+- **The big spinner stays away.** It used to appear on every channel change. Now it shows only when a channel takes longer than ~1.6 s to start: **0–1 times in 16 channel changes** on the TV.
+- **Fast channel switching**, a new setting in **⚙ Settings**, on by default. The player is kept between channels: key → picture **984 ms** on the TV, and a 200‑switch soak test ran with **0 failures and no slowdown**.
+- **No endless spinner on a dead channel**, and a stream in a format the TV cannot play is reported instead of being retried forever.
+- **Archive near the end of a programme opens once**, not again and again.
+- **No logo pop‑in at all:** while you scroll, 0 frames with logos being drawn in (1.8.4: 47–108 frames, up to 68 logos appearing on screen).
+
+### 1.9.0
+
+- **Four interface languages** — Russian, Ukrainian, Hebrew (right to left) and English, picked from a list in **⚙ Settings → 🌐 Interface language**.
+- **Logos stay put.** The logos of the group you watch are loaded ahead in the background, so a list looks complete the moment you open it.
+- **Hourly lists.** Channels and groups refresh every hour (was 6 hours). The offline copy on the TV is rewritten only when the list has really changed.
+- **A welcoming first launch.** A fresh install shows **Choose what to watch**; choosing OTT Club asks for your key straight away.
+- **Calmer lists.** The highlighted row no longer jumps or grows.
+- **Clear naming.** The settings screen is titled **⚙ Settings**, like its row in the menu.
+- **Adult channels are hidden by default.** Switch them on in **⚙ Settings → Adult channels**.
+- **Every TV measurement is in the repository**, one folder per version, in [docs/measurements/](docs/measurements/).
+
+## Everything it does
+
+| Feature | What you get |
+|---|---|
+| 🔍 **Search** | Type part of a channel name or its number; results update as you type. |
+| ★ **Favourites** | ⏯ (or Yellow) pins a channel. CH+ / CH− inside **★ Favourites** zaps through favourites only. |
+| 🗂 **Groups** | **All channels**, **★ Favourites**, **Israel** and **Ukraine** first, then the provider's own groups exactly as it names them, and **No group** for channels it gives none. Empty groups are not shown. |
+| 🇮🇱🇺🇦 **Israel and Ukraine with any provider** | A channel's country is recognised from its name, its playlist group, its guide id or the language of its programmes (`js/country.js`). |
+| 📅 **Programme guide** | ▼ while watching: today's programmes, ◀ ▶ for other days, OK on a past show plays it from the archive. The guide loads per channel, only when you look at it. |
+| ⏪ **Archive slider** | ▲ while watching: hold ◀ ▶ to scrub (faster as you hold), ▲ ▼ to jump between programmes, OK to watch from there. |
+| 🏷 **Banner** | Channel, programme on air with its time range, what comes **Next**, a progress bar and a short tech line (resolution, codec, bitrate, sound). |
+| 🔊 **Sound and picture** | Red picks the audio track; Green cycles **Full screen → Auto → Letterbox**. |
+| 🧭 **Scroll bars** | A quiet scroll bar beside groups and channels shows where you are and where the list ends; lists never run into the hint bar on any screen size. |
+| 💾 **Remembers you** | Each provider keeps your last channel and group; the app opens where you left off. |
+| 🛡 **Survives bad networks** | Every stall, error or network drop reconnects with backoff (0.5 s up to 15 s). If the list server is down, the last list is shown and updates by itself. |
+| 🔑 **Your key stays with OTT Club** | Used exactly as typed and only ever sent to OTT Club (pinned by tests). |
+| 👤 **About** | **⚙ Settings** shows the version, build, TV model, Tizen and engine version, player, provider, channel count and buffer settings; **Author** opens the author's LinkedIn profile in the TV's browser. |
 
 ## See it in action
 
-### Channels
-
 <table>
-  <tr>
-    <td><img src="docs/screenshots/channel-m1.jpg" alt="М1, Ukrainian music channel"></td>
-    <td><img src="docs/screenshots/channel-natgeowild.jpg" alt="Nat Geo Wild: a Nile crocodile close up, in full HD"></td>
-  </tr>
-  <tr><td align="center"><b>М1</b> · Ukrainian music</td><td align="center"><b>Nat Geo Wild</b> · wildlife</td></tr>
-  <tr>
-    <td><img src="docs/screenshots/channel-channel9.jpg" alt="Channel 9, Israel, news"></td>
-    <td><img src="docs/screenshots/channel-cartoons90.jpg" alt="Cartoons 90: cartoons of the 90s"></td>
-  </tr>
-  <tr><td align="center"><b>Channel 9</b> · Israel, news</td><td align="center"><b>Cartoons 90</b> · cartoons of the 90s</td></tr>
-  <tr>
-    <td><img src="docs/screenshots/channel-discovery.jpg" alt="Discovery: sailing boats on the sea"></td>
-    <td><img src="docs/screenshots/channel-cartoonsshort.jpg" alt="Cartoons Short: classic animation"></td>
-  </tr>
-  <tr><td align="center"><b>Discovery</b> · documentary</td><td align="center"><b>Cartoons Short</b> · classic animation</td></tr>
-</table>
-
-### The player
-
-<table>
-  <tr>
-    <td><img src="docs/screenshots/ui-slider.jpg" alt="Archive slider over the picture: scrub to any minute of the show"></td>
-    <td><img src="docs/screenshots/ui-panel-1plus1.jpg" alt="Programme panel over 1+1 Україна: today's shows, «Голос країни» on air highlighted"></td>
-  </tr>
-  <tr><td align="center"><b>▲ Archive slider</b>: scrub to any minute</td><td align="center"><b>▼ Programme</b>: past shows play from the archive</td></tr>
   <tr>
     <td><img src="docs/screenshots/ui-menu.jpg" alt="Channel menu: search, groups, channels with logos and what is on now"></td>
-    <td><img src="docs/screenshots/ui-search.jpg" alt="Search: typing муз lists the music channels"></td>
+    <td><img src="docs/screenshots/ui-search.jpg" alt="Search: typing a few letters lists the matching channels"></td>
   </tr>
-  <tr><td align="center"><b>OK · Channel menu</b>: groups, logos, what's on</td><td align="center"><b>🔍 Search</b>: results as you type</td></tr>
+  <tr><td align="center"><b>OK · Channel menu</b>: groups, logos, what's on now</td><td align="center"><b>🔍 Search</b>: results as you type</td></tr>
+  <tr>
+    <td><img src="docs/screenshots/ui-slider.jpg" alt="Archive slider over the picture: scrub to any minute of the show"></td>
+    <td><img src="docs/screenshots/ui-panel-1plus1.jpg" alt="Programme panel over 1+1 Україна: today's shows, the one on air highlighted"></td>
+  </tr>
+  <tr><td align="center"><b>▲ Archive slider</b>: scrub to any minute</td><td align="center"><b>▼ Programme guide</b>: past shows play from the archive</td></tr>
+  <tr>
+    <td><img src="docs/screenshots/channel-natgeowild.jpg" alt="Nat Geo Wild: a Nile crocodile close up, in full HD"></td>
+    <td><img src="docs/screenshots/channel-discovery.jpg" alt="Discovery: sailing boats on the sea"></td>
+  </tr>
+  <tr><td align="center"><b>Nat Geo Wild</b> · full HD</td><td align="center"><b>Discovery</b> · documentary</td></tr>
+  <tr>
+    <td><img src="docs/screenshots/channel-channel9.jpg" alt="Channel 9, Israel, news"></td>
+    <td><img src="docs/screenshots/channel-m1.jpg" alt="М1, Ukrainian music channel"></td>
+  </tr>
+  <tr><td align="center"><b>Channel 9</b> · Israel</td><td align="center"><b>М1</b> · Ukrainian music</td></tr>
 </table>
 
-## Remote control
+<sub>The interface screenshots show the default Russian interface.</sub>
 
-The player works with the basic Samsung Smart Remote. No number or colour keys are needed.
+## 🆓 Start watching — free, in a minute
 
-| Key | While watching | In the guide |
+On the very first launch the app shows **Choose what to watch**:
+
+| Choice | What happens |
+|---|---|
+| **iptv-org — free channels** | OK opens its playlists; OK on one starts it. No key, no sign‑up. |
+| **OTT Club** | Asks for your key right away; Back returns to the choice. |
+| **+ Add a provider** | Type or paste your provider's M3U link (`http://…` or `https://…`) and press OK. |
+
+Back without a choice starts iptv-org's whole list. From then on the app opens on your last provider, group and channel.
+
+**The free playlists built in** (all from the open [iptv-org](https://github.com/iptv-org/iptv) project, `js/config.js`):
+
+| Playlist | |
+|---|---|
+| **The whole list — channels from around the world** | ~11 000 public channels (the default) |
+| **Israel** · **Ukraine** | by country |
+| **In Russian** · **In English — CNN, Bloomberg, DW, France 24, Euronews…** | by language |
+| **News** · **Kids** · **Music** · **Movies** · **Documentary** · **Sports** | by category |
+
+The player shows every channel a source lists and filters nothing — except adult channels, which stay hidden until you switch them on. A stream that does not play is the source's matter. No paid channels, keys or private playlists are included in this repository.
+
+**Change provider any time:** OK (channel menu) → **Blue**, or the **📡 Providers** row just above **⚙ Settings**.
+
+| Row in 📡 Providers | OK | Other keys |
 |---|---|---|
-| ◀ ▶ | previous / next channel | switch column |
-| ▲ | archive slider: scrub to any minute | move up |
-| ▼ | this channel's programme: ◀ ▶ change the day, OK watches | move down |
-| OK | the channel menu with 🔍 Search | watch the channel or the show (the channel already on screen is not restarted) |
+| **OTT Club** | watch it | **Blue** — enter or change the key |
+| **iptv-org — free channels** | open its playlists | built in, cannot be removed |
+| your own providers | watch it | **Red** twice — remove it |
+| **+ Add a provider** | type an M3U link | — |
+
+The provider you are watching is marked **● now**.
+
+**Want more?** [OTT Club](https://www.ottclub.tv) is built in: enter your key for **389 channels, the full programme guide and the 7‑day archive**. Any other paid provider works today through its M3U link. Built‑in support like OTT Club's (key, guide and archive from the provider's API) for other providers will come if there is interest — [tell us which one](https://github.com/yaroslavrudenko/nastin-kinozal/issues).
+
+## 🌐 Interface languages
+
+| Language | In the list | Direction |
+|---|---|---|
+| Russian (default) | Русский | left to right |
+| Ukrainian | Українська | left to right |
+| Hebrew | עברית | **right to left — the whole layout is mirrored** |
+| English | English | left to right |
+
+**Change it:** **⚙ Settings → 🌐 Interface language → OK**. The list shows all four languages, each written in itself, the current one marked ✓. Pick one with ▲ ▼ and press OK. The app restarts in that language on the same channel and group. Back, or OK on the current language, changes nothing. The 🌐 sign leads the row, so you can find it even in a language you cannot read.
+
+- **Translated:** everything the app writes, including the groups the app forms itself — **🔍 Search, All channels, ★ Favourites, Israel, Ukraine, No group, 📡 Providers, ⚙ Settings**.
+- **Never translated:** the provider's group names, channel names and programme titles. They appear exactly as the provider writes them, in any interface language.
+- **Mixed scripts read correctly:** a Hebrew name in an English menu, or a Latin or Cyrillic one in the Hebrew menu, keeps its own direction, wrapped lines included. Technical text (host names, picture sizes) always reads left to right.
+
+## 🎮 Remote control
+
+The basic Samsung Smart Remote is enough; number and colour keys are optional.
+
+| Key | While watching | In the menu and the guide |
+|---|---|---|
+| ◀ ▶ | previous / next channel | switch between groups and channels |
+| ▲ | archive slider | move up |
+| ▼ | programme guide (◀ ▶ change the day) | move down |
+| OK | channel menu with **🔍 Search** | watch (the channel on screen is not restarted) |
 | ⏯ | pause / play | add or remove a favourite |
 | ⏪ ⏩ | archive slider, big steps | — |
-| CH+ / CH− | next / previous channel | archive day, or page through channels; a soft scroll bar beside the groups and beside the channels shows where you are and when the list ends |
-| Back | back to live; press twice to exit | close |
-| 0–9 · Red · Green · Blue | channel number · audio track · picture mode (full screen → stream proportions → with borders) · stream info | Blue: **📡 Провайдеры** |
+| CH+ / CH− | next / previous channel | next / previous page, or archive day |
+| Back | back to live; twice to exit | close |
+| 0–9 | channel number | — |
+| Red · Green · Blue | audio track · picture mode · stream info | Blue: **📡 Providers** |
 
-## Why this project exists
+## ⚙ Settings
 
-Samsung TVs from 2017 and 2018 still have good panels, but their software has fallen behind.
+OK (channel menu) → **⚙ Settings**, the last row of the groups. ▲ ▼ choose, OK opens or switches, Back closes.
 
-- **The official OTT Club app on these TVs is stuck at version 1.0.6.** It is a 56 KB shell that downloads its menu from the provider's server. The Android app moves on (2.6x in 2026), but the code it sends to the TV now uses JavaScript that the TV's 2015-era web engine cannot run. The result is JavaScript errors in the menus, frozen screens, and channels that hang without recovering.
-- **Samsung no longer updates these TVs.** The firmware is signed and locked, so the web engine cannot be upgraded. The only fix inside the TV is an app written for the engine the TV actually has.
-- **The goal: a player that is fast, reliable and complete on old hardware.** It keeps every feature that matters to a viewer: all channels split into groups, a programme guide, a 7-day archive with rewind, sound tracks and picture modes. The app should never hang. A stalled stream reconnects by itself, and the interface stays responsive with a thousand channels.
-
-The app is named after the person it was made for: «Настин кинозал» means "Nastya's cinema", a cinema at home, one that simply works.
-
-## Design principles
-
-- **Native playback first.** Video is decoded by the TV's hardware player (AVPlay), not in JavaScript.
-- **Never block the UI.** Lists are virtualised, and the guide loads one channel at a time.
-- **Assume the network fails.** Every stall, error or network drop leads to an automatic reconnect with backoff (0.5 s up to 15 s).
-- **Never show a stale list.** Channels come from the provider on every start, and each one is re-checked in the background.
-- **Write for the oldest engine.** The code is plain ES5, checked with `acorn --ecma5`, and needs no build step.
-
-## Measured, not promised
-
-| Check | Result |
-|---|---|
-| Movie channels, 3 × 10 min in parallel | 0 stalls · 0 rebuffers · 0 reconnects · buffer never below 12 s |
-| Playback on the TV (UE50MU7000, Tizen 3.0) | hardware H.264 1920×1080, ~6 Mbit/s, `PLAYING` |
-| Channel list request | ~0.1 s, 389 channels, 9 groups |
-| Archive depth | 7 days; every hour complete |
-| Archive on the TV (programme panel, slider) | first frame in 2.2 s; 60 s without a single failure |
-| Archive that catches up with live | continues by itself, no "no signal" |
-| Full channel re-check | 389 channels in ~9 s, in the background |
-
-Open performance issues and every performance change, with before/after numbers: **[docs/PERFORMANCE.md](docs/PERFORMANCE.md)**.
-
-## ⚡ Performance
-
-In October 2026 six independent reviewers went through the whole player. The 230 findings were then fixed over six reviewed iterations, and 159 behaviour tests now guard the fixes.
-
-On the TV (2026-10-25/26) the build passes the life-cycle test: close, open, exit and reopen, and Home → another app → back, twice. The heaviest movie channel, Viju+ Megahit at 1080p and 10.9 Mbit/s, plays without stalls. The acceptance plan is in [docs/TESTING.md](docs/TESTING.md).
-
-**TV run of 2026-10-26** (automated runner `tests/tv/run.mjs`, builds f7ccc45 and 84fc43e): 11 channel groups, 349 channels in «Все каналы».
-- **Channel list:** 0 empty «now» cells. The few rows that lagged had changed less than 60 s before (the refresh floor).
-- **Zapping:** first frame on landing 0.7–2.0 s (median 1.0 s); a single zap 0.7–1.3 s; a burst of 10 presses lands right with 0 extra requests.
-- **Archives:** 8 of 8 archive opens on the four heaviest movie channels play. The end of a recording continues within 2 s of the right moment. The 7-day archive edge plays (fixed in 84fc43e).
-- **Stability:** 10 min without a stall; a 60 s pause sends no requests.
-- **Open:** the tech-line check is being re-run, and the 60 s «now» refresh floor awaits the owner's decision.
-- **Update, later on 2026-10-26:** the «now» refresh was redesigned (DEC-2026-10-26-now-refresh-2): only rows on screen ask the provider, the guide-known row turns over at its end with no request, a 10 s floor, and a row never goes blank — past 15 min without news it keeps the last programme marked «(шла до HH:MM)». Verified on the desktop; the TV run is pending ([docs/PERFORMANCE.md](docs/PERFORMANCE.md)).
-
-Details: [docs/TESTING.md](docs/TESTING.md) (results of 2026-10-26).
-
-The numbers below were measured on a desktop (harness and headless Chrome):
-
-- **Zapping:** requests per 10 quick presses 20 → 3; a single press opens the channel after 0 ms instead of 350 ms.
-- **Startup:** the channel list is parsed once instead of twice, with 0 storage writes before the first frame (was 2). The offline copy shrank from 500 KB to 44 KB. No long tasks over 50 ms (was 66–74 ms at 6× CPU).
-- **Quiet when idle or failing:** 0 requests during a 10-minute pause (was 200). A failing guide makes 5 requests in 10 minutes instead of 12 007.
-- **Memory:** full guides kept after 100 channels 100 → 24, with no descriptions stored.
-
-The full before → after table and what is still to verify on the TV: **[docs/PERFORMANCE.md](docs/PERFORMANCE.md#summary-of-the-2026-performance-work)**.
-
-## 📡 Providers: OTT Club, iptv-org and your own
-
-**Open it:** press **OK** for the channel menu, then **Blue** (or pick the **📡 Провайдеры** row near the end of the groups, just above ⚙ Настройки). The list:
-
-| Row | What it is | What you can do |
+| Row | What it does | Default |
 |---|---|---|
-| **OTT Club** | the paid service the app was built for | **OK** watches it; **Blue** enters or changes your key |
-| **iptv-org — бесплатные каналы** | the free provider; it gives its own playlists: **Весь список** (~11 000 channels, the default) · Израиль · Украина · На русском · На английском · Новости · Детские · Музыка · Кино · Познавательные · Спорт | **OK** opens its playlists, **OK** on one watches it, **Back** returns; built in, cannot be deleted |
-| **your providers** | M3U links you added | **OK** watches it; **Red twice** deletes it |
-| **+ Добавить провайдера** | add a link | type an `http://` or `https://` M3U link, **OK** |
+| **🌐 Interface language** | opens the list of the four languages | Русский |
+| **Fast channel switching** | keeps the player between channels for faster switching | on |
+| **Full-screen picture** | yes — the picture fits the screen exactly · no — the stream's own proportions | yes |
+| **Adult channels** | shown in the menu · hidden | hidden |
+| **Author** | opens the author's LinkedIn profile in the TV's browser | — |
 
-Switching starts the app again on the chosen provider (or playlist), with its channels and groups; each one remembers its own last channel and group. The channel list and its groups are downloaded again every hour, and every list downloaded is read and shown as it is — the player never decides from a date or a size that a list is unchanged. The row in blue with **● сейчас** is the one you are watching. In the channel menu, a soft scroll bar beside the groups and beside the channels shows where you are in each list and when it ends; no list ever runs into the hint bar at the bottom, on any TV size.
+## ⚡ Performance: what improved and why
 
-**The OTT Club key.** Enter it at any time in 📡 Провайдеры with **Blue** (or OK on the OTT Club row); it is saved exactly as typed and used at once, and it is only ever sent to OTT Club — never to a free or your own playlist. The player never checks the key itself: OTT Club judges it, and a key it refuses shows OTT Club's own error picture in the stream. A link from your OTT Club account works too (the key is taken from it). You can also build the key in with `OTT_KEY=` in `build.local.env`.
+Every number below was measured **on the TV** (Samsung UE50MU7000, Tizen 3.0, Chromium 47, OTT Club with 389 channels), unless it is marked *desktop*. The raw logs and the scenarios that produced them are in the repository: [1.8.4](docs/measurements/2026-10-27-tv-1.8.4/README.md) · [1.9.0](docs/measurements/2026-10-28-tv-1.9.0/README.md) · [1.9.1](docs/measurements/2026-10-28-tv-1.9.1/).
 
-**Groups follow the source.** The groups a provider gives are shown exactly as it gives them, in every interface language, even one it calls «Undefined» or «Без группы» (`group-title`; from iptv-org's `General;News` the specific `News` is taken). Channel names and programmes are never translated either. The groups the player forms itself — 🔍 Search, All channels, ★ Favourites, 🇮🇱 Israel, 🇺🇦 Ukraine, «No group» (channels the source gives no group), 📡 Providers, ⚙ Settings — are in the interface language. The adult group is the one exception to «nothing filtered»: it is hidden by default, always, until you switch it on in «⚙ Настройки» (owner, 2026-10-27: «Для взрослых нужно скрывать по умолчанию всегда»). Names in another script than the interface (Hebrew in a Russian menu, Latin in a Hebrew one) read as written, wrapped lines included. Israel and Ukraine appear when the source has such channels, and their channels open the list. A group with no channels is not shown.
+### The story
 
-**Your own playlist from any provider**: add its **M3U link** in 📡 Провайдеры, or build it in with `PLAYLIST_URL=` in `build.local.env` — typing a long URL with a TV remote is slow. A link that carries the provider's own key (`…/playlist/<key>/…`, `?key=…`, `get.php?username=…&password=…`) is used as it is. From a standard extended M3U the player takes:
+| What you noticed | Why it happened | What we changed | Measured result |
+|---|---|---|---|
+| Logos appearing, vanishing and redrawing while scrolling | Logos were only requested once the cursor stopped, then many arrived at once | The page on screen, 2 pages ahead and 1 behind are requested on every key; the watched group's logos load in the background after the picture starts; each logo is kept in memory for the session and refreshed with the hourly list | Frames with logos popping in: **47–108 → 0**; logos drawn in on screen: **up to 68 → 0** |
+| Jerky scrolling | Each page key wrote every row's logo several times | Each row's logo is set once per screen update, and only when it changes | Frames over 34 ms holding ▼: **15 → 2**; CH+ back: **23 → 1** |
+| A spinner on every channel change | The spinner showed from the moment a stream opened until the picture moved | It shows only if the start takes longer than ~1.6 s | Spinner in 16 channel changes: **every time → 0–1** |
+| Channel switching | A new player for every channel | **Fast channel switching**: the player is kept between channels | Key → picture **1063 → 984 ms**; 200 switches, **0 failures**, no slowdown |
+| Lists out of date | The list was fetched every 6 hours | Every hour, and every list downloaded is applied | Lists at most 1 hour old |
+| Needless storage writes | The offline copy was written even when nothing had changed | Written only when the list changed; written after the first picture, not before | **0** writes per unchanged hour; offline copy **500 KB → 44 KB** *(desktop)* |
+| Slow, chatty zapping | Every ◀ ▶ downloaded a 205 KB guide, after a fixed 350 ms delay | Guides load once and only when needed; the key acts at once | Requests per 10 quick presses **20 → 3**; delay **350 → 0 ms** *(desktop)* |
+| Busy when idle or failing | A failed guide was retried in a tight loop; background checks kept running | Backoff, and nothing runs while nothing changes | Failed‑guide requests in 10 min **12 007 → 5**; requests in a 10‑min pause **200 → 0** *(desktop)* |
+
+### 1.8.4 → 1.9.0 → 1.9.1 on the TV
+
+| Measure | 1.8.4 | 1.9.0 | 1.9.1 |
+|---|---|---|---|
+| Channel switch ▶ ◀, key → picture | 1063 ms | 982 ms | **984 ms** |
+| Logo pop‑in while scrolling (frames) | 47–108 | — | **0** |
+| Frames over 34 ms, holding ▼ | 15 | — | **2** |
+| Frames over 34 ms, CH+ back | 23 | — | **1** |
+| CH+ back, key → screen | 64 ms | — | **49 ms** |
+| Group keys, key → screen | 50 ms | — | **37 ms** |
+| Channel list load | 4047 ms | — | **3878 ms** |
+| Channel by number (digits) | 2948 ms | — | **2842 ms** |
+| Big spinner in 16 channel changes | every time | — | **0–1** |
+| "Now" lines matching the guide | — | **13 / 13**, 0 stale | — |
+| Four OTT Club groups, 20 s per channel | 0 freezes | 0 freezes, 0 spinner while watching | — |
+
+"—" means the measure was not part of that run. More: [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+
+### Our rule
+
+Performance never costs freshness: no refresh is made rarer to look faster, and no cache is added that would show you an old list or an old "now on air" line.
+
+## ✅ Testing
+
+| | |
+|---|---|
+| **Automated tests** | **429 tests, all passing**, in 49 files: 37 behaviour suites and 12 headless‑browser layout suites. The browser suites check wrapping, paging, scroll bars, logo boxes, mixed‑direction text and the Hebrew right‑to‑left layout. |
+| **Mutation‑proven fixes** | For every fix, the guard is removed and the test must turn red, then the guard is restored and it must turn green again. |
+| **Independent reviews** | Every batch is reviewed by people who did not write it: a native code reviewer, Codex as an external reviewer, and a performance analyst (plus a designer for layout). The first full review raised 230 findings, and every one was given a status. |
+| **On the real TV** | Every release is measured on a 2017 UE50MU7000. The scenarios drive the app with remote key events through its inspector and read the results inside the TV page, on one clock. The raw logs are committed next to each scenario. |
+| **Acceptance plan** | The viewer's basic journey in every group, plus a matrix covering every channel, the high‑bitrate movie channels, Israel and Ukraine HD, long names and archives across midnight: [docs/TESTING.md](docs/TESTING.md). |
+
+Highlights from the TV:
+- **0 stalls, 0 rebuffers and 0 reconnects** across three movie channels watched for 10 minutes each.
+- **0 freezes** across four OTT Club groups, watching each channel for 20 s (up to 90 channels per group).
+- **8 of 8** archive opens on the heaviest movie channels played.
+- **0 failures** in 200 channel switches with **Fast channel switching**.
+
+## 📡 Your own playlists, in depth
+
+Add any provider's **M3U link** in **📡 Providers → + Add a provider**, or build it in with `PLAYLIST_URL=` in `build.local.env`, because typing a long URL with a remote is slow. A link that carries the provider's own key (`…/playlist/<key>/…`, `?key=…`, `get.php?username=…&password=…`) is used as it is. From an extended M3U the player reads:
 
 | Playlist attribute | What it gives you |
 |---|---|
 | `group-title` / `#EXTGRP` | the groups in the menu |
 | `tvg-logo`, `tvg-id` | logos; programme guide matching |
 | `url-tvg` / `x-tvg-url` in `#EXTM3U` | the programme guide (XMLTV, uncompressed) |
-| `catchup`, `catchup-source`, `catchup-days` (or `tvg-rec`, `timeshift`) | the archive and the slider: `default` / `append` templates (`{utc}`, `{lutc}`, `{start}`, `{end}`, `{duration}`, `{offset}`, `{Y}{m}{d}{H}{M}{S}`), `shift` (`?utc=…&lutc=…`) and `flussonic` |
+| `catchup`, `catchup-source`, `catchup-days` (or `tvg-rec`, `timeshift`) | the archive and the slider: `default` / `append` templates (`{utc}`, `{lutc}`, `{start}`, `{end}`, `{duration}`, `{offset}`, `{Y}{m}{d}{H}{M}{S}`), `shift` and `flussonic` |
 
-Without catch-up attributes, live TV, groups, favourites and search still work; only the archive is missing.
+Without catch‑up attributes, live TV, groups, favourites and search still work; only the archive is missing.
 
-**🇮🇱 Israel and 🇺🇦 Ukraine groups work with any provider.** A channel's country is recognised from a tag in the name (`(Израиль)`, `IL:`, `[UA]`, `… UA`), the playlist group (`Israel`, `Україна` …), the guide id (`tvg-id` ending in `.il` / `.ua`, or iptv-org's `.il@SD`), Hebrew or Ukrainian text in the name or the show on air, and a list of well-known channel names (`js/country.js`). Israeli channels open the list (with OTT Club, Channel 9 first), Ukrainian ones follow.
+**The OTT Club key:** enter it in **📡 Providers** with **Blue** (or OK on the **OTT Club** row). It is saved exactly as typed, used at once and only ever sent to OTT Club. The player never judges the key itself: OTT Club does, and a key it refuses shows OTT Club's own error picture in the stream. A link from your OTT Club account works too. You can also build the key in with `OTT_KEY=` in `build.local.env`.
 
 ## 🚀 Install
 
-**[docs/DEPLOY.md](docs/DEPLOY.md) is the full guide**, written from a real install. It covers Developer Mode, the Tizen CLI on Apple Silicon, the macOS local-network trap, Samsung certificates without the broken Certificate Manager, and the **device profile without which every install fails with `118`**.
+**[docs/DEPLOY.md](docs/DEPLOY.md) is the full guide**, written from a real install. It covers Developer Mode, the Tizen CLI on Apple Silicon, the macOS local‑network trap, Samsung certificates without the broken Certificate Manager, and the **device profile without which every install fails with `118`**.
 
 In short:
 
@@ -223,31 +279,56 @@ printf 'CERT_PROFILE=kinozal\nDEVICE_PROFILE=%s\nTV=<tv-ip>:26101\n' ~/tizen-stu
 ./build.sh                                                   # sign, push the device profile, install, start
 ```
 
-The daisy icon appears in your TV's apps. On the very first launch it opens **📡 Провайдеры** so you choose what to watch: an iptv-org playlist (free), **OTT Club** (it asks for your key right away; Back returns to the choice) or **+ Add a provider** (your M3U link). **Back** with no choice starts the free iptv-org channels. From then on it always opens the last provider, group and channel; 📡 Провайдеры is there whenever you want to change. A TV built with a key or a playlist (`build.local.env`) skips the choice and starts on it. The choice also opens whenever no provider is usable any more — say, a TV that ran a build with a key built in and now runs one without it: the player never tries to load an empty link.
+`build.local.env` stays on your machine and is never committed. The daisy icon appears among your TV's apps. A TV built with a key or a playlist in `build.local.env` skips **Choose what to watch** and starts on it. The choice also comes back whenever no provider is usable any more, so the player never tries to load an empty link.
 
 **The TV's address can change** (the router hands it out): `./build.sh` and the TV test runs check the saved address and, if the TV is not there, scan the local network for it (`tools/find-tv.sh`; [docs/DEPLOY.md §3](docs/DEPLOY.md)).
+
+## Why this project exists
+
+- **The official OTT Club app on these TVs is stuck at version 1.0.6.** It is a 56 KB shell that downloads its menu from the provider's server. The Android app moves on (2.6x in 2026), but the code it sends to the TV now uses JavaScript that the TV's 2015‑era web engine cannot run: errors in the menus, frozen screens, channels that hang.
+- **Samsung no longer updates these TVs.** The firmware is signed and locked; the only fix inside the TV is an app written for the engine it actually has.
+- **The goal:** a player that is fast, reliable and complete on old hardware, with every feature a viewer cares about, and that never hangs.
+
+«Настин кинозал» means "Nastya's cinema": a cinema at home, one that simply works.
+
+### Design principles
+
+- **Native playback first.** Video is decoded by the TV's hardware player (AVPlay), not in JavaScript.
+- **Never block the screen.** Lists are virtualised, so a 1000‑channel playlist moves like a 10‑channel one; the guide loads one channel at a time.
+- **Assume the network fails.** Every stall, error or network drop reconnects with backoff.
+- **Never show a stale list.** Channels come from the provider at every start and every hour.
+- **Write for the oldest engine.** Plain ES5, checked with `acorn --ecma5`, no build step.
 
 ## 🗺 Roadmap
 
 **A universal player for any provider**
-- [x] 📡 Провайдеры: OTT Club, 10 free playlists, your own M3U playlists (added and deleted on the TV).
-- [ ] Other paid providers, if there is interest: Xtream Codes (server + login), and possibly Stalker/MAG portals.
+- [x] **📡 Providers**: OTT Club, 11 free playlists, your own M3U playlists (added and removed on the TV).
+- [x] The interface in Russian, Ukrainian, Hebrew (right to left) and English.
+- [ ] Other paid providers, if there is interest: Xtream Codes (server + login), possibly Stalker/MAG portals.
 - [ ] Programme guide (XMLTV) by URL, independent of the playlist.
-- [ ] Catch-up formats (`flussonic`, `shift`, templates) always taken from the playlist itself.
-- [ ] OTT Club becomes one built-in preset instead of the default.
-- Builds on what is already here: `js/m3u.js`, `js/epg.js`, `js/catchup.js` and the provider-independent 🇮🇱 Israel / 🇺🇦 Ukraine grouping in `js/country.js`.
+- [ ] Catch‑up formats always taken from the playlist itself.
+- [ ] OTT Club as one built‑in preset instead of the default.
 
 **Publish in the Samsung TV app store** (Samsung Apps, via Tizen Seller Office)
-- [ ] No built-in provider or channels: users bring their own subscription.
+- [ ] No built‑in provider or channels: users bring their own subscription.
 - [ ] A privacy policy.
 - [ ] Store icons and screenshots.
-- [ ] Pass Samsung certification on several TV generations.
+- [ ] Samsung certification on several TV generations.
 
-**Ideas: more providers and platforms**
+**Ideas**
 - [ ] Enter the playlist from a phone by scanning a QR code on the TV.
-- [ ] An LG webOS port.
-- [ ] An Android TV build.
+- [ ] An LG webOS port and an Android TV build.
 - [ ] Settings backup and restore.
+
+## 📚 Documentation
+
+| Document | What is in it |
+|---|---|
+| [docs/DEPLOY.md](docs/DEPLOY.md) | Installing on a TV, step by step |
+| [docs/TESTING.md](docs/TESTING.md) | The TV acceptance plan and every test batch |
+| [docs/PERFORMANCE.md](docs/PERFORMANCE.md) | Every performance change with its before/after numbers |
+| [docs/measurements/](docs/measurements/) | Raw TV measurements per version |
+| [docs/TEST-REPORT-2026-10-26.md](docs/TEST-REPORT-2026-10-26.md) | The TV test report of 2026‑10‑26 |
 
 ---
 
@@ -255,4 +336,3 @@ The daisy icon appears in your TV's apps. On the very first launch it opens **�
   <b>Made with love for Настя: a cinema at home, one that simply works.</b><br>
   If it brought your old TV back to life, <a href="https://github.com/yaroslavrudenko/nastin-kinozal">give it a ⭐</a>.
 </p>
-- Test report 2026-10-26: [docs/TEST-REPORT-2026-10-26.md](docs/TEST-REPORT-2026-10-26.md)

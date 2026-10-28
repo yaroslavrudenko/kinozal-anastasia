@@ -52,8 +52,9 @@ var Util = (function () {
   function $(id) { return document.getElementById(id); }
 
   // Toggles exactly the class "hidden"; other classes (even ones containing the word) are kept.
+  function isHidden(el) { return HIDDEN.test(el.className); }
   function show(el, on) {
-    var hidden = HIDDEN.test(el.className);
+    var hidden = isHidden(el);
     if (hidden !== !!on) return;
     el.className = on ? el.className.replace(/(^|\s)hidden(?=\s|$)/g, '').trim() : (el.className ? el.className + ' hidden' : 'hidden');
   }
@@ -74,6 +75,13 @@ var Util = (function () {
     else setTimeout(fn, 1);
   }
 
+  // Runs fn in a task after the next frame is painted (what the current task drew is on screen first); a plain next task
+  // where animation frames are missing (the desktop test harness).
+  function afterPaint(fn) {
+    if (window.requestAnimationFrame) window.requestAnimationFrame(function () { setTimeout(fn, 0); });
+    else setTimeout(fn, 0);
+  }
+
   // Calendar arithmetic in local time, so a day across a DST change has 23 or 25 hours.
   function dayStart(t) { var d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); }
   function addDays(t, n) {
@@ -90,6 +98,6 @@ var Util = (function () {
 
   return {
     MIN_MS: MIN_MS, DAY_MS: DAY_MS,
-    load: load, save: save, saveJson: saveJson, remove: remove, pad2: pad2, hhmm: hhmm, $: $, show: show, hideBrokenImage: hideBrokenImage, esc: esc, dict: dict,
-    idle: idle, dayStart: dayStart, addDays: addDays, backoff: backoff, openUrl: openUrl };
+    load: load, save: save, saveJson: saveJson, remove: remove, pad2: pad2, hhmm: hhmm, $: $, show: show, isHidden: isHidden, hideBrokenImage: hideBrokenImage, esc: esc, dict: dict,
+    idle: idle, afterPaint: afterPaint, dayStart: dayStart, addDays: addDays, backoff: backoff, openUrl: openUrl };
 }());

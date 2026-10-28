@@ -2,7 +2,7 @@
 // slider, «⚙ Настройки» and the screens' visibility; the list columns are ListView.
 var UI = (function () {
   var STICKY = 0;              // toast(text, UI.STICKY): stays until the next toast
-  var el = {}, toastTimer = null, bannerTimer = null, scrubBarPx = 0;
+  var el = {}, toastTimer = null, bannerTimer = null, spinnerTimer = null, scrubBarPx = 0;
   var IDS = ['banner', 'b-num', 'b-logo', 'b-title', 'b-state', 'b-now', 'b-next', 'b-tech', 'b-progress', 'b-clock', 'toast',
     'spinner', 'numentry', 'fatal', 'guide', 'prog', 'p-title', 'scrub', 's-title', 's-time', 's-start', 's-end',
     's-delta', 's-played', 's-now', 's-knob', 'about', 'about-table', 'lang', 'sources', 'search', 'setup', 'search-more', 'groups-bar', 'channels-bar'];
@@ -42,7 +42,7 @@ var UI = (function () {
   }
   function bannerTech(text) { el['b-tech'].textContent = text; }
   function hideBanner() { clearTimeout(bannerTimer); show('banner', false); }
-  function bannerShown() { return !/(^|\s)hidden(\s|$)/.test(el.banner.className); }
+  function bannerShown() { return !Util.isHidden(el.banner); }
 
   function toast(text, ms) {
     el.toast.textContent = text;
@@ -51,7 +51,12 @@ var UI = (function () {
     if (ms !== STICKY) toastTimer = setTimeout(function () { show('toast', false); }, ms || CONFIG.TOAST_MS);
   }
 
-  function spinner(on) { show('spinner', on); }
+  function spinner(on) { clearTimeout(spinnerTimer); spinnerTimer = null; show('spinner', on); }
+  // The spinner after ms, unless it is on or already on its way; spinner(false) cancels it (review3 S-1).
+  function spinnerAfter(ms) {
+    if (spinnerTimer || !Util.isHidden(el.spinner)) return;
+    spinnerTimer = setTimeout(function () { spinnerTimer = null; show('spinner', true); }, ms);
+  }
   function numEntry(text) { el.numentry.textContent = text; show('numentry', !!text); }
   function fatal(text) { el.fatal.textContent = text; show('fatal', !!text); }
   function panelTitle(text) { el['p-title'].textContent = text; }
@@ -119,7 +124,7 @@ var UI = (function () {
 
   return {
     STICKY: STICKY, init: init, fitDesktop: fitDesktop, show: show, banner: banner, bannerTech: bannerTech, hideBanner: hideBanner, bannerShown: bannerShown,
-    toast: toast, spinner: spinner, numEntry: numEntry, fatal: fatal, panelTitle: panelTitle, scrub: scrub, about: about,
+    toast: toast, spinner: spinner, spinnerAfter: spinnerAfter, numEntry: numEntry, fatal: fatal, panelTitle: panelTitle, scrub: scrub, about: about,
     listEnd: listEnd, scrollBar: scrollBar
   };
 }());

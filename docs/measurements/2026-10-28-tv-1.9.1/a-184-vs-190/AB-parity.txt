@@ -1,0 +1,18 @@
+metric                                              parity184               parity195                 pick184                 pick195
+cold: list end (ms from start)        med 4047 (n3, max 5621) med 3935 (n3, max 4124)                       -                       -
+cold: load event                        med 406 (n3, max 408)   med 443 (n3, max 457)                       -                       -
+reload: channels ready                  med 799 (n3, max 819)   med 829 (n3, max 847)                       -                       -
+reload: first picture                 med 2042 (n3, max 2150) med 2109 (n3, max 2444)                       -                       -
+zap ▶◀: key → playing                med 1063 (n18, max 1149) med 982 (n18, max 1227)                       -                       -
+zap ▶◀: key → spinner off            med 1063 (n18, max 1149) med 982 (n18, max 1227)                       -                       -
+digits: last digit → playing         med 2948 (n12, max 3038)med 2953 (n12, max 3303)                       -                       -
+menu: first open                        med 93 (n3, max 94.1)   med 91.1 (n3, max 96)                       -                       -
+menu: close after first open          med 28.6 (n3, max 31.3) med 24.8 (n3, max 32.9)                       -                       -
+menu: reopen                           med 70 (n12, max 77.4)med 73.7 (n12, max 80.4)                       -                       -
+menu: close                          med 27.7 (n12, max 32.9)  med 23.2 (n12, max 33)                       -                       -
+groups: ◀ ▼ ▲ ▶ keys                   med 38.9 (n72, max 63)med 37.6 (n72, max 57.7)                       -                       -
+groups: frames > 34 ms per run              med 3 (n9, max 8)       med 4 (n9, max 5)                       -                       -
+menu pick: key → playing                                    -                       -med 1160 (n18, max 1376.7)med 1123.1 (n18, max 1264.2)
+menu pick: key JS                                           -                       -med 148.4 (n18, max 189.7)med 142.9 (n18, max 178.2)
+menu pick: Player.open at                                   -                       -  med 2.2 (n18, max 3.1)  med 2.2 (n18, max 3.3)
+menu pick: prepared at                                      -                       -med 1132.4 (n18, max 1329.6)med 1100.3 (n18, max 1234.7)

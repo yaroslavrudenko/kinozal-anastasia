@@ -1,5 +1,5 @@
 // «⚙ Настройки» (formerly «О программе»; the last row of the channel menu): the interface language (OK opens the list
-// of languages — overlays/lang.js), the full-screen picture (default on), adult channels and the author (OK opens his
+// of languages — overlays/lang.js), the full-screen picture (default on), adult channels, fast channel switching and the author (OK opens his
 // LinkedIn profile in the TV's browser), then what the app and the TV are. ▲▼ choose, OK switches / opens, BACK returns
 // to the menu.
 (function () {
@@ -12,6 +12,8 @@
       on: 'st.fullOn', off: 'st.fullOff', said: ['st.fullSaidOn', 'st.fullSaidOff'] },
     { label: 'st.adult', get: function () { return Channels.showAdult(); }, set: function (on) { Channels.setShowAdult(on); },
       on: 'st.adultOn', off: 'st.adultOff', said: ['st.adultSaidOn', 'st.adultSaidOff'] },
+    { label: 'st.fast', get: function () { return Player.fastSwitch(); }, set: function (on) { Player.setFastSwitch(on); },
+      on: 'st.fastOn', off: 'st.fastOff', said: ['st.fastSaidOn', 'st.fastSaidOff'] },
     { label: 'st.author', state: function () { return I18n.t('st.authorState', I18n.t('st.authorName'), 'linkedin.com/in/yaroslav-rudenko-2303'); },
       press: function () {
         UI.toast(I18n.t('st.opening', AUTHOR_URL), 4000);

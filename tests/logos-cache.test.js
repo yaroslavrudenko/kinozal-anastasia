@@ -22,8 +22,13 @@ function logoStates(app) {
   });
 }
 const allOk = (app) => logoStates(app).every((s) => s === 'ok');
+// The zap group's background trickle is off here (its wish is dropped), so these tests pin what the menu itself
+// asks for; tests/logos-trickle.test.js pins the trickle (DEC-2026-10-28-logos-ahead).
 function menuApp(opts) {
-  const app = f.untilPlaying(f.ottApp(Object.assign({ channels: 200 }, opts)));
+  const app = f.ottApp(Object.assign({ channels: 200 }, opts, { boot: false }));
+  vm.runInContext('var __noGroup = Logos.want; Logos.want = function (who) { if (who !== "group") return __noGroup.apply(this, arguments); };', app.ctx);
+  app.boot();
+  f.untilPlaying(app);
   app.advance(5000);
   return app;
 }
@@ -44,18 +49,18 @@ test('logos: flicked down three pages and back, the first page shows its logos i
   assert.equal(reqs(app) - r0, 0, 'pictures downloaded again');
 });
 
-test('logos: requests — the menu laid out at the first frame loads its page; the first opening loads the next page; a CH− after a pause = 0 for the page shown + the page after it; CH+ back = 0', () => {
+test('logos: requests — the menu laid out at the first frame loads its page; the first opening loads the two pages ahead; a CH− after a pause = 0 for the page shown + the next page two ahead; CH+ back = 0 (DEC-2026-10-28-logos-ahead)', () => {
   const app = menuApp();
   const r0 = reqs(app);
   app.press(KEYS.ENTER, 3000);
   const n = rows(app).length;
-  assert.equal(new Set(app.images.requests.map((r) => r.url)).size, 2 * n, 'page 1 (at the first frame, with the banner\'s) + page 2');
-  assert.equal(reqs(app) - r0, n, 'first opening: the next page');
+  assert.equal(new Set(app.images.requests.map((r) => r.url)).size, 3 * n, 'page 1 (at the first frame, with the banner\'s) + pages 2 and 3');
+  assert.equal(reqs(app) - r0, 2 * n, 'first opening: the two pages ahead');
   const r1 = reqs(app);
   app.press(KEYS.CH_DOWN, 0);
   assert.ok(allOk(app), 'the page loaded ahead is shown at once: ' + logoStates(app));
   app.advance(3000);
-  assert.equal(reqs(app) - r1, n, 'CH− after a pause: the page after it only');
+  assert.equal(reqs(app) - r1, n, 'CH− after a pause: the page two ahead only');
   const r2 = reqs(app);
   app.press(KEYS.CH_UP, 3000);
   assert.equal(reqs(app) - r2, 0, 'CH+ back');
@@ -71,16 +76,18 @@ test('logos: the key that opens the menu starts no download in its own task (O(1
   assert.ok(reqs(app) - r0 > 0, 'nothing started after the key');
 });
 
-test('logos: CH− held through 10 pages downloads nothing for the pages passed; the page it stops on and the next one load once it rests', () => {
+test('logos: CH− held through 10 pages — the downloads run ahead of the cursor while the key is held, each picture once, never another channel\'s picture; the page it stops on is shown once it rests (DEC-2026-10-28-logos-ahead)', () => {
   const app = menuApp();
   app.press(KEYS.ENTER, 3000);
   const r0 = reqs(app);
   for (let i = 0; i < 10; i++) app.press(KEYS.CH_DOWN, 120);
-  assert.ok(reqs(app) - r0 <= 13, 'downloads while held: ' + (reqs(app) - r0));
+  assert.ok(reqs(app) - r0 > 0, 'nothing loaded while the key was held');
   assert.ok(logoStates(app).every((s) => s === 'ok' || s === 'empty'), 'another channel\'s picture while held: ' + logoStates(app));
   app.advance(2000);
   assert.ok(allOk(app), logoStates(app));
-  assert.ok(reqs(app) - r0 <= 13 + 2 * rows(app).length, 'downloads for 10 pages: ' + (reqs(app) - r0));
+  const urls = app.images.requests.map((r) => r.url);
+  assert.equal(new Set(urls).size, urls.length, 'a picture downloaded twice');
+  assert.ok(reqs(app) - r0 <= 13 * rows(app).length, 'downloads for 10 pages: ' + (reqs(app) - r0));
 });
 
 test('logos: a page not loaded yet shows empty boxes, never the previous channels\' pictures, and fills in as they arrive', () => {
@@ -170,7 +177,7 @@ test('logos: page up with the layout\'s correcting fill asks for the page above,
   const col = app.document.getElementById('channels');
   col.clientHeight = 840;                                      // 12 rows of 70 px fit; the pool has 13
   col.children.forEach((r, i) => { r.offsetTop = 70 * i; r.offsetHeight = 70; });
-  vm.runInContext('var __wishes = [], __want = Logos.want; Logos.want = function () { var u = [].slice.call(arguments).filter(function (a) { return a instanceof Array; })[0]; __wishes.push(u); return __want.apply(this, arguments); };', app.ctx);
+  vm.runInContext('var __wishes = [], __want = Logos.want; Logos.want = function (who, u) { if (who === "channels") __wishes.push(typeof u === "function" ? u() : u); return __want.apply(this, arguments); };', app.ctx);
   app.press(KEYS.ENTER, 2000);
   app.press(KEYS.CH_DOWN, 2000);
   app.press(KEYS.CH_DOWN, 2000);
@@ -179,7 +186,9 @@ test('logos: page up with the layout\'s correcting fill asks for the page above,
   assert.equal(ev(app, 'ListView.shown("channels").first'), 12);
   const wish = ev(app, '__wishes[__wishes.length - 1]'), logo = (num) => ev(app, 'Channels.byNum(' + num + ').logo');
   assert.ok([1, 6, 12].every((num) => wish.indexOf(logo(num)) >= 0), 'the page above was not asked for');
-  assert.ok([26, 30].every((num) => wish.indexOf(logo(num)) < 0), 'the page below was asked for');
+  // DEC-2026-10-28-logos-ahead: the pages ahead (above) come before the one page behind (below), and no second page below.
+  assert.ok(wish.indexOf(logo(1)) < wish.indexOf(logo(30)), 'the page below was asked for before the page above');
+  assert.ok(wish.indexOf(logo(45)) < 0, 'a second page below was asked for');
   // Up again to the top: nothing is above, so the next page is the one below.
   app.press(KEYS.CH_UP, 2000);
   assert.equal(ev(app, 'ListView.shown("channels").first'), 0);
@@ -213,13 +222,13 @@ test('logos: the banner and the menu each keep their own wish — a menu wish ne
 test('logos: beyond LOGO_KEEP the least recently shown are let go — never the page on screen; one let go is asked for again only when it is wanted again (review 7, F4)', () => {
   const app = menuApp();
   // Every picture Logos itself asks for (an Image()'s src), by URL — the harness's memory cache would hide a re-request.
-  vm.runInContext('CONFIG.LOGO_KEEP = 30; CONFIG.LOGO_EVICT = 5; var __loads = [], __I = Image; Image = function () { var im = __I(), d = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(im), "src");' +
+  vm.runInContext('CONFIG.LOGO_KEEP = 60; CONFIG.LOGO_EVICT = 5; var __loads = [], __I = Image; Image = function () { var im = __I(), d = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(im), "src");' +
     ' Object.defineProperty(im, "src", { set: function (v) { __loads.push(v); d.set.call(this, v); }, get: function () { return d.get.call(this); } }); return im; };', app.ctx);
   const loads = (u) => ev(app, '__loads').filter((x) => x === u).length, ready = (u) => ev(app, 'Logos.ready(' + JSON.stringify(u) + ')');
   app.press(KEYS.ENTER, 3000);
   for (let i = 0; i < 3; i++) app.press(KEYS.CH_DOWN, 3000);
   const all = ev(app, 'Channels.groups()[Channels.allIdx()].items.map(function (i) { return Channels.at(i).logo; })');
-  assert.ok(all.filter(ready).length <= 30, 'kept ' + all.filter(ready).length + ' > LOGO_KEEP');
+  assert.ok(all.filter(ready).length <= 60, 'kept ' + all.filter(ready).length + ' > LOGO_KEEP');
   const shown = rows(app).map((r) => ev(app, 'Channels.byNum(' + Number(r.children[0].textContent) + ').logo'));
   assert.deepEqual(shown.filter((u) => !ready(u)), [], 'the page on screen was let go');
   const n = rows(app).length, first = all.slice(0, n);

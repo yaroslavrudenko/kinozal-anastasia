@@ -4,6 +4,7 @@ var Diag = (function () {
   var pending = [];            // failLog lines not yet written
   var recent = [];             // the same lines, kept in memory for snapshot()
   var counters = {}, notes = {};
+  var attempts = [], lastKeyAt = 0;   // S-0: the timeline of the last DIAG_ATTEMPTS playback attempts (memory only)
   var flushTimer = null;
 
   // scheme://host/path only: no user:password, no query; credentials inside the path are masked:
@@ -39,6 +40,27 @@ var Diag = (function () {
   }
   function note(name, value) { notes[name] = value; schedule(); }
 
+  // S-0 (review3): where a channel change spends its time, on the TV's own clock (Date.now(), ms). key(): a remote key
+  // was pressed; attempt(): the player starts an attempt (it carries the last key's moment); mark(): a step of the
+  // latest attempt, its first moment only. Read by the TV probes through snapshot(); never written to storage.
+  function key() { lastKeyAt = Date.now(); }
+  function attempt(archive) {
+    attempts.push({ key: lastKeyAt, archive: archive, marks: { key: lastKeyAt } });
+    if (attempts.length > CONFIG.DIAG_ATTEMPTS) attempts.shift();
+  }
+  function mark(name) {
+    var a = attempts[attempts.length - 1];
+    if (a && a.marks[name] === undefined) a.marks[name] = Date.now();
+  }
+  // S-10: AVPlay's onevent (HTTP error codes, bitrate and resolution changes): counted per type, the latest data kept;
+  // a URL in it is redacted (no key, no query).
+  function avEvent(type, data) {
+    var name = 'avEvent.' + type, text = String(data === undefined ? '' : data);
+    count(name);
+    note(name, /:\/\//.test(text) ? text.replace(/[a-z][a-z0-9+.-]*:\/\/\S*/gi, redact) : text.substring(0, 80));
+    mark('ev.' + type);
+  }
+
   function schedule() {
     if (flushTimer) return;
     flushTimer = setTimeout(function () { Util.idle(flush); }, CONFIG.DIAG_FLUSH_MS);
@@ -55,8 +77,8 @@ var Diag = (function () {
     Util.save('diag', { counters: counters, notes: notes });
   }
 
-  function snapshot() { return { counters: counters, notes: notes, recent: recent.slice() }; }
+  function snapshot() { return { counters: counters, notes: notes, recent: recent.slice(), attempts: attempts.slice() }; }
 
   // snapshot() is read from the Tizen inspector console (TV checks TV-4 and TV-9).
-  return { fail: fail, count: count, note: note, snapshot: snapshot };
+  return { fail: fail, count: count, note: note, snapshot: snapshot, key: key, attempt: attempt, mark: mark, avEvent: avEvent };
 }());

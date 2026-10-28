@@ -69,6 +69,7 @@ var Zap = (function () {
     clearTimeout(settleTimer);
     EPG.cancelExcept(c.id);
     NowLines.landed();
+    Logos.hold();                        // the stream first: the logo trickle waits (LOGO_ZAP_PAUSE_MS)
     Playback.live(c);
   }
 
@@ -89,6 +90,10 @@ var Zap = (function () {
       EPG.cancelExcept(c.id);
       EPG.ensure(c.id, Banner.onGuide);
       Sources.onFirstFrame();
+      // The zap group's logos trickle in at idle, from the channel on screen on (the menu opens there), so they are there
+      // before the menu is ever opened (DEC-2026-10-28-logos-ahead; owner: «чтобы визуально казалось, что всё загрузилось»).
+      var gi = group();
+      Logos.want('group', function () { return Channels.logos(gi, c.key); });
     }, Math.max(0, lastStepAt + CONFIG.ZAP_IDLE_MS - Date.now()));
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function () { if (Playback.current() === c) Sources.rememberLanding(c); }, CONFIG.LANDING_SAVE_MS);

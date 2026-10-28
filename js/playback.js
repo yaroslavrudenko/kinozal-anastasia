@@ -7,15 +7,14 @@ var Playback = (function () {
   var anchorWallMs = 0, anchorMediaMs = null, frozenMs = 0, pausedAt = 0;   // anchorMediaMs null: until the first frame
   var pipelineLost = false, hiddenMs = null, selection = 0, audioIdx = 0, hooks = {};
 
-  // hooks: { onOpened(ch) } — a new stream started (banner, landing bookkeeping).
+  // hooks: { onOpened(ch) } — a new stream started (banner, landing bookkeeping); onUnplayable() — a channel the TV
+  // cannot play was chosen; onBanner().
   function setHooks(h) { hooks = h; }
-
 
   function live(c) {
     selection++;
     ch = c; mode = 'live'; pipelineLost = false; audioIdx = 0;
-    Player.open({ url: c.url, archive: false });
-    hooks.onOpened(c);
+    open({ url: c.url, archive: false });
   }
 
   // Plays channel c's archive from fromMs; near the live edge it plays live instead.
@@ -28,10 +27,23 @@ var Playback = (function () {
     selection++;
     ch = c; mode = 'archive'; pipelineLost = false; audioIdx = 0;
     anchorWallMs = fromMs; anchorMediaMs = null;
-    Player.open({ url: archiveUrl(c, fromMs), archive: true });
-    hooks.onOpened(c);
+    open({ url: archiveUrl(c, fromMs), archive: true });
   }
-  function archiveUrl(c, fromMs) { var p = EPG.at(c.id, fromMs); return Catchup.url(c, fromMs, p ? p.stop - fromMs : 0); }
+  // The playing channel's stream. A format the TV cannot play (dead at parse, review3 F-S12) is never opened, so it is
+  // never retried: the stream on screen stops and the viewer is told once.
+  function open(o) {
+    if (ch.dead) Player.stop(); else Player.open(o);
+    hooks.onOpened(ch);
+    if (ch.dead) hooks.onUnplayable();
+  }
+  // From fromMs to the programme's end. Its last ARCHIVE_MIN_SPAN_MS are asked for with the next programme: a recording a
+  // few seconds long ended at once and opened again (review3 F-S8); no next one known: ARCHIVE_SPAN_MS (0). The
+  // ARCHIVE_LONG_CONTINUATION experiment (S-7) always asks for ARCHIVE_SPAN_MS.
+  function archiveUrl(c, fromMs) {
+    var p = CONFIG.ARCHIVE_LONG_CONTINUATION ? null : EPG.at(c.id, fromMs), end = p ? p.stop : 0;
+    if (end && end - fromMs < CONFIG.ARCHIVE_MIN_SPAN_MS) { var next = EPG.at(c.id, end); end = next && next.stop - fromMs >= CONFIG.ARCHIVE_MIN_SPAN_MS ? next.stop : 0; }
+    return Catchup.url(c, fromMs, end ? end - fromMs : 0);
+  }
 
   // Wall-clock moment on screen.
   function position() {
@@ -81,7 +93,7 @@ var Playback = (function () {
     if (hidden) {
       if (mode === 'idle' || hiddenMs !== null) return;
       hiddenMs = position();
-        selection++;                       // nothing pending (a zap, a probe) acts while in the background
+      selection++;                       // nothing pending (a zap, a probe) acts while in the background
       if (mode === 'paused') pipelineLost = true;
       Player.suspend();
       return;

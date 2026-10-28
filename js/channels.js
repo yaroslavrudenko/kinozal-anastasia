@@ -118,10 +118,17 @@ var Channels = (function () {
   }
 
   function stats() { return { total: list.length }; }
+  // The logo URLs of group gi, from the channel with key `from` on (wrapping round), at most LOGO_GROUP_MAX: what the
+  // background trickle loads (the zap group's, the group highlighted in the menu).
+  function logos(gi, from) {
+    var g = groups[gi], items = g ? g.items : [], at0 = Math.max(0, items.indexOf(indexOfKey(from))), out = [];
+    for (var k = 0; k < items.length && k < CONFIG.LOGO_GROUP_MAX; k++) out.push(list[items[(at0 + k) % items.length]].logo);
+    return out;
+  }
 
   return {
     replace: replace, rebuild: rebuild, at: at, count: count, indexOfKey: indexOfKey, get: get, byNum: byNum,
     groups: allGroups, groupIndex: groupIndex, allIdx: allIdx, groupOrAll: groupOrAll, upgradedGroupKey: upgradedGroupKey, isEligible: isEligible, adultAllowed: adultAllowed, nextVisible: nextVisible,
-    search: search, setShowAdult: setShowAdult, showAdult: adultShown, providerGroupCount: providerGroupCount, stats: stats
+    search: search, setShowAdult: setShowAdult, showAdult: adultShown, providerGroupCount: providerGroupCount, stats: stats, logos: logos
   };
 }());

@@ -1,9 +1,9 @@
 'use strict';
 // Work the screen does not need (performance review 2026-10-27, P-2 P-4 P-8 P-9), without making anything less fresh
 // (owner: «видеть актуальные списки каналов и групп … что реально идёт по каналам»):
-//  - P-2: a logo is a picture download from a third-party host. Pages flicked past (CH− held) request none; the page
-//    the cursor rests on gets its logos NOW_QUIET_MS after the last key. The first opening and a single step after a
-//    pause show them at once. The names and the «now» lines are never held back.
+//  - P-2: a logo is a picture download from a third-party host. Since DEC-2026-10-28-logos-ahead the zap group's logos
+//    are loaded in the background before the menu opens, so a page flicked to is already there and costs no download;
+//    the first opening and a single step after a pause show them at once. The names and «now» lines are never held back.
 //  - P-4: a first channel that does not play still gets the menu laid out ahead (it was laid out only at a first frame).
 //  - P-8: the banner does not load its logo again when it is redrawn for the same channel.
 //  - P-9: one key in the programme panel reads the day's programmes once.
@@ -44,11 +44,11 @@ test('logos (P-2): the menu\'s first opening shows the logos of its page at once
   assert.deepEqual(wrongLogos(app), []);
 });
 
-test('logos (P-2): CH− held through 10 pages requests no logo for the pages passed; the page it stops on gets its logos once the cursor rests — names and «now» lines at once', () => {
+test('logos (P-2): CH− held through 10 pages over the zap group loaded in the background downloads (almost) nothing while flicking; every page shows its own logos — names and «now» lines at once (DEC-2026-10-28-logos-ahead)', () => {
   const app = menuApp();
   app.press(KEYS.ENTER, 3000);
   const w0 = writes(app);
-  // Held: a key every 150 ms, under LOGO_DWELL_MS (200) — a page passed that fast asks for nothing (DEC logo-dwell).
+  // Held: a key every 150 ms. The group was loaded in the background (the trickle), so the pages flicked to are there.
   for (let i = 0; i < 10; i++) app.press(KEYS.CH_DOWN, 150);
   const during = writes(app) - w0;
   const shown = app.rowsDetailed('channels');
@@ -59,7 +59,7 @@ test('logos (P-2): CH− held through 10 pages requests no logo for the pages pa
   assert.deepEqual(wrongLogos(app), [], 'the page the cursor rests on has no logos');
   const after = writes(app) - w0;
   assert.ok(during <= 13, 'logos requested while flicking: ' + during);
-  // DEC logos-page-plus-next: the first press (after a pause) asks for the page after it (13); at rest, the page and the next (26).
+  // DEC-2026-10-28-logos-ahead: the zap group (200 channels here) was loaded before; whatever remains is bounded by the window.
   assert.ok(after <= 39, 'logo requests for 10 pages: ' + after + ' (was one per row per page, 130)');
 });
 

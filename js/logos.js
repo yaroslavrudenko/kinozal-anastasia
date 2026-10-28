@@ -4,39 +4,68 @@
 // when it arrives; another channel's picture is never shown in its place. A logo that fails (404, a host that does not
 // answer within LOGO_TIMEOUT_MS) is asked for again once per hourly list, never within the hour
 // (DEC-2026-10-28-logo-retry-hourly: a passing failure — Wi-Fi not up after standby — is not kept for the page's life).
+// What loads, and when (DEC-2026-10-28-logos-ahead; owner: «не видеть, как дозагружаются иконки … частями, не всё
+// сразу»): the list on screen asks for its page, the two pages ahead and the one behind on every move (no dwell); the zap
+// group's logos trickle in at idle after the first picture (before the menu is opened) and the group highlighted in the
+// menu goes first among them; a zap pauses the trickle LOGO_ZAP_PAUSE_MS. Downloads start only in idle slots, at most
+// LOGO_STARTS_PER_SLOT per slot and LOGO_PARALLEL at once; pictures that arrive together go into the rows on screen at
+// most LOGO_PUTS_PER_FRAME per frame; rows of a screen not shown get theirs when they are drawn.
 var Logos = (function () {
   var OK = 1, BAD = 2;
   var state = Util.dict();        // url -> OK | BAD | the Image loading it
   var kept = Util.dict();         // url -> the loaded Image: keeps the picture in the page's memory cache
   var used = Util.dict(), keptN = 0, tick = 0;   // url -> last use (eviction order), how many are kept
   var wishes = Util.dict(), inFlight = 0, imgs = [];      // consumer -> { urls, i, open }: each consumer replaces only its own
+  var slotAsked = false, wakeTimer = null, holdUntil = 0, paintQ = [], painting = false;
+  // Who is served first (DEC-2026-10-28-logos-ahead): the banner, the list on screen (its page, the two pages ahead, the
+  // page behind — in its wish's order), then the trickles: the group highlighted in the menu, then the zap group.
+  var ORDER = ['banner', 'channels', 'search', 'highlight', 'group'], TRICKLE = { highlight: 1, group: 1 };
+  var frame = window.requestAnimationFrame ? function (fn) { window.requestAnimationFrame(fn); } : function (fn) { setTimeout(fn, 16); };
 
   // The one way a logo is put into an <img>: shown when loaded, else its box empty until it is. key: the channel the
   // <img> shows (a pooled row passes from channel to channel); the same channel's previous picture stays until a new URL
   // of its logo has arrived (an hourly list that changed it) — another channel's never does, even when both want the
-  // same URL (review 7, Codex C7-1).
+  // same URL (review 7, Codex C7-1). A picture that arrived while its row was not on screen is given to it here.
   function put(img, url, key) {
-    var same = !!key && img.logoKey === key;
-    if (img.logoWant === url && same) return;
+    var same = !!key && img.logoKey === key, ok = !!url && state[url] === OK;
+    if (img.logoWant === url && same && (!ok || img.getAttribute('src') === url)) return;
     img.logoWant = url;
     img.logoKey = key;
-    if (url && state[url] === OK) { used[url] = ++tick; if (img.getAttribute('src') !== url) img.src = url; img.style.visibility = 'inherit'; }
+    if (ok) { used[url] = ++tick; if (img.getAttribute('src') !== url) img.src = url; img.style.visibility = 'inherit'; }
     else if (!same || !url || state[url] === BAD) img.style.visibility = 'hidden';
   }
-  function track(img) { img.onerror = Util.hideBrokenImage; imgs.push(img); }
+  // shown(): whether the screen holding the <img> is on screen; one that is not gets no picture until it is drawn again.
+  function track(img, shown) { img.onerror = Util.hideBrokenImage; img.logoShown = shown || null; imgs.push(img); }
 
-  // The pictures a consumer (a list column, the banner) wants now, most urgent first; it replaces that consumer's previous
-  // wish only (pictures not started yet are dropped, pictures on their way finish into the map) — the banner's logo and
-  // the menu's page never drop each other (review 7, F3, R7-P2). open(): false once the screen asking has gone.
-  function want(who, urls, open) { wishes[who] = { urls: urls, i: 0, open: open }; pump(); }
-  // The banner's one logo first, then the lists'.
-  function pump() { serve('banner'); for (var who in wishes) serve(who); }
-  function serve(who) {
+  // The pictures a consumer (a list column, the banner, a trickle) wants now, most urgent first: an array, or a function
+  // giving it (looked up in idle time, so a key's task stays O(1)). It replaces that consumer's previous wish only
+  // (pictures not started yet are dropped, pictures on their way finish into the map) — the banner's logo and the menu's
+  // page never drop each other (review 7, F3, R7-P2). open(): false once the screen asking has gone. No download starts
+  // here: they start in idle slots (slot()), never in the task of a key.
+  function want(who, urls, open) { wishes[who] = { urls: urls, i: 0, open: open }; ask(); }
+  // A zap or a stream start: the trickles wait LOGO_ZAP_PAUSE_MS so the stream has the network first.
+  function hold() { holdUntil = Date.now() + CONFIG.LOGO_ZAP_PAUSE_MS; }
+  function ask() { if (!slotAsked) { slotAsked = true; Util.idle(slot); } }
+  // One idle slot: at most LOGO_STARTS_PER_SLOT downloads start, at most LOGO_PARALLEL in flight — a burst of 26 no
+  // longer lands on the frames of the next keys (owner: «меню не тормозило и не подвисало на дозагрузках»).
+  function slot(d) {
+    slotAsked = false;
+    if (d && !d.didTimeout && d.timeRemaining() < CONFIG.LOGO_SLOT_MIN_MS) { ask(); return; }
+    var budget = CONFIG.LOGO_STARTS_PER_SLOT, k;
+    for (k = 0; k < ORDER.length; k++) budget = serve(ORDER[k], budget);
+    var more = false, held = false;
+    for (var who in wishes) { if (TRICKLE[who] && Date.now() < holdUntil) held = true; else more = true; }
+    if (more && inFlight < CONFIG.LOGO_PARALLEL) ask();
+    if (held && !wakeTimer) wakeTimer = setTimeout(function () { wakeTimer = null; ask(); }, holdUntil - Date.now() + 1);
+  }
+  function serve(who, budget) {
     var w = wishes[who];
-    if (!w) return;
-    if (w.open && !w.open()) w.i = w.urls.length;
-    while (inFlight < CONFIG.LOGO_PARALLEL && w.i < w.urls.length) { var url = w.urls[w.i++]; if (url && !state[url]) load(url); }
+    if (!w || budget <= 0 || TRICKLE[who] && Date.now() < holdUntil) return budget;
+    if (w.open && !w.open()) { delete wishes[who]; return budget; }
+    if (typeof w.urls === 'function') w.urls = w.urls();
+    while (budget > 0 && inFlight < CONFIG.LOGO_PARALLEL && w.i < w.urls.length) { var url = w.urls[w.i++]; if (url && !state[url]) { load(url); budget--; } }
     if (w.i >= w.urls.length) delete wishes[who];
+    return budget;
   }
   function load(url) {
     var im = new Image();
@@ -44,27 +73,32 @@ var Logos = (function () {
     inFlight++;
     // A host that does not answer holds a slot until the browser gives up (minutes): after LOGO_TIMEOUT_MS the download is
     // given up, its slot freed, and the URL waits for the next hourly list like a failure (review 7, F2; PF-13 T3).
-    var timer = setTimeout(function () { im.onload = im.onerror = null; drop(url, im); done(url, im, false); }, CONFIG.LOGO_TIMEOUT_MS);
+    var timer = setTimeout(function () { im.onload = im.onerror = null; im.removeAttribute('src'); done(url, im, false); }, CONFIG.LOGO_TIMEOUT_MS);
     im.onload = function () { clearTimeout(timer); done(url, im, true); };
     im.onerror = function () { clearTimeout(timer); done(url, im, false); };
     im.src = url;
-    // The rows waiting for it load it too (the same download): each paints it the moment it arrives, without
-    // waiting for this script; their earlier picture is dropped first, so it never shows in its place. (One still showing
-    // its channel's previous picture keeps it until this one has arrived: done().)
-    for (var i = 0; i < imgs.length; i++) if (imgs[i].logoWant === url && imgs[i].style.visibility === 'hidden') { imgs[i].removeAttribute('src'); imgs[i].src = url; imgs[i].style.visibility = 'inherit'; }
   }
-  // Every element sharing the download lets it go, so the browser can close it.
-  function drop(url, im) {
-    im.removeAttribute('src');
-    for (var i = 0; i < imgs.length; i++) if (imgs[i].getAttribute('src') === url) imgs[i].removeAttribute('src');
-  }
+  // A download finished: the <img>s on screen that want it get it — at most LOGO_PUTS_PER_FRAME per frame, so pictures
+  // arriving together appear over a few frames, not in one heavy one; the others get it when they are drawn (put).
   function done(url, im, ok) {
     inFlight--;
-    if (state[url] !== im) { pump(); return; }   // forgotten meanwhile (the list dropped it)
-    state[url] = ok ? OK : BAD;
-    if (ok) { kept[url] = im; used[url] = ++tick; if (++keptN > CONFIG.LOGO_KEEP) evict(); }
-    for (var i = 0; i < imgs.length; i++) if (imgs[i].logoWant === url) { imgs[i].logoWant = null; put(imgs[i], url, imgs[i].logoKey); }
-    pump();
+    if (state[url] === im) {                       // else forgotten meanwhile (the list dropped it)
+      state[url] = ok ? OK : BAD;
+      if (ok) { kept[url] = im; used[url] = ++tick; if (++keptN > CONFIG.LOGO_KEEP) evict(); }
+      for (var i = 0; i < imgs.length; i++) if (imgs[i].logoWant === url && (!imgs[i].logoShown || imgs[i].logoShown())) paintQ.push(imgs[i]);
+      if (paintQ.length && !painting) { painting = true; frame(paint); }
+    }
+    ask();
+  }
+  function paint() {
+    for (var n = 0; n < CONFIG.LOGO_PUTS_PER_FRAME && paintQ.length; n++) {
+      var img = paintQ.shift(), url = img.logoWant;
+      if (url && state[url] && state[url] !== OK && state[url] !== BAD) continue;   // asked for something else meanwhile, still loading
+      img.logoWant = null;
+      put(img, url, img.logoKey);
+    }
+    painting = paintQ.length > 0;
+    if (painting) frame(paint);
   }
   // The least recently shown pictures beyond the limit are let go (the HTTP cache still has them).
   function evict() {
@@ -80,5 +114,5 @@ var Logos = (function () {
     for (var url in state) if (!live[url] || state[url] === BAD) forget(url);
   }
 
-  return { put: put, track: track, want: want, retain: retain, ready: function (url) { return state[url] === OK; } };
+  return { put: put, track: track, want: want, hold: hold, retain: retain, ready: function (url) { return state[url] === OK; } };
 }());

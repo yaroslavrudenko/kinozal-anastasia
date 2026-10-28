@@ -7,7 +7,7 @@ var CONFIG = {
   OTT_KEY: '__OTT_KEY__',
   PLAYLIST_URL: '__PLAYLIST_URL__',
   EPG_URL: '',                 // empty = use url-tvg from the playlist header
-  VERSION: '1.9.0',            // must equal config.xml's version
+  VERSION: '1.9.1',            // must equal config.xml's version
   BUILD: '__BUILD__',          // filled by build.sh: commit and date
   // «📡 Провайдеры» (owner, 2026-10-27: a source is a provider; inside it the channels are grouped as the
   // provider gives them; a provider that gives separate playlists is a source of playlists): OTT Club (key),
@@ -54,6 +54,8 @@ var CONFIG = {
   ARCHIVE_DAYS: 7,
   ARCHIVE_EDGE_MARGIN_MS: 600000,   // nothing older than ARCHIVE_DAYS minus this is opened (or retried)
   ARCHIVE_SPAN_MS: 14400000,        // one archive request covers at most 4 h (OTT Club answers 404 past 24–48 h); the player continues
+  ARCHIVE_MIN_SPAN_MS: 300000,      // a programme's last minutes are asked for together with the next one (a few-second recording ended at once: F-S8)
+  ARCHIVE_DAYS_UNDECLARED: 3,       // a playlist declaring catch-up without days: its window is assumed this long, not ARCHIVE_DAYS (F-S13)
   GUIDE_TIMEOUT_MS: 15000,
   GUIDE_FRESH_MS: 3600000,
   GUIDE_RETRY_MIN_MS: 30000,
@@ -77,6 +79,22 @@ var CONFIG = {
   MAX_BACKOFF_MS: 15000,
   STABLE_MS: 20000,            // the retry backoff resets only after this much advancing playback
   LIVE_SNAP_MS: 120000,        // archive within 2 min of live plays live instead
+  // The big centre spinner (review3 F-S1/F-S2; owner 2026-10-27: buffering stays, the viewer must not keep seeing it).
+  // The banner's state line («Подключение…», «Загрузка видео… N%», «Нет сигнала — повтор…») is not delayed.
+  SPINNER_GRACE_START_MS: 1600,     // an open shows it only once buffering lasted this long (96 % of opens move by 1.8 s on the TV)
+  SPINNER_GRACE_REBUFFER_MS: 1000,  // a rebuffer: this long (the measured ones lasted 0.04–0.4 s)
+  NO_SIGNAL_AFTER: 4,          // from this many failures in a row: «Нет сигнала» toast and no spinner on further retries
+  // Experiments (review3 S-2/S-4/S-5/S-7/S-8): the defaults are the measured behaviour; a value changes only after a TV A/B.
+  // Read at each open, so a TV probe may set them at runtime (CONFIG.START_BITRATE = 'AVERAGE').
+  START_BITRATE: 'HIGHEST',    // ADAPTIVE_INFO STARTBITRATE: 'HIGHEST' | 'AVERAGE' | 'LOWEST' (S-4)
+  AV_REUSE_NO_CLOSE: false,    // true: a channel change skips close() when the stopped player is IDLE (S-5); set at boot from
+                               // the «Быстрое переключение каналов» setting (Player.setFastSwitch), a probe may still override it
+  FAST_SWITCH_DEFAULT: true,   // that setting's value until the viewer changes it (TV: −40…−100 ms per zap; 203-zap soak: 0 failures)
+  BANNER_BEFORE_TEARDOWN: false,   // true: AVPlay's stop/close/open wait for the banner's frame to be painted (S-3; TV: +144 ms key→playing)
+  AV_BUFFERING_TIMEOUT_S: null,   // a number: AVPlay setTimeoutForBuffering (seconds); null: AVPlay's own 20 s (S-8)
+  FREEZE_AS_BUFFERING: false,  // true: a picture frozen for FREEZE_MS shows the spinner (after the rebuffer grace) (S-2)
+  FREEZE_MS: 2000,
+  ARCHIVE_LONG_CONTINUATION: false,   // true: an archive request asks for ARCHIVE_SPAN_MS, not one programme (S-7)
   HLS_JS_URL: 'https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js',
   HLS_JS_SRI: 'sha384-9v3HcdYrO3D+OPDTjZ40RXocgE4GtXVCd3/mCS62JsM93JXgI1afJVuwjFvsu6ni',
 
@@ -93,7 +111,11 @@ var CONFIG = {
   NUMBER_ENTRY_MS: 1800,
   EXIT_CONFIRM_MS: 2000,
   VISIBLE_ROWS: 13,
-  LOGO_DWELL_MS: 200,          // logos are asked for once the cursor stays this long (or at once after a pause)
+  LOGO_STARTS_PER_SLOT: 3,     // logo downloads started in one idle slot (never in a key's task)
+  LOGO_SLOT_MIN_MS: 8,         // an idle slot shorter than this starts none (it waits for the next)
+  LOGO_PUTS_PER_FRAME: 4,      // pictures that arrived together go into rows at most this many per frame
+  LOGO_ZAP_PAUSE_MS: 3000,     // after a zap / stream start the group trickle waits this long (the stream first)
+  LOGO_GROUP_MAX: 400,         // the zap group's / highlighted group's logos loaded in the background, at most (= LOGO_KEEP)
   LOGO_PARALLEL: 6,            // logo downloads at a time (Chromium 47 opens at most 6 per host)
   LOGO_KEEP: 400,              // loaded logos kept in memory (the whole OTT Club list); beyond it the least recently shown go
   LOGO_EVICT: 50,              // how many of the least recently shown go at once when LOGO_KEEP is passed
@@ -101,5 +123,6 @@ var CONFIG = {
   SEARCH_ROWS: 9,
   SEARCH_LIMIT: 60,
   DIAG_FLUSH_MS: 30000,
-  DIAG_LOG_LINES: 40
+  DIAG_LOG_LINES: 40,
+  DIAG_ATTEMPTS: 20            // playback attempts whose timeline Diag.snapshot() keeps (S-0; memory only, never stored)
 };

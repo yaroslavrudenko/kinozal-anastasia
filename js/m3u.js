@@ -7,6 +7,10 @@ var M3U = (function () {
   // name and one with no group are keyed by these words in every interface language (1.8.4 also showed them so).
   var KEY_UNNAMED = 'канал', KEY_NO_GROUP = 'Без группы';
   var REPEAT = /#\d+$/;               // «#2» … ending the key of a repeated entry (uniqueKey)
+  // Entries the TV's player cannot play (iptv-org: rtmp, srt, mms(h) streams and web pages): dead, never opened or retried
+  // (review3 F-S12). DASH, extension-less http(s) and .ts stay playable.
+  var UNPLAYABLE = /^(rtmp[a-z]*|srt|mms[a-z]?):|\.html?(?=[?#]|$)/i;
+  function unplayable(url) { return UNPLAYABLE.test(url); }
   function parse(text, done) {
     var unnamedName = I18n.t('m.channel');           // shown for an entry without a name, in the interface language
     var attrRe = /([a-zA-Z0-9_-]+)="([^"]*)"/g;      // local: overlapping parses never share a cursor
@@ -40,6 +44,7 @@ var M3U = (function () {
 
     function finish(ch, url) {
       ch.url = url;
+      ch.dead = unplayable(url);
       if (!ch.rawGroup) ch.rawGroup = group;
       ch.groupId = groupId(ch.rawGroup);
       ch.group = I18n.group(ch.groupId);
@@ -138,5 +143,5 @@ var M3U = (function () {
     return raw === KEY_NO_GROUP ? '' : groupId(raw);
   }
 
-  return { KEY_UNNAMED: KEY_UNNAMED, KEY_NO_GROUP: KEY_NO_GROUP, parse: parse, groupIdOfKey: groupIdOfKey };
+  return { KEY_UNNAMED: KEY_UNNAMED, KEY_NO_GROUP: KEY_NO_GROUP, parse: parse, groupIdOfKey: groupIdOfKey, unplayable: unplayable };
 }());

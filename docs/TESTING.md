@@ -177,6 +177,13 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 | L13 | Running for 2 h | «now» lines and the banner still current | C1 | AUTO-TV M11 | P0 |
 | L14 | STOP / BACK in the archive | Back to live; double BACK on live exits | — | MANUAL | P1 |
 | L15 | A TV platform call fails (error 18) | The app still starts and zaps | — | HARNESS platform-throws; TV boot itself | P0 |
+| L16 | Streams 1.9.1 — open a channel whose picture comes within 1.6 s | No big centre spinner at all; the banner says «Подключение…» at once (the state line is the owner's and is unchanged) | C2, C3, C4 | HARNESS streams P-S1 + TV probe `s-streams.mjs` (spinShows per zap) | P0 |
+| L17 | Streams 1.9.1 — a slow open (> 1.6 s) / a rebuffer (> 1 s) | The big spinner appears only after 1.6 s (open) / 1 s (rebuffer) and goes the moment the picture moves; buffering itself unchanged (5 s / 10 s) | C2 | HARNESS streams P-S1, P-S2 + TV probe | P1 |
+| L18 | Streams 1.9.1 — a stream that never plays (dead host, provider 429/404) | No spinner during «Нет сигнала — повтор через N с»; from the 4th failure no spinner at all, «Нет сигнала…» toast as before; retries continue with the same backoff | — | HARNESS streams P-S3 + TV: a dead channel 90 s, spinner time | P1 |
+| L19 | Streams 1.9.1 — ◀▶ / a pick | The new name is on screen before the old stream is torn down; only the last of several quick choices is opened | C2, C3 | HARNESS streams P-S4 + TV probe (`name` vs `marks.stop`) | P1 |
+| L20 | Streams 1.9.1 — an M3U entry in a format the TV cannot play (rtmp, srt, mms(h), a web page) | Picked: the old stream stops, «Этот канал в формате, который телевизор не воспроизводит», no spinner, no retries | — | HARNESS streams P-S8 | P2 |
+| L22 | Streams 1.9.1 — «⚙ Настройки» → «Быстрое переключение каналов» (on by default): OK turns it off / on | «да / нет» in the row, a toast; the next zap uses it without a restart; kept after a restart | — | HARNESS streams P-S13 + TV 200-zap soak (no state errors, no leaks) | P1 |
+| L21 | Streams 1.9.1 — archive from a programme's last 5 min | One request covering the next programme too (never a few seconds long); continuation into the next programme unchanged | C5 | HARNESS streams P-S7 + AUTO-TV M6 | P1 |
 
 ### O. Other screens and keys
 | ID | Steps | Expected result | Set | Verified | P |
@@ -2421,3 +2428,32 @@ The screen's title was the app's name («Настин кинозал»); it is n
 dedication stay. Test: `tests/i18n.test.js` «the «⚙ Настройки» screen is titled as its menu row …» (red before: the title had
 no translation). Mutants: the title not set on open — killed; another key — killed; the old literal in `index.html` — survives
 (the title is set whenever the screen opens; the literal is only the page's text before that).
+
+## Fix batch 7 — logos ahead of the viewer (owner, 2026-10-28; DEC-2026-10-28-logos-ahead)
+
+Owner: «Видно, как они уродски дорисовываются во время навигации. На границе списков страниц навигация залипает на
+переходах»; «хотелось бы по возможности не видеть, как дозагружаются иконки … частями, не всё сразу»; «навигация
+максимально мягкая». The perf analyst measured (desktop 20×): the batch-4 pipeline asked for nothing while ▼ was held and
+then burst 26 downloads on release (12 empty boxes at once, 551 ms to paint). Changes:
+
+| Part | Where |
+|---|---|
+| No dwell; window = page on screen + 2 pages ahead + 1 behind, asked for on every fill, keys held too | js/listrows.js `schedule` (the URLs looked up lazily in Logos' idle slot) |
+| The zap group's logos trickle in after the first picture (before the menu is opened); a zap pauses the trickle `LOGO_ZAP_PAUSE_MS` | js/zap.js (`Logos.hold()` in `land`, `Logos.want('group', …)` after the first frame), js/channels.js `logos(gi, from)` |
+| A group highlighted in the menu goes first among the background loads | js/overlays/menu.js `render` (`Logos.want('highlight', …)`) |
+| Paced starts: idle slots only, ≤ `LOGO_STARTS_PER_SLOT` per slot, ≤ `LOGO_PARALLEL` in flight, priority banner > list on screen > highlight > zap group | js/logos.js `want` / `ask` / `slot` / `serve` |
+| Pictures arriving together go into the rows on screen ≤ `LOGO_PUTS_PER_FRAME` per frame; rows of a hidden screen get none (they get it when drawn) | js/logos.js `done` / `paint` / `track(img, shown)`; js/listrows.js tracks each pool with its overlay |
+| The batch-4 pre-assignment of a loading picture into waiting rows (L10) is gone: `done` → frame queue is the one way a picture reaches a row | js/logos.js `load` |
+| Constants | js/config.js (`LOGO_DWELL_MS` removed; `LOGO_STARTS_PER_SLOT` 3, `LOGO_SLOT_MIN_MS` 8, `LOGO_PUTS_PER_FRAME` 4, `LOGO_ZAP_PAUSE_MS` 3000, `LOGO_GROUP_MAX` 400) |
+
+**Tests:** new `tests/logos-trickle.test.js` (7: no dwell; the window; the trickle before the menu, paused after a zap, no
+src into hidden rows; the highlighted group first; ≤ 3 starts per idle slot; ≤ 4 pictures per frame; a closed menu's rows get
+none). Red first: all 6 of the first version failed on the tree before (`scratchpad/batch7/red.txt`). `tests/logos-cache.test.js`
+now turns the zap-group trickle off (its wish is dropped) to pin the menu's own requests; two tests renamed with new
+expectations (the opening loads the two pages ahead; CH− held runs ahead, each picture once); the C7-2 test now checks the
+order (pages ahead before the one behind); the eviction test uses `LOGO_KEEP` 60 (the window is 52). `tests/logos-and-redraws.test.js`:
+the P-2 held test renamed (the group is loaded in the background). Mutation: 12/12 killed (`scratchpad/batch7/mut-out2.txt`).
+
+**Acceptance (desktop 20× CPU, 3 runs per tree, `scratchpad/batch7/perf/agg.txt`):** logos seen arriving 0 in every phase
+(1.8.4: 9–72 per cold phase); key→2nd frame medians equal or better; frames over 34 ms fewer in total, but two phases have
+one frame more than 1.8.4 in one of three runs (▼ ×6 inside a page; CH− at 250 ms). TV measurement: the coordinator's run.

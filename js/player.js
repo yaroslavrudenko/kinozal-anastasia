@@ -1,16 +1,21 @@
 // Native Samsung AVPlay (hardware decoding) with a self-healing watchdog; an HTML <video> element off
 // the TV, for desktop checks. Every attempt has a generation: a callback of an older attempt does nothing.
-//   hooks: { onBuffering(on), onLoading(pct: -1 none), onFirstFrame(), onStable(), onError(n, delayMs), onEnded(),
-//            onMutedStart(), retryTarget() -> { url, archive } | null (archive: a fresh URL at the position shown) }
+//   hooks: { onBuffering(on, phase: 'open' | 'retry' | 'wait' (before the first frame) | 'rebuffer'), onLoading(pct: -1 none),
+//            onFirstFrame(), onStable(), onError(n, delayMs), onEnded(), onMutedStart(), onFrozen(on) (FREEZE_AS_BUFFERING),
+//            retryTarget() -> { url, archive } | null (archive: a fresh URL at the position shown) }
+// Each attempt's steps are marked in Diag (S-0, review3): Diag.snapshot().attempts on the TV.
 var Player = (function () {
   var av = null, video = null, hooks = null;
   var gen = 0, url = null, archive = false;
   var lastTime = -1, lastTimeAt = 0, bufferingSince = 0, bufferStartAt = 0, mediaMs = 0;
-  var firstFrame = false, streakFrom = 0, stable = false, info = '', bufferPct = -1;
+  var firstFrame = false, streakFrom = 0, stable = false, info = '', bufferPct = -1, frozen = false;
+  var FAST_STORE = 'fastSwitch';
   var retries = 0, retryTimer = null, retryPending = false, restartOnPlay = false, paused = false, suspended = false, WATCHDOG_MS = 1000;
 
   function init(h) {
     hooks = h;
+    var fast = Util.load(FAST_STORE);
+    CONFIG.AV_REUSE_NO_CLOSE = typeof fast === 'boolean' ? fast : CONFIG.FAST_SWITCH_DEFAULT;
     try { av = (window.webapis && window.webapis.avplay) || null; } catch (e) { av = null; Diag.note('avplay', (e && e.message) || String(e)); }
     video = Util.$('html-player');
     if (!av) HtmlVideo.init(video, {
@@ -40,40 +45,63 @@ var Player = (function () {
     retryPending = false;
     var my = ++gen;
     lastTime = -1; lastTimeAt = Date.now(); bufferingSince = Date.now(); bufferStartAt = 0; mediaMs = 0; bufferPct = -1;
-    firstFrame = false; streakFrom = 0; stable = false; info = '';
-    hooks.onBuffering(true);
-    if (av) startAv(my); else HtmlVideo.start(my, url);
+    firstFrame = false; streakFrom = 0; stable = false; info = ''; frozen = false;
+    Diag.attempt(archive);
+    Diag.mark('start');
+    hooks.onBuffering(true, retries ? 'retry' : 'open');
+    // AVPlay opens in this task, after the hook has updated the banner. BANNER_BEFORE_TEARDOWN (S-3, experiment) waits for the
+    // banner's frame first: on the TV that cost +144 ms key→playing (parity probe, 2026-10-28), so it is off.
+    if (!av) HtmlVideo.start(my, url);
+    else if (CONFIG.BANNER_BEFORE_TEARDOWN) Util.afterPaint(function () { if (my === gen) startAv(my); });
+    else startAv(my);
   }
 
   function startAv(my) {
-    try { av.stop(); } catch (e) { Diag.count('avStopIgnored'); }
-    try { av.close(); } catch (e) { Diag.count('avCloseIgnored'); }
+    Diag.mark('stop');
+    avStop();
+    Diag.mark('close');
+    if (!reusable()) avClose();
     try {
+      Diag.mark('open');
       av.open(url);
+      Diag.mark('setup');
       setting(function () { av.setDisplayRect(0, 0, 1920, 1080); }, 'displayRect');
       setting(function () { av.setDisplayMethod(AvTracks.displayMode()); }, 'displayMode');
-      // Start at the best quality the bandwidth allows, and let AVPlay drop to the lowest rendition
-      // rather than stall on a weak connection.
-      setting(function () { av.setStreamingProperty('ADAPTIVE_INFO', 'STARTBITRATE=HIGHEST'); }, 'adaptive');
+      // The first rendition AVPlay picks (HIGHEST: the best the bandwidth allows; it drops to a lower one rather than
+      // stall). An experiment flag (S-4): the TV A/B decides.
+      setting(function () { av.setStreamingProperty('ADAPTIVE_INFO', 'STARTBITRATE=' + CONFIG.START_BITRATE); }, 'adaptive');
       setting(function () { av.setBufferingParam('PLAYER_BUFFER_FOR_PLAY', 'PLAYER_BUFFER_SIZE_IN_SECOND', CONFIG.BUFFER_PLAY_S); }, 'bufferPlay');
       setting(function () { av.setBufferingParam('PLAYER_BUFFER_FOR_RESUME', 'PLAYER_BUFFER_SIZE_IN_SECOND', CONFIG.BUFFER_RESUME_S); }, 'bufferResume');
+      if (CONFIG.AV_BUFFERING_TIMEOUT_S !== null) setting(function () { av.setTimeoutForBuffering(CONFIG.AV_BUFFERING_TIMEOUT_S); }, 'bufferTimeout');
       av.setListener({
-        onbufferingstart: function () { if (my === gen) bufferingStarted(); },
+        onbufferingstart: function () { if (my === gen) { Diag.mark('bufStart'); bufferingStarted(); } },
         onbufferingprogress: function (pct) { if (my === gen) bufferingProgress(pct); },
-        onbufferingcomplete: function () { if (my === gen) bufferingEnded(); },
-        oncurrentplaytime: function (t) { if (my === gen) advanced(t); },
+        onbufferingcomplete: function () { if (my === gen) { Diag.mark('bufDone'); bufferingEnded(); } },
+        oncurrentplaytime: function (t) { if (my === gen) { Diag.mark('firstTime'); advanced(t); } },
         // A recording that reaches its end is not an error: the app continues with what follows it.
         onstreamcompleted: function () { if (my === gen) ended(my); },
         onerror: function (e) { fail(my, String(e)); },
-        onevent: function () {}
+        // HTTP error codes, bitrate and resolution changes: recorded only, for now (S-10).
+        onevent: function (type, data) { if (my === gen) Diag.avEvent(type, data); }
       });
+      Diag.mark('prepare');
       av.prepareAsync(function () {
         if (my !== gen || paused) return;        // paused while preparing: play() starts it later
+        Diag.mark('prepared');
+        Diag.mark('play');
         try { av.play(); } catch (e) { fail(my, 'play: ' + (e.message || e)); }
       }, function (e) { fail(my, String(e)); });
+      Diag.mark('prepareCalled');
     } catch (e) {
       fail(my, e.message || String(e));
     }
+  }
+  function avStop() { try { av.stop(); } catch (e) { Diag.count('avStopIgnored'); } }
+  function avClose() { try { av.close(); } catch (e) { Diag.count('avCloseIgnored'); } }
+  // AV_REUSE_NO_CLOSE (S-5, experiment): a stopped player in IDLE is opened again without close().
+  function reusable() {
+    if (!CONFIG.AV_REUSE_NO_CLOSE) return false;
+    try { return av.getState() === 'IDLE'; } catch (e) { return false; }
   }
 
   function setting(fn, name) { try { fn(); } catch (e) { Diag.count('settingsRejected'); Diag.note('setting.' + name, (e && e.message) || String(e)); } }
@@ -83,7 +111,7 @@ var Player = (function () {
     bufferingSince = Date.now(); bufferPct = -1;
     streakFrom = 0; stable = false;      // stability has to be earned again after a rebuffer
     if (firstFrame) { bufferStartAt = Date.now(); Diag.count('rebuffer'); }
-    hooks.onBuffering(true);
+    hooks.onBuffering(true, firstFrame ? 'rebuffer' : 'wait');
     hooks.onLoading(-1);
   }
   // Only real progress (a higher percentage) restarts the buffering timeout.
@@ -106,11 +134,14 @@ var Player = (function () {
     var now = Date.now();
     if (!streakFrom || now - lastTimeAt > CONFIG.STALL_TIMEOUT_MS) streakFrom = now;
     lastTime = t; lastTimeAt = now; mediaMs = t;
+    unfreeze();
     if (!firstFrame) {
       firstFrame = true; bufferingSince = 0;
       hooks.onBuffering(false);
+      Diag.mark('ffRead0');
       info = readInfo();
       if (av) Diag.note('variants', AvTracks.variantCount(av));
+      Diag.mark('ffRead1');
       hooks.onFirstFrame();
     } else if (!stable && !bufferingSince && now - streakFrom >= CONFIG.STABLE_MS) {
       stable = true; retries = 0;
@@ -150,19 +181,26 @@ var Player = (function () {
     if (av) { try { state = av.getState(); } catch (e) { state = ''; Diag.count('getStateFailed'); } } else state = video.paused ? 'PAUSED' : 'PLAYING';
     var limit = archive ? CONFIG.ARCHIVE_BUFFER_TIMEOUT_MS : CONFIG.BUFFER_TIMEOUT_MS, released = !!av && !document.hidden && (state === 'IDLE' || state === 'NONE');
     if (bufferingSince) { if (now - bufferingSince > limit) fail(gen, 'buffering timeout ' + Math.round((now - bufferingSince) / 1000) + ' s'); return; }
+    if (CONFIG.FREEZE_AS_BUFFERING && !frozen && firstFrame && state === 'PLAYING' && now - lastTimeAt > CONFIG.FREEZE_MS) { frozen = true; hooks.onFrozen(true); }
     if ((state === 'PLAYING' || released) && now - lastTimeAt > CONFIG.STALL_TIMEOUT_MS) fail(gen, released ? 'player released (' + state + ')' : 'stalled');
   }
+
+  // FREEZE_AS_BUFFERING (S-2, experiment): the frozen picture's indicator goes when time moves again or on a pause; the
+  // stall timeout above still decides a reconnect.
+  function unfreeze() { if (frozen) { frozen = false; hooks.onFrozen(false); } }
 
   // ---- control ----
   // A pause also holds a pending retry: it runs on play(), not behind the pause.
   function pause() {
     paused = true;
     streakFrom = 0; stable = false;
+    unfreeze();
     if (retryPending) { clearTimeout(retryTimer); retryPending = false; restartOnPlay = true; }
     try { if (av) av.pause(); else HtmlVideo.pause(); } catch (e) { Diag.note('pause', (e && e.message) || String(e)); }
   }
   // Resumes a native pause; a failure goes through the normal retry (archive: at the shown position).
   function play() {
+    if (!url) return;                    // stopped: an unplayable channel (stop)
     paused = false;
     lastTimeAt = Date.now();
     if (restartOnPlay) { retry(); return; }
@@ -176,6 +214,15 @@ var Player = (function () {
     clearTimeout(retryTimer);
     retryPending = false;
     try { if (av) av.suspend(); else HtmlVideo.pause(); } catch (e) { Diag.note('suspend', (e && e.message) || String(e)); }
+  }
+  // A channel the TV cannot play (M3U.unplayable, review3 F-S12): the stream on screen stops and nothing opens or retries
+  // until the next open.
+  function stop() {
+    gen++;                               // callbacks of the stopped attempt are inert
+    url = null; retries = 0; paused = false; suspended = false; restartOnPlay = false; bufferingSince = 0; firstFrame = false;
+    clearTimeout(retryTimer);
+    retryPending = false;
+    if (av) { avStop(); avClose(); } else HtmlVideo.pause();
   }
   // Network restored: the same path as a retry, so an archive resumes at the position shown.
   function reconnect() { if (url && !paused && !suspended) { retries = 0; retry(); } }
@@ -192,10 +239,14 @@ var Player = (function () {
   function selectAudio(index) { return !!av && AvTracks.selectAudio(av, index); }
   function cycleDisplay() { return AvTracks.cycleDisplay(av); }
   function setFullScreen(on) { return AvTracks.setFullScreen(av, on); }
+  // «Быстрое переключение каналов»: a channel change reuses the stopped player (no close(), S-5); saved, used from the next zap.
+  function fastSwitch() { return CONFIG.AV_REUSE_NO_CLOSE; }
+  function setFastSwitch(on) { CONFIG.AV_REUSE_NO_CLOSE = on; Util.save(FAST_STORE, on); }
 
   return {
-    init: init, open: open, pause: pause, play: play, suspend: suspend, reconnect: reconnect,
+    init: init, open: open, stop: stop, pause: pause, play: play, suspend: suspend, reconnect: reconnect,
     mediaTimeMs: mediaTimeMs, streamInfo: streamInfo, audioTracks: audioTracks, selectAudio: selectAudio,
-    cycleDisplay: cycleDisplay, fullScreen: AvTracks.fullScreen, setFullScreen: setFullScreen, unmute: function () { return !av && HtmlVideo.unmute(); }
+    cycleDisplay: cycleDisplay, fullScreen: AvTracks.fullScreen, setFullScreen: setFullScreen,
+    fastSwitch: fastSwitch, setFastSwitch: setFastSwitch, unmute: function () { return !av && HtmlVideo.unmute(); }
   };
 }());

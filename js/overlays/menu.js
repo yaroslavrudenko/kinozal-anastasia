@@ -44,6 +44,9 @@
     if (!g) return;
     cursor = clamp(cursor, g.items.length);            // a refresh may have shortened the group
     var playing = playingIdx(), now = Date.now();
+    // A group highlighted in the groups column: its logos load first among the background ones (owner: «загружать при
+    // выделении группы»); looked up in idle time, so the key's task stays as it was.
+    if (focus === 'groups') Logos.want('highlight', function () { return Channels.logos(gi); });
     ListView.columns([{ name: 'groups', view: { total: groups().length, cursor: gi, active: focus === 'groups', row: groupRow } },
       { name: 'channels', view: { total: g.items.length, cursor: cursor, active: focus === 'channels', ahead: ahead, logo: function (i) { return Channels.at(g.items[i]).logo; }, row: function (i) {
         // The banner's lookup and text too; a programme on air is the provider's text alone, an ended one is ours around it.

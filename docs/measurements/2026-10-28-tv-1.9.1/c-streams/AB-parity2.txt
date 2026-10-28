@@ -1,0 +1,14 @@
+metric                                              parity184               parity195         parity-streams2
+cold: list end (ms from start)        med 4047 (n3, max 5621) med 3935 (n3, max 4124) med 3878 (n3, max 4115)
+cold: load event                        med 406 (n3, max 408)   med 443 (n3, max 457)   med 452 (n3, max 486)
+reload: channels ready                  med 799 (n3, max 819)   med 829 (n3, max 847)                       -
+reload: first picture                 med 2042 (n3, max 2150) med 2109 (n3, max 2444)                       -
+zap ▶◀: key → playing                med 1063 (n18, max 1149) med 982 (n18, max 1227) med 984 (n18, max 1163)
+zap ▶◀: key → spinner off            med 1063 (n18, max 1149) med 982 (n18, max 1227) med 984 (n18, max 1163)
+digits: last digit → playing         med 2948 (n12, max 3038)med 2953 (n12, max 3303)med 2842 (n12, max 3022)
+menu: first open                        med 93 (n3, max 94.1)   med 91.1 (n3, max 96)med 93.5 (n3, max 111.4)
+menu: close after first open          med 28.6 (n3, max 31.3) med 24.8 (n3, max 32.9) med 21.5 (n3, max 31.4)
+menu: reopen                           med 70 (n12, max 77.4)med 73.7 (n12, max 80.4)med 76.1 (n12, max 84.6)
+menu: close                          med 27.7 (n12, max 32.9)  med 23.2 (n12, max 33)med 26.1 (n12, max 32.9)
+groups: ◀ ▼ ▲ ▶ keys                   med 38.9 (n72, max 63)med 37.6 (n72, max 57.7)med 37.6 (n72, max 62.8)
+groups: frames > 34 ms per run              med 3 (n9, max 8)       med 4 (n9, max 5)       med 4 (n9, max 5)

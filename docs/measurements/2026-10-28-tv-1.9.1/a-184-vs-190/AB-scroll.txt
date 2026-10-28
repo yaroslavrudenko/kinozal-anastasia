@@ -1,0 +1,23 @@
+phase | variant                                            runs med(keyMed) max  >34ms longest imgStart doneMs idleMs keyJsMed | emptyFrames maxEmpty arriving allPaintedMs
+cold: CH− ×6 pages (250) | scroll184                          3      53.7  66.4      9    50.7        0      0      1     10.6 |          47       12       68        165.2
+cold: CH− ×6 pages (250) | scroll195                          3      59.8  69.3      6    55.5       68     23     28     13.3 |           0        0        0         14.3
+cold: CH− ×6 pages (600) | scroll184                          3      44.1  69.4      6    57.3        0      0      0      7.8 |          50       12       71        178.3
+cold: CH− ×6 pages (600) | scroll195                          3      60.4  72.8      6    58.4       70   22.6   15.1     12.2 |           0        0        0         12.9
+cold: ▼ held ×30 (80) + release | scroll184                   3      38.9  74.4     15    54.6        0      0      0      6.1 |         108        2       17         96.2
+cold: ▼ held ×30 (80) + release | scroll195                   3      34.9  58.5      3    50.1       26   14.7      0      7.9 |         100       12       12        379.9
+groups: ▲ ×6 back (350) | scroll184                           3      44.1  74.3      3    59.5        0      0      0      9.5 |           0        0        0          6.6
+groups: ▲ ×6 back (350) | scroll195                           3      35.7  53.4      2    46.2        0      0    2.9       12 |           0        0        0          6.5
+groups: ◀ + ▼ ×6 (350) | scroll184                            3      50.4    66      5    50.9        0      0      0      9.1 |           0        0        0         15.8
+groups: ◀ + ▼ ×6 (350) | scroll195                            3      35.1  59.2      2    43.1        0      0    1.7     11.7 |           0        0        0         12.8
+open menu (OK) | scroll184                                    3       112 137.3      1     115        0      0      0     10.4 |           0        0        0         11.4
+open menu (OK) | scroll195                                    3     101.6 119.5      1   102.1        5    0.8    4.7       14 |           0        0        0         14.9
+to «All channels» | scroll184                                 3      27.3  32.2      0       0        0      0      0      4.7 |           0        0        0          5.1
+to «All channels» | scroll195                                 3        27  32.3      0       0        8    1.3    0.2      5.2 |           0        0        0          9.9
+warm: CH+ ×12 back (250) | scroll184                          3      63.5 102.1     23    63.9        0      0      0     18.3 |           0        0        0         15.4
+warm: CH+ ×12 back (250) | scroll195                          3      48.3  80.4      3      61        4    0.8    0.1     15.7 |           1        2        1         50.4
+warm: ▲ held ×30 (80) back | scroll184                        3      36.6  74.7     11    50.1        0      0      0      7.5 |           0        0        0         13.9
+warm: ▲ held ×30 (80) back | scroll195                        3      32.4  65.7      2      50        0      0    0.2     11.2 |           0        0        0         14.1
+warm: ▼ ×6 inside the page (350) | scroll184                  3      34.9    52      0    47.9        0      0      0      4.5 |           0        0        0         14.3
+warm: ▼ ×6 inside the page (350) | scroll195                  3      27.3  39.6      0       0        0      0    2.2      4.4 |           0        0        0         10.3
+▼ ×14 steps, window scrolls (350) | scroll184                 3      44.4  65.8      6      50        0      0      0        6 |          30        1        9         83.8
+▼ ×14 steps, window scrolls (350) | scroll195                 3      42.5  54.4      4    43.2        9    0.9    3.1      7.8 |           0        0        0         14.8

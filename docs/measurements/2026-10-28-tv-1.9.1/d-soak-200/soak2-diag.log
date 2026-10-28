@@ -1,0 +1,2 @@
+port 50353
+0.1s diag {"stored":{"counters":{"avEvent.PLAYER_MSG_BITRATE_CHANGE":95},"notes":{"network":"18","avEvent.PLAYER_MSG_BITRATE_CHANGE":"BITRATE:5420000","variants":"1"}},"state":"PLAYING","ch":"Channel 9 (Израиль)"}
