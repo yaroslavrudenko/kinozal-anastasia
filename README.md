@@ -54,7 +54,7 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't: menus th
 | 📺 **Runs on old TVs** | Built for Samsung Tizen 3.0 — the 2017 TVs and their Chromium 47 web engine. The whole app is plain ES5 (checked with `acorn --ecma5`), with no framework, no build step and no modern JavaScript that an old TV cannot run. Developed and measured on a Samsung UE50MU7000 from 2017. |
 | ⏪ **TV you can rewind** | Up to **7 days of archive** (with OTT Club or a playlist that has catch‑up): a timeline slider to scrub to any minute, ▲ ▼ to jump between programmes, and a programme guide where past shows play from the archive. |
 | 🔄 **Always current** | Channel lists and groups are fetched again every hour and always applied. With the menu open, the "now on air" lines are re‑read every minute; in every TV check they matched the guide (**13 of 13 rows, 0 stale**). |
-| 🆓 **Free channels from the first minute** | The free provider **iptv-org** is built in with **11 ready playlists** — about 11 000 public channels from around the world. No key, no sign‑up. |
+| 🆓 **Free channels from the first minute** | The free provider **iptv-org** is built in with **11 ready playlists** — about 11 000 public channels from around the world. No key, no sign‑up. Their quality and availability are the sources' own ([about the free channels](#-start-watching--free-in-a-minute)); for guaranteed quality and support, use the paid OTT Club. |
 | 📡 **Any provider, many at once** | Add as many providers' M3U links as you like on the TV and switch between them in **📡 Providers**, or enter your **OTT Club** key for 389 channels, the full guide and the 7‑day archive. Each provider remembers its last channel and group. |
 | 🌍 **Four languages, Hebrew right to left** | The whole interface in **Russian, Ukrainian, Hebrew** (the full layout mirrored) or **English**. Channel names and programmes stay exactly as your provider writes them, in any script. |
 | 🔒 **Private by design** | No account, no ads, no analytics. The app asks the TV for only three permissions (internet, the remote, opening a link). Its diagnostics stay on the TV. Your OTT Club key is only ever sent to OTT Club. |
@@ -206,6 +206,8 @@ Back without a choice starts iptv-org's whole list. From then on the app opens o
 
 The player shows every channel a source lists and filters nothing — except adult channels, which stay hidden until you switch them on. A stream that does not play is the source's matter. No paid channels, keys or private playlists are included in this repository.
 
+> ⚠️ **About the free channels.** Free channels come from public sources that nobody behind this app runs or controls. The player plays each stream **exactly as its source serves it, in the quality its source gives**. We take **no responsibility for the picture quality, the continuity or even the availability** of free channels: a free channel can be slow, stall, drop out, change or disappear at any time, and its programme guide can be inaccurate. A stall that the source causes is shown with the buffering spinner, and the player continues by itself once the data arrives (for example, BRIDGE Rock, measured on the TV on 2026‑10‑28: its server sometimes delivered a 5‑second piece in up to 9.4 s).
+
 **➕ Add your own playlist in three steps:**
 1. Press **OK** (the channel menu), then **Blue**: **📡 Providers** opens.
 2. Choose **+ Add a provider** and type (or paste) the **M3U link** your provider gave you, `http://…` or `https://…`. Press **OK**.
@@ -222,7 +224,7 @@ The player shows every channel a source lists and filters nothing — except adu
 
 The provider you are watching is marked **● now**.
 
-**Want more?** [OTT Club](https://www.ottclub.tv) is built in: enter your key for **389 channels, the full programme guide and the 7‑day archive**. Any other paid provider works today through its M3U link. Built‑in support like OTT Club's (key, guide and archive from the provider's API) for other providers will come if there is interest — [tell us which one](https://github.com/yaroslavrudenko/nastin-kinozal/issues).
+**Want quality you can rely on? Take the paid OTT Club.** [OTT Club](https://www.ottclub.tv) is built in: enter your key for **389 channels, the full programme guide and the 7‑day archive**. Compared with free channels, its picture quality is much better and the streams start faster. Reliability and uninterrupted playback are guaranteed by the paid provider itself, and OTT Club has its own **customer support**. Any other paid provider works today through its M3U link. Built‑in support like OTT Club's (key, guide and archive from the provider's API) for other providers will come if there is interest — [tell us which one](https://github.com/yaroslavrudenko/nastin-kinozal/issues).
 
 ## 🌐 Interface languages
 
