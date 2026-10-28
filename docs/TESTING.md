@@ -2412,3 +2412,12 @@ without the row's channel (every following redraw restores it — no visible eff
 the flick repeated. Focused vs unfocused channel row: logo box and name edge shift 0 px in Russian and Hebrew. Copy writes
 per unchanged hour 0. Menu key latency unchanged. Screenshots: `scratchpad/shots-batch5/<ru|he>-b5-focused-channel-row`,
 `-b5-same-row-unfocused`.
+
+### The «⚙ Настройки» screen is titled «Настройки» (owner, 2026-10-28: «экран - Настройки»)
+
+The screen's title was the app's name («Настин кинозал»); it is now the name of its menu row, from the same key `g.settings`
+(«⚙ Настройки» / «⚙ Налаштування» / «⚙ הגדרות» / «⚙ Settings»; no second copy of the text): `index.html` `#about-title`
+(`data-t`) and `js/overlays/about.js` `open()`, as the language list and «Провайдеры» set theirs. The icon and the
+dedication stay. Test: `tests/i18n.test.js` «the «⚙ Настройки» screen is titled as its menu row …» (red before: the title had
+no translation). Mutants: the title not set on open — killed; another key — killed; the old literal in `index.html` — survives
+(the title is set whenever the screen opens; the literal is only the page's text before that).

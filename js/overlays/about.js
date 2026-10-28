@@ -20,6 +20,7 @@
   ];
   function open() {
     cursor = 0;
+    Util.$('about-title').textContent = I18n.t('g.settings');   // the screen is named as its menu row (owner 2026-10-28)
     UI.show('about', true);
     render();
     Device.model(function () { if (Overlay.mode() === 'about') render(); });

@@ -299,3 +299,13 @@ test('i18n: an entry with no name is not taken for an Israeli channel in Hebrew 
   app.boot(); app.advance(3000);
   assert.deepEqual(ev(app, '[Channels.at(0).name, Channels.at(0).il, Channels.at(1).name]'), ['ערוץ', false, 'Inter']);
 });
+
+test('i18n: the «⚙ Настройки» screen is titled as its menu row — in Russian, Ukrainian, Hebrew and English (owner 2026-10-28: «экран - Настройки»)', () => {
+  for (const lang of ['ru', 'uk', 'he', 'en']) {
+    const app = withLang(lang);
+    vm.runInContext('Overlay.open("about")', app.ctx);
+    assert.ok(app.visible('about'), lang);
+    assert.equal(app.text('about-title'), ev(app, 'I18n.t("g.settings")'), lang);
+    assert.ok(groupNames(app).indexOf(app.text('about-title')) >= 0, lang + ': not the menu row\'s name');
+  }
+});
