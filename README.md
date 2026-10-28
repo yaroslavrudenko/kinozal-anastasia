@@ -49,9 +49,9 @@
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/settings.jpg" alt="Settings: interface language, full-screen picture, adult channels, fast channel switching and the menu view"></td>
+    <td><img src="docs/screenshots/settings-icon.jpg" alt="Settings: interface language, full-screen picture, adult channels, fast channel switching and the menu view"></td>
     <td><img src="docs/screenshots/providers.jpg" alt="Providers: OTT Club, the free iptv-org channels with their notice, and adding your own M3U provider"></td>
-    <td><img src="docs/screenshots/about.jpg" alt="About: the dedication, version, build, provider and the free-channel notice"></td>
+    <td><img src="docs/screenshots/about-icon.jpg" alt="About: the dedication, version, build, provider and the free-channel notice"></td>
   </tr>
   <tr><td align="center"><b>⚙ Settings</b>: pick the large or the detailed menu, language, picture</td><td align="center"><b>📡 Providers</b>: OTT Club, free channels, your own playlists</td><td align="center"><b>ℹ About</b>: version, provider and what free channels promise</td></tr>
 </table>
