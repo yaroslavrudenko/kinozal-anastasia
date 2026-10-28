@@ -136,7 +136,7 @@
     else if (k === K.RED) Playback.cycleAudio();
     else if (k === K.GREEN) UI.toast(I18n.t('m.screen', Player.cycleDisplay()));
     else if (k === K.BLUE) UI.toast(Player.streamInfo(true) || I18n.t('m.noStreamInfo'), 3000);
-    else if (k === K.YELLOW) { if (c) toggleFav(c); }
+    else if (k === K.YELLOW) { if (c) ChannelView.toggleFav(c); }   // the playing channel's favourite; the zap group stays
     else if (Keys.isBack(k)) back(c, mode);
     else return false;
     return true;
@@ -146,13 +146,6 @@
     if (!Catchup.supported(c)) { Banner.show(true); UI.toast(I18n.t('m.noArchive')); return; }
     Overlay.open('scrub');
     if (k !== K.UP) Overlay.onKey(k, { preventDefault: function () {} });
-  }
-
-  // YELLOW while watching: the playing channel's favourite; the zap group stays as it was.
-  function toggleFav(c) {
-    var on = Favs.toggle(c.key);
-    Channels.rebuild();
-    UI.toast(I18n.t(on ? 'm.favAdded' : 'm.favRemoved'));
   }
 
   function back(c, mode) {

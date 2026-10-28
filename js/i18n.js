@@ -38,6 +38,12 @@ var I18n = (function () {
     'src.title': ['Провайдеры', 'Провайдери', 'ספקים', 'Providers'],
     'src.note': ['OTT Club · бесплатный iptv-org · ваши провайдеры', 'OTT Club · безкоштовний iptv-org · ваші провайдери', 'OTT Club\u200f · iptv-org בחינם · הספקים שלך', 'OTT Club · free iptv-org · your providers'],
     'src.hint': ['OK — смотреть · Синяя — ключ OTT Club · Красная ×2 — удалить своего провайдера · Назад — в меню', 'OK — дивитися · Синя — ключ OTT Club · Червона ×2 — видалити свого провайдера · Назад — у меню', 'OK — צפייה · כחול — מפתח OTT Club · אדום ×2 — מחיקת ספק שהוספתם · חזרה — לתפריט', 'OK — watch · Blue — OTT Club key · Red ×2 — remove your provider · Back — to the menu'],
+    // under the free provider's row and in «ℹ О программе» (owner 2026-10-28: «мы не несем ответственности за качество
+    // воспроизведения бесплатных каналов … платная версия OTT Club … гарантируются … У него есть support»)
+    'src.freeNote': ['Бесплатные каналы воспроизводятся так, как их отдаёт источник, и в его качестве; их непрерывность и доступность не гарантируются. Гарантированное качество и поддержка — в платном OTT Club.',
+      'Безкоштовні канали відтворюються так, як їх віддає джерело, і в його якості; їхня безперервність і доступність не гарантуються. Гарантована якість і підтримка — у платному OTT Club.',
+      'ערוצים חינמיים מוצגים כפי שהמקור מספק אותם ובאיכות שלו, ללא התחייבות לרציפות או לזמינות. לאיכות מובטחת ולתמיכה — OTT Club בתשלום.',
+      'Free channels play exactly as their source serves them, in its quality, with no guarantee of continuity or availability. For guaranteed quality and support, use the paid OTT Club.'],
     'src.choose': ['Выберите, что смотреть', 'Виберіть, що дивитися', 'בחרו מה לצפות', 'Choose what to watch'],
     'src.firstHint': ['OK — выбрать · Синяя — ключ OTT Club · Назад — бесплатные каналы iptv-org', 'OK — вибрати · Синя — ключ OTT Club · Назад — безкоштовні канали iptv-org', 'OK — בחירה · כחול — מפתח OTT Club · חזרה — ערוצים בחינם של iptv-org', 'OK — choose · Blue — OTT Club key · Back — free iptv-org channels'],
     'src.add': ['+ Добавить провайдера', '+ Додати провайдера', '+ הוספת ספק', '+ Add a provider'],
@@ -62,7 +68,7 @@ var I18n = (function () {
     'set.empty': ['Поле пустое.', 'Поле порожнє.', 'השדה ריק.', 'The field is empty.'],
     // «Настройки»
     'st.hint': ['▲▼ — выбрать · OK — открыть или переключить · Назад — закрыть', '▲▼ — вибрати · OK — відкрити або перемкнути · Назад — закрити', '\u200e▲▼\u200e — בחירה · OK — פתיחה או החלפה · חזרה — סגירה', '▲▼ — choose · OK — open or switch · Back — close'],
-    'ab.hint': ['OK — открыть профиль автора · Назад — закрыть', 'OK — відкрити профіль автора · Назад — закрити', 'OK — פתיחת הפרופיל של היוצר · חזרה — סגירה', 'OK — open the author\'s profile · Back — close'],
+    'ab.hint': ['▲▼ — листать · OK — открыть профиль автора · Назад — закрыть', '▲▼ — гортати · OK — відкрити профіль автора · Назад — закрити', '\u200e▲▼\u200e — גלילה · OK — פתיחת הפרופיל של היוצר · חזרה — סגירה', '▲▼ — scroll · OK — open the author\'s profile · Back — close'],
     'st.dedication': ['Эта программа сделана специально в честь моей супруги Анастасии и для неё —\nчтобы в свободное время она включала телевизор, отдыхала и получала удовольствие от жизни. 💐', 'Цю програму зроблено спеціально на честь моєї дружини Анастасії й для неї —\nщоб у вільний час вона вмикала телевізор, відпочивала й насолоджувалася життям. 💐', 'התוכנה הזאת נעשתה במיוחד לכבוד רעייתי אנסטסיה ובשבילה —\nכדי שבזמנה הפנוי תדליק את הטלוויזיה, תנוח ותיהנה מהחיים. 💐', 'This app was made especially in honour of my wife Anastasia and for her —\nso that in her free time she can switch on the TV, rest and enjoy life. 💐'],
     // 🌐 first: the row is found by its shape in a language the viewer cannot read.
     'st.language': ['🌐 Язык интерфейса', '🌐 Мова інтерфейсу', '🌐 שפת הממשק', '🌐 Interface language'],
@@ -81,6 +87,11 @@ var I18n = (function () {
     'st.fastOff': ['нет — плеер создаётся заново для каждого канала', 'ні — плеєр створюється заново для кожного каналу', 'לא — הנגן נוצר מחדש לכל ערוץ', 'no — a new player for every channel'],
     'st.fastSaidOn': ['Быстрое переключение каналов включено', 'Швидке перемикання каналів увімкнено', 'מעבר מהיר בין ערוצים מופעל', 'Fast channel switching is on'],
     'st.fastSaidOff': ['Быстрое переключение каналов выключено', 'Швидке перемикання каналів вимкнено', 'מעבר מהיר בין ערוצים כבוי', 'Fast channel switching is off'],
+    'st.layout': ['Вид меню', 'Вигляд меню', 'תצוגת תפריט', 'Menu layout'],
+    'st.layoutBasic': ['Крупный', 'Великий', 'גדול', 'Basic'],
+    'st.layoutAdvanced': ['Подробный', 'Детальний', 'מפורט', 'Advanced'],
+    'st.layoutSaidBasic': ['Вид меню: крупный', 'Вигляд меню: великий', 'תצוגת תפריט: גדול', 'Menu layout: Basic'],
+    'st.layoutSaidAdvanced': ['Вид меню: подробный', 'Вигляд меню: детальний', 'תצוגת תפריט: מפורט', 'Menu layout: Advanced'],
     'st.adult': ['Каналы для взрослых', 'Канали для дорослих', 'ערוצים למבוגרים', 'Adult channels'],
     'st.adultOn': ['показываются в меню', 'показуються в меню', 'מוצגים בתפריט', 'shown in the menu'],
     'st.adultOff': ['скрыты', 'приховані', 'מוסתרים', 'hidden'],
@@ -97,6 +108,7 @@ var I18n = (function () {
     'st.playerTv': ['аппаратный Samsung AVPlay', 'апаратний Samsung AVPlay', 'Samsung AVPlay בחומרה', 'hardware Samsung AVPlay'],
     'st.playerWeb': ['браузер (hls.js)', 'браузер (hls.js)', 'דפדפן (hls.js)', 'browser (hls.js)'],
     'st.provider': ['Провайдер', 'Провайдер', 'ספק', 'Provider'],
+    'st.free': ['Бесплатные каналы', 'Безкоштовні канали', 'ערוצים חינמיים', 'Free channels'],
     'st.channels': ['Каналы', 'Канали', 'ערוצים', 'Channels'],
     'st.channelsState': ['{0} · групп: {1}', '{0} · груп: {1}', '{0} · קבוצות: {1}', '{0} · groups: {1}'],
     'st.archive': ['Архив', 'Архів', 'ארכיון', 'Archive'],
@@ -114,6 +126,18 @@ var I18n = (function () {
     'h.scrub': ['◀ ▶ — перемотка (удерживайте — быстрее) · ▲ ▼ — соседняя передача · OK — смотреть отсюда · Назад — отмена', '◀ ▶ — перемотування (утримуйте — швидше) · ▲ ▼ — сусідня передача · OK — дивитися звідси · Назад — скасувати', '\u200e◀ ▶\u200e — הרצה (החזיקו — מהר יותר) · \u200e▲ ▼\u200e — תוכנית סמוכה · OK — צפייה מכאן · חזרה — ביטול', '◀ ▶ — rewind (hold — faster) · ▲ ▼ — previous / next programme · OK — watch from here · Back — cancel'],
     'h.first': ['◀ ▶ — каналы · ▲ — архив · ▼ — программа · OK — меню и поиск', '◀ ▶ — канали · ▲ — архів · ▼ — програма · OK — меню й пошук', '\u200e◀ ▶\u200e — ערוצים · ▲ — ארכיון · ▼ — לוח שידורים · OK — תפריט וחיפוש', '◀ ▶ — channels · ▲ — archive · ▼ — TV guide · OK — menu and search'],
     'h.firstDesktop': ['← → каналы · ↑ архив · ↓ программа · Enter — меню и поиск', '← → канали · ↑ архів · ↓ програма · Enter — меню й пошук', '\u200e← →\u200e ערוצים · ↑ ארכיון · ↓ לוח שידורים · Enter — תפריט וחיפוש', '← → channels · ↑ archive · ↓ TV guide · Enter — menu and search'],
+    // the Basic menu («Вид меню: крупный»): its two help bars — hints «<key> — <what>» joined by « · »; {y} / {b} before a
+    // key: the yellow / blue key, drawn as a dot of its colour before the word
+    'h.cards': ['OK — открыть · ◀ ▶ ▲ ▼ — выбор · {b}Синяя — провайдеры · Назад — закрыть', 'OK — відкрити · ◀ ▶ ▲ ▼ — вибір · {b}Синя — провайдери · Назад — закрити', 'OK — פתיחה · \u200e◀ ▶\u200e \u200e▲ ▼\u200e — בחירה · {b}כחול — ספקים · חזרה — סגירה', 'OK — open · ◀ ▶ ▲ ▼ — choose · {b}Blue — providers · Back — close'],
+    'h.clist': ['OK — смотреть · ◀ ▶ — страница · {y}Жёлтая — избранное · Назад — к группам', 'OK — дивитися · ◀ ▶ — сторінка · {y}Жовта — обране · Назад — до груп', 'OK — צפייה · \u200e◀ ▶\u200e — עמוד · {y}צהוב — מועדפים · חזרה — לקבוצות', 'OK — watch · ◀ ▶ — page · {y}Yellow — favourites · Back — to the groups'],
+    // its cards screen: the title, and the line under the name of our cards (the others show their channel count)
+    'bc.title': ['Группы', 'Групи', 'קבוצות', 'Groups'],
+    'bc.search': ['Найти канал', 'Знайти канал', 'חיפוש ערוץ', 'Find a channel'],
+    'bc.sources': ['Откуда каналы', 'Звідки канали', 'מקורות הערוצים', 'Channel sources'],
+    'bc.settings': ['Язык и вид меню', 'Мова й вигляд меню', 'שפה ותצוגת תפריט', 'Language, menu layout'],
+    'bc.about': ['Версия {0}', 'Версія {0}', 'גרסה {0}', 'Version {0}'],
+    // its list: the minutes left of the programme on air
+    'bl.left': ['ещё {0} мин', 'ще {0} хв', 'עוד {0} דק׳', '{0} min left'],
     'search.title': ['🔍 Поиск канала', '🔍 Пошук каналу', '🔍 חיפוש ערוץ', '🔍 Find a channel'],
     'search.placeholder': ['Название канала или номер', 'Назва каналу або номер', 'שם ערוץ או מספר', 'Channel name or number'],
     'search.capped': ['Показаны первые {0} из {1} — уточните запрос', 'Показано перші {0} з {1} — уточніть запит', 'מוצגים {0} הראשונים מתוך {1} — חדדו את החיפוש', 'The first {0} of {1} are shown — refine the search'],

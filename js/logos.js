@@ -15,11 +15,15 @@ var Logos = (function () {
   var state = Util.dict();        // url -> OK | BAD | the Image loading it
   var kept = Util.dict();         // url -> the loaded Image: keeps the picture in the page's memory cache
   var used = Util.dict(), keptN = 0, tick = 0;   // url -> last use (eviction order), how many are kept
+  var best = Util.dict();          // url -> the highest place a trickle gave it while not loaded yet (P-4)
+  var pins = {};                   // trickle -> the page its list opens on (its wish's head): never let go (CODEX-1)
   var wishes = Util.dict(), inFlight = 0, imgs = [];      // consumer -> { urls, i, open }: each consumer replaces only its own
   var started = false, slotAsked = false, wakeTimer = null, holdUntil = 0, paintQ = [], painting = false;
   // Who is served first (DEC-2026-10-28-logos-ahead): the banner, the list on screen (its page, the two pages ahead, the
   // page behind — in its wish's order), then the trickles: the group highlighted in the menu, then the zap group.
-  var ORDER = ['banner', 'channels', 'search', 'highlight', 'group'], TRICKLE = { highlight: 1, group: 1 };
+  // A consumer missing here would never be served (and keep the idle slots asking): want() refuses it (P-2). Basic's list
+  // ('clist') ranks with the lists on screen; its cards' first pages ('cards') with the trickles, after the highlighted group.
+  var ORDER = ['banner', 'channels', 'clist', 'search', 'highlight', 'cards', 'group'], TRICKLE = { highlight: 1, cards: 1, group: 1 };
   var frame = window.requestAnimationFrame ? function (fn) { window.requestAnimationFrame(fn); } : function (fn) { setTimeout(fn, 16); };
 
   // The one way a logo is put into an <img>: shown when loaded, else its box empty until it is. key: the channel the
@@ -51,7 +55,10 @@ var Logos = (function () {
   // (pictures not started yet are dropped, pictures on their way finish into the map) — the banner's logo and the menu's
   // page never drop each other (review 7, F3, R7-P2). open(): false once the screen asking has gone. No download starts
   // here: they start in idle slots (slot()), never in the task of a key.
-  function want(who, urls, open) { wishes[who] = { urls: urls, i: 0, open: open }; ask(); }
+  function want(who, urls, open) {
+    if (ORDER.indexOf(who) < 0) throw new Error('Logos.want: unknown consumer ' + who);
+    wishes[who] = { urls: urls, i: 0, open: open }; ask();
+  }
   // A zap or a stream start: the trickles wait LOGO_ZAP_PAUSE_MS so the stream has the network first.
   function hold() { holdUntil = Date.now() + CONFIG.LOGO_ZAP_PAUSE_MS; }
   // Nothing loads before the list is applied and the first picture is on screen (or a screen of logos is opened): the
@@ -75,7 +82,18 @@ var Logos = (function () {
     if (!w || budget <= 0 || TRICKLE[who] && Date.now() < holdUntil) return budget;
     if (w.open && !w.open()) { delete wishes[who]; return budget; }
     if (typeof w.urls === 'function') w.urls = w.urls();
-    while (budget > 0 && inFlight < CONFIG.LOGO_PARALLEL && w.i < w.urls.length) { var url = w.urls[w.i++]; if (url && !state[url]) { load(url); budget--; } }
+    if (TRICKLE[who] && w.rank === undefined) pins[who] = w.urls.slice(0, CONFIG.VISIBLE_ROWS);   // its opening page: never let go
+    // A trickle's pictures are kept by their place in it, not by when they came: its first ones (the page the menu opens on)
+    // are let go last, its far end first — one it finds loaded already is raised to its place (P-4: a trickle of
+    // LOGO_GROUP_MAX on a longer list used to let its own first page go).
+    if (TRICKLE[who] && w.rank === undefined) { w.rank = tick + w.urls.length + 1; tick = w.rank; }
+    while (budget > 0 && inFlight < CONFIG.LOGO_PARALLEL && w.i < w.urls.length) {
+      var url = w.urls[w.i++], rank = w.rank ? w.rank - w.i : 0;
+      if (!url) continue;
+      if (rank && state[url] === OK) { if (used[url] < rank) used[url] = rank; continue; }
+      if (rank && state[url] !== BAD && !(best[url] >= rank)) best[url] = rank;   // new or on its way: kept by its best place when it comes
+      if (!state[url]) { load(url); budget--; }
+    }
     if (w.i >= w.urls.length) delete wishes[who];
     return budget;
   }
@@ -93,10 +111,12 @@ var Logos = (function () {
   // A download finished: the <img>s on screen that want it get it — at most LOGO_PUTS_PER_FRAME per frame, so pictures
   // arriving together appear over a few frames, not in one heavy one; the others get it when they are drawn (put).
   function done(url, im, ok) {
+    var rank = best[url];
     inFlight--;
+    delete best[url];
     if (state[url] === im) {                       // else forgotten meanwhile (the list dropped it)
       state[url] = ok ? OK : BAD;
-      if (ok) { kept[url] = im; used[url] = ++tick; if (++keptN > CONFIG.LOGO_KEEP) evict(); }
+      if (ok) { kept[url] = im; used[url] = rank || ++tick; if (++keptN > CONFIG.LOGO_KEEP) evict(); }
       for (var i = 0; i < imgs.length; i++) if (imgs[i].logoWant === url && (!imgs[i].logoShown || imgs[i].logoShown())) paintQ.push(imgs[i]);
       if (paintQ.length && !painting) { painting = true; frame(paint); }
     }
@@ -106,16 +126,22 @@ var Logos = (function () {
     for (var n = 0; n < CONFIG.LOGO_PUTS_PER_FRAME && paintQ.length; n++) {
       var img = paintQ.shift(), url = img.logoWant;
       if (url && state[url] && state[url] !== OK && state[url] !== BAD) continue;   // asked for something else meanwhile, still loading
+      if (img.logoShown && !img.logoShown()) continue;   // its screen closed since it was queued (a late frame): put when drawn again (CODEX-6)
       img.logoWant = null;
       put(img, url, img.logoKey);
     }
     painting = paintQ.length > 0;
     if (painting) frame(paint);
   }
-  // The least recently shown pictures beyond the limit are let go (the HTTP cache still has them).
+  // The least recently shown pictures beyond the limit are let go (the HTTP cache still has them) — never one a list's row
+  // holds (the page on screen, and the page a menu was laid out on ahead, hidden, waiting to be opened: P-4), nor the page
+  // a trickle's list opens on (a later trickle used to let a focused card's prefetched page go: CODEX-1).
   function evict() {
-    var urls = Object.keys(kept).sort(function (a, b) { return used[a] - used[b]; });
-    for (var i = 0; i < urls.length - CONFIG.LOGO_KEEP + CONFIG.LOGO_EVICT; i++) forget(urls[i]);
+    var held = Util.dict(), i;
+    for (i = 0; i < imgs.length; i++) if (imgs[i].logoShown && imgs[i].logoWant) held[imgs[i].logoWant] = 1;
+    for (var who in pins) for (var k = 0; k < pins[who].length; k++) held[pins[who][k]] = 1;
+    var urls = Object.keys(kept).filter(function (u) { return !held[u]; }).sort(function (a, b) { return used[a] - used[b]; });
+    for (i = 0; i < urls.length && keptN > CONFIG.LOGO_KEEP - CONFIG.LOGO_EVICT; i++) forget(urls[i]);
   }
   function forget(url) { if (kept[url]) keptN--; delete kept[url]; delete used[url]; delete state[url]; }
   // A new list: what it no longer has is forgotten; an unchanged URL keeps its picture (no request); a URL that failed

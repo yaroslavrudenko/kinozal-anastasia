@@ -8,11 +8,12 @@ var ListView = (function () {
                                // (bottom: px from the column's top to the last one's bottom; null without a layout)
   var anchor = {};             // the next render's window, set by page(): { top: idx } or { bottom: idx }
 
+  // The first row of a window of `visible` rows that holds the cursor in its middle (a list's first render).
   function windowStart(cursor, total, visible) {
     return Math.max(0, Math.min(cursor - Math.floor(visible / 2), total - visible));
   }
 
-  // name: 'groups' | 'channels' | 'programmes' | 'search'
+  // name: 'groups' | 'channels' | 'programmes' | 'search' | 'clist'
   // view: { total, cursor, active, row: function (i) -> { num, logo, title, sub, past, playing } }
   // The row of the channel on screen carries the class "playing" wherever it scrolls (it follows the
   // channel, not the pooled DOM row).
@@ -85,7 +86,7 @@ var ListView = (function () {
   // at: { cursor, total } of the list being paged.
   function page(name, dir, at) {
     var v = shown[name], cursor = at.cursor, total = at.total;
-    if (!v) return Math.max(0, Math.min(total - 1, cursor + dir * CONFIG.VISIBLE_ROWS));
+    if (!v) return Math.max(0, Math.min(total - 1, cursor + dir * ListRows.size(name)));   // never drawn yet: by its pool (F5)
     if (dir > 0) {
       if (v.first + v.count >= total) return total - 1;   // the last page: it stays, the cursor goes to its end
       var t = v.first + v.count;
@@ -187,5 +188,5 @@ var ListView = (function () {
   // list-end line is drawn right below it, in the room the column leaves under itself (css .list-wrap).
   function end(name) { var v = shown[name]; return v ? v.bottom : null; }
 
-  return { column: column, columns: columns, scrollWithin: scrollWithin, page: page, reset: reset, shown: shownRows, rest: rest, end: end };
+  return { column: column, columns: columns, scrollWithin: scrollWithin, page: page, reset: reset, shown: shownRows, rest: rest, end: end, windowStart: windowStart };
 }());

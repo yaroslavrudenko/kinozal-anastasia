@@ -7,7 +7,7 @@ var CONFIG = {
   OTT_KEY: '__OTT_KEY__',
   PLAYLIST_URL: '__PLAYLIST_URL__',
   EPG_URL: '',                 // empty = use url-tvg from the playlist header
-  VERSION: '1.9.3',            // must equal config.xml's version
+  VERSION: '1.9.4',            // must equal config.xml's version
   BUILD: '__BUILD__',          // filled by build.sh: commit and date
   // «📡 Провайдеры» (owner, 2026-10-27: a source is a provider; inside it the channels are grouped as the
   // provider gives them; a provider that gives separate playlists is a source of playlists): OTT Club (key),
@@ -111,9 +111,17 @@ var CONFIG = {
   NUMBER_ENTRY_MS: 1800,
   EXIT_CONFIRM_MS: 2000,
   VISIBLE_ROWS: 13,
+  // «Вид меню» (owner 2026-10-28): «Подробный» (Advanced, the groups and channels side by side) or «Крупный» (Basic, for
+  // poor eyesight: big group cards, then a big full-screen channel list)
+  MENU_BASIC_DEFAULT: false,   // the layout until the viewer chooses one: Advanced, the menu as it was
+  BASIC_COLS: 3,               // Basic: cards per row (a 15-letter Russian group name stays whole at 60 px)
+  BASIC_CARD_ROWS: 3,          // Basic: rows of cards on screen; the window moves one row at a time
+  BASIC_ROWS: 8,               // Basic: the list's rows (the pool): 7 one-line rows fit whole, wrapped ones fewer (owner 2026-10-28)
   LOGO_STARTS_PER_SLOT: 3,     // logo downloads started in one idle slot (never in a key's task)
   LOGO_SLOT_MIN_MS: 8,         // an idle slot shorter than this starts none (it waits for the next)
   LOGO_PUTS_PER_FRAME: 4,      // pictures that arrived together go into rows at most this many per frame
+  LOGO_AHEAD_ROWS: 26,         // a list asks for this many rows ahead of its page the way the cursor moves (every list,
+  LOGO_BEHIND_ROWS: 13,        // whatever its rows on screen: Basic's 5-row page keeps Advanced's look-ahead, P-1) and this many behind
   LOGO_ZAP_PAUSE_MS: 3000,     // after a zap / stream start the group trickle waits this long (the stream first)
   LOGO_GROUP_MAX: 400,         // the zap group's / highlighted group's logos loaded in the background, at most (= LOGO_KEEP)
   LOGO_PARALLEL: 6,            // logo downloads at a time (Chromium 47 opens at most 6 per host)

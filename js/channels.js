@@ -29,7 +29,8 @@ var Channels = (function () {
       byGroup[g].push(i);
     }
     // key: the group's identity across rebuilds (its kind and name), used to keep the zap group.
-    groups = [{ key: 'search', name: I18n.t('g.search'), items: [], search: true }, { key: 'all', name: I18n.t('g.all'), items: all, all: true }];
+    // screen: the groups that are screens of ours (opened, not listed): the overlay each one opens.
+    groups = [{ key: 'search', name: I18n.t('g.search'), items: [], search: true, screen: 'search' }, { key: 'all', name: I18n.t('g.all'), items: all, all: true }];
     var favItems = all.filter(function (i) { return Favs.has(list[i].key); });
     if (favItems.length) groups.push({ key: 'fav', name: I18n.t('g.fav'), items: favItems, fav: true });
     for (var p = 0; p < ORDER.PINNED.length; p++) {
@@ -39,9 +40,9 @@ var Channels = (function () {
     }
     // A provider group is keyed by its own text; the one for channels with none is ours (key 'none', translated).
     for (var j = 0; j < order.length; j++) groups.push({ key: order[j] ? 'grp:' + order[j] : 'none', name: names[order[j]], items: byGroup[order[j]], own: !!order[j] });
-    groups.push({ key: 'sources', name: I18n.t('g.providers'), items: [], sources: true });
-    groups.push({ key: 'settings', name: I18n.t('g.settings'), items: [], settings: true });
-    groups.push({ key: 'about', name: I18n.t('g.about'), items: [], about: true });
+    groups.push({ key: 'sources', name: I18n.t('g.providers'), items: [], sources: true, screen: 'sources' });
+    groups.push({ key: 'settings', name: I18n.t('g.settings'), items: [], settings: true, screen: 'settings' });
+    groups.push({ key: 'about', name: I18n.t('g.about'), items: [], about: true, screen: 'about' });
   }
   function byNameNumber(a, b) { return ORDER.nameNumber(list[a].name) - ORDER.nameNumber(list[b].name) || a - b; }
 
@@ -113,17 +114,18 @@ var Channels = (function () {
     var n = 0;
     for (var g = 0; g < groups.length; g++) {
       var x = groups[g];
-      if (!x.search && !x.all && !x.fav && !x.pinned && !x.settings && !x.about && !x.sources) n++;
+      if (!x.screen && !x.all && !x.fav && !x.pinned) n++;
     }
     return n;
   }
 
   function stats() { return { total: list.length }; }
-  // The logo URLs of group gi, from the channel with key `from` on (wrapping round), at most LOGO_GROUP_MAX: what the
-  // background trickle loads (the zap group's, the group highlighted in the menu).
-  function logos(gi, from) {
-    var g = groups[gi], items = g ? g.items : [], at0 = Math.max(0, items.indexOf(indexOfKey(from))), out = [];
-    for (var k = 0; k < items.length && k < CONFIG.LOGO_GROUP_MAX; k++) out.push(list[items[(at0 + k) % items.length]].logo);
+  // The logo URLs of group gi, from the channel with key `from` on (wrapping round), at most `max` (default LOGO_GROUP_MAX):
+  // what the background trickles load (the zap group's, the group highlighted in the menu, the first pages of the Basic
+  // cards around the one in focus — a page each, never the whole group: P-3).
+  function logos(gi, from, max) {
+    var g = groups[gi], items = g ? g.items : [], at0 = Math.max(0, items.indexOf(indexOfKey(from))), cap = max === undefined ? CONFIG.LOGO_GROUP_MAX : max, out = [];
+    for (var k = 0; k < items.length && k < cap; k++) out.push(list[items[(at0 + k) % items.length]].logo);
     return out;
   }
 

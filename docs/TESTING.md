@@ -25,6 +25,8 @@ The owner's own words: "this is what must be tested from the very beginning". Ru
 
 Record, per group: channels checked, empty "now" cells (must be 0), banner fields present, PASS/FAIL.
 
+From 1.9.4 U0 runs in **both menu layouts** («⚙ Настройки» → «Вид меню»): «Подробный» (Advanced, the default) as above, and «Крупный» (Basic), where step 2 is «OK → the group's card → OK» and step 4 reads the grey line under each name (cases V1–V12).
+
 ## Test matrix (mandatory before every release)
 
 Every cell is a test case. A cell passes only when it is checked on the TV and recorded in the results. «—» means the cell does not apply.
@@ -100,6 +102,26 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 | B12 | Pick a channel in a group (e.g. «Кино»), then: reopen the menu; restart the app or come back from another app; browse other groups and close the menu without a pick; ◀ ▶ | The menu reopens on that group with the cursor on the playing channel, its row on screen; ◀ ▶ stay inside that group; browsing without a pick changes nothing | C1 | **AUTO-TV G1** (reopen) + HARNESS menu «remembered group» (restart, browse without a pick, ▶) | P0 |
 | B13 | A channel chosen outside the menu (search, number, PREV, programme panel) | In the remembered group: the group stays; not in it: the menu and ◀ ▶ use «Все каналы» | — | HARNESS menu «remembered group» (search, number) | P1 |
 | B14 | The remembered group is gone (list changed, adult switch) | The menu opens on «Все каналы» on the playing channel; ◀ ▶ walk «Все каналы»; no error | — | HARNESS menu «remembered group» (group gone) | P2 |
+
+### V. Basic menu layout («Вид меню: крупный», 1.9.4)
+Owner 2026-10-28: big group cards that fill the screen, OK on a card → that group's channels full screen in large text (a big logo, the name, what is on now in grey under it), Back → the cards; «Наш источник» (📡), «Настройки», «О программе» among the cards; a help bar at the bottom.
+| ID | Steps | Expected result | Set | Verified | P |
+|---|---|---|---|---|---|
+| V1 | «⚙ Настройки» → «Вид меню» (the last row) → OK, Back; restart; switch back | Default «Подробный»; OK says «Вид меню: крупный» and Back opens the cards at once (no restart); a restart keeps it; switched back, the next OK is the Advanced menu | — | HARNESS basic-layout | P0 |
+| V2 | OK while watching (Basic) | The channel list of the group ◀ ▶ zap through (else «Все каналы»), the playing channel focused (owner 2026-10-28, O5); Back → the cards on that group (3 × 3, gentle outline focus, the name and count at one place on every card, a provider group by its first word), Back → the picture | C1 | HARNESS basic-layout + MANUAL look | P0 |
+| V3 | Walk every card with ◀ ▶ ▲ ▼ and CH± | The menu's groups in its order: 🔍 Поиск first, then the groups, then 📡 Провайдеры · ⚙ Настройки · ℹ О программе; counts «N каналов»; our cards say what they open; the edges stop (nothing wraps); ▼ into a shorter last row lands on its last card; the window moves one row at a time | C1 | HARNESS basic-layout | P0 |
+| V4 | OK on a group card, then ▲ ▼ CH± through the list | The group's channels full screen: number, logo 150 × 100 with the programme's progress under it, the name 56 px, «21:00–22:00  what is on» in grey under it, «ещё N мин»; at most 5 rows; every channel completely visible on some page; the cursor on the playing channel when the group holds it | C1 | HARNESS basic-layout + BROWSER basic-layout + AUTO-TV (U0 in Basic: pending) | P0 |
+| V5 | OK on a channel; ◀ ▶ on the picture | It plays, the menu closes; ◀ ▶ zap inside that group | C1 sample | HARNESS basic-layout | P0 |
+| V6 | ▶ / ◀ on the list (mirrored in Hebrew), held too; Back on the list; Back on the cards; CH_LIST on either | ▶ the next page, ◀ the previous (as CH±); ◀ on the first page and Back → the cards on this group; ▶ on the last page does nothing; Back on the cards → the picture; CH_LIST closes | — | HARNESS basic-layout | P0 |
+| V7 | OK on 🔍 📡 ⚙ ℹ, then Back; BLUE on either screen | Each opens its screen as in the menu; Back returns to the cards on that card; a channel tuned from search → the next OK opens on its group, not on 🔍 | — | HARNESS basic-layout | P1 |
+| V8 | YELLOW / ⏯ on a channel; the last favourite removed inside «★ Избранное» | ★ and the toast on the help bar; «★ Избранное» appears among the cards; the emptied group falls back to «Все каналы» | — | HARNESS basic-layout + BROWSER (toast on the bar) | P1 |
+| V9 | The list open across a minute and a programme's end | «ещё N мин» and the progress turn each minute with no request; the line turns over at the programme's end as in the menu | C1 | HARNESS basic-layout + MANUAL | P1 |
+| V10 | Logos while moving over cards, opening lists, ▼ held, CH− ×6, Back | **No logo seen arriving and no empty box** in any phase (per-frame probe); no download started in a key's task | C1, C4 | HARNESS basic-layout + AUTO-TV probe (P-B1/P-B2, pending) | P0 |
+| V11 | Hebrew; Ukrainian; English | The grid and rows mirror in Hebrew (first card top-right, logo on the right, ◀ = next card); a provider's name keeps its own direction; the help bar is one line of 36 px in all four languages | C4 | BROWSER basic-layout + MANUAL | P1 |
+| V12 | The longest real group names and channel names | Never cut, never broken inside a word: a card name is one line at 60 px, else 52 / 44 / 36 px; list names and programmes wrap by whole words, no ellipsis | — | BROWSER basic-layout | P1 |
+| V13 | Every list in both layouts: ℹ О программе, ⚙ Настройки, 📡 Провайдеры, the languages, search, the programme guide, the Basic cards and list, the menu's columns | A scroll bar beside the list (end side; left in Hebrew) whenever the list does not fit — its thumb the share shown and the place; none when everything fits; ℹ О программе moves a whole row per ▲▼ | C1, C4 | BROWSER basic-layout «scroll bars» + MANUAL | P1 |
+| V14 | On the picture, with «Крупный» chosen: ◀ ▶ ▲ ▼ | Exactly as in «Подробный»: ◀ ▶ the previous / next channel, ▲ the archive slider, ▼ the programme guide | C1 | HARNESS basic-layout | P0 |
+| V15 | ⚙ / 📡 / ℹ in both layouts; the free provider's row | Large: rows 44 px, values 40 px, hint 36 px, the gentle focus; inside 1080 px; the free channels' notice under the free provider and in ℹ О программе (4 languages) | C4 | BROWSER basic-layout + MANUAL | P1 |
 
 ### S. Search
 | ID | Steps | Expected result | Set | Verified | P |
@@ -233,11 +255,13 @@ Every cell is a test case. A cell passes only when it is checked on the TV and r
 ### Counts
 86 use cases plus the key map (O6, 11 keys × 7 states): **P0 26 · P1 38 · P2 22**. Verification: **28 fully AUTO-TV**, 6 AUTO-TV with a MANUAL part, 52 MANUAL or HARNESS only (a person at the TV is needed for acceptance). Of the 26 P0 cases, 20 have AUTO-TV coverage; the other P0 cases (A1, A2, A5, N2, L11, L15) are MANUAL on the TV.
 2026-10-26 (1.8.1): + B12 (P0, AUTO-TV G1 with a HARNESS part), B13 (P1), B14 (P2) — 89 use cases: **P0 27 · P1 39 · P2 23**.
+2026-10-28 (1.9.4): + V1–V15 (Basic menu layout and the owner's review decisions: P0 8 · P1 7) — 104 use cases: **P0 35 · P1 46 · P2 23**. V4 and V10 need the TV (U0 in Basic and the per-frame logo probe).
 
 ## Traceability: change → use cases that verify it
 | Change (docs/PERFORMANCE.md change log / owner request) | Use cases |
 |---|---|
 | P-A zap: leading-edge open, guide after the first frame, abort passed channels | Z1, Z2, X2 |
+| 1.9.4 Basic menu layout («Вид меню»), P-1 look-ahead in rows, P-2 unknown logo consumers refused, P-4 the opening page kept past LOGO_KEEP | V1–V12, B1–B4 (Advanced unchanged), U0 in both layouts |
 | P-B list parsed once, offline copy after the first frame | A6, X1 |
 | P-C XMLTV linear scanner | A4 (M3U with url-tvg), HARNESS xmltv |
 | P-D health check only behind steady playback | Z4, X2, L2 |

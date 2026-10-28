@@ -43,6 +43,7 @@
       return { num: c.num, key: c.key, logo: c.logo, title: c.name, own: true, sub: sub, playing: c.key === curKey };
     } });
     UI.listEnd('search-more', ListView.rest('search'), ListView.end('search'));
+    UI.scrollBar('search-bar', ListView.shown('search'));
     NowLines.update();
   }
 
@@ -68,11 +69,7 @@
   }
 
   // The channel ids of the results on screen.
-  function visibleIds() {
-    var v = ListView.shown('search'), out = [];
-    for (var i = v ? v.first : 0; v && i < v.first + v.count && i < result.items.length; i++) out.push(Channels.at(result.items[i]).id);
-    return out;
-  }
+  function visibleIds() { return ChannelView.ids('search', result.items); }
 
   function tune(i) { var c = Channels.at(result.items[i]); Overlay.close(); if (c) Zap.pick(c); }
 

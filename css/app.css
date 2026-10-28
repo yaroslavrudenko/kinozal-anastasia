@@ -84,14 +84,14 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 .sel { background: rgba(255,255,255,.08); }
 /* The group the menu is in, while the channels have the focus (owner 2026-10-26: the remembered group was
    not visible): a soft blue band and a blue bar on the left, weaker than the focused row. */
-.grow.sel { background: rgba(47,126,232,.26); color: #eef1f6; box-shadow: inset 6px 0 0 #2f7ee8; }
-.grow.sel .s { color: #c9dcf7; }
+.grow.sel { background: rgba(82,100,140,.30); color: #eef1f6; box-shadow: inset 6px 0 0 #8a9bbd; }
+.grow.sel .s { color: #dfe6f2; }
 /* A focused row does not grow — a group, a channel, a search result, a programme: its icon, logo, name and count stay
    where they are on the other rows and its band stays inside the column, both ends round (review 5, D-N2; review 6: a
    group grown from one edge was clipped square; review 7, design N6-1 and the owner's «не должны прыгать»: a channel's
    logo moved 12.8 px). Its solid fill sets it apart. */
-.focus { background: #2f7ee8; color: #fff; }
-.focus .n, .focus .s { color: #e4efff !important; }
+.focus { background: #46577c; color: #fff; }   /* gentle slate, owner 2026-10-28 (variant B): white text 7.2:1 */
+.focus .n, .focus .s { color: #fff !important; }
 /* The channel on screen: an accent bar and accent name, with or without the cursor on it (no layout change). */
 .row.playing { box-shadow: inset 6px 0 0 #4da3ff; }
 .row.playing .t { color: #4da3ff; }
@@ -143,7 +143,9 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
   background: rgba(10,14,22,.94); box-shadow: 0 10px 40px rgba(0,0,0,.5); display: -webkit-flex; display: flex;
   -webkit-flex-direction: column; flex-direction: column; }
 .prog-title { -webkit-flex: none; flex: none; font-size: 36px; font-weight: 700; line-height: 44px; padding: 10px 22px; word-wrap: break-word; }
-.prog-list { position: relative; overflow: hidden; -webkit-flex: 1; flex: 1; margin-bottom: 50px; }   /* above the hint */
+.prog-box { position: relative; -webkit-flex: 1; flex: 1; min-height: 0; margin-bottom: 50px; }   /* above the hint */
+.prog-list { position: absolute; left: 0; right: 0; top: 0; bottom: 0; overflow: hidden; }
+.prog-box .bar { top: 0; bottom: 0; right: -18px; }
 .prog-hint, .search-hint { position: absolute; left: 50px; bottom: 26px; font-size: 24px; color: #8d99ad; }
 .search-hint { left: 360px; right: 360px; bottom: 30px; padding: 10px 22px; border-top: 1px solid rgba(141,153,173,.18);
   border-radius: 12px; background: #121927; color: #b4bfd0; }
@@ -160,7 +162,7 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 .banner-state:empty { display: none; }
 .banner-tech { font-size: 22px; margin-top: 6px; color: #4da3ff; word-wrap: break-word; }
 /* Overlays always above the video layer (hardware video can be composited on top otherwise). */
-.guide, .search, .setup, .about { z-index: 20; }
+.guide, .search, .setup, .about, .basic { z-index: 20; }
 .banner, .scrub, .prog, .numentry { z-index: 15; }
 .toast, .fatal, .spinner { z-index: 30; }
 
@@ -174,42 +176,55 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
    12 px over it); a longer one wraps upward, at most 2 lines for every message (pinned in screen-details). */
 #guide:not(.hidden) ~ #toast { left: 60px; right: 60px; bottom: 24px; min-height: 60px; padding: 8px 40px; border-radius: 12px; }
 
-/* «О программе» */
-.about { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; padding: 46px 260px;
-  background: #06090f; text-align: center; }
-.about-icon { width: 88px; height: 88px; border-radius: 20px; }
-.about-title { font-size: 46px; font-weight: 700; color: #4da3ff; margin: 6px 0 6px; }
-.about-dedication { white-space: pre-line; font-size: 26px; line-height: 34px; color: #eef1f6; font-style: italic; margin-bottom: 16px; }
-.about-table { text-align: left; border-top: 1px solid rgba(255,255,255,.12); }
-.about-row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 6px 16px; font-size: 24px; line-height: 30px; border-bottom: 1px solid rgba(255,255,255,.08); }
-.about-k { -webkit-flex: 0 0 300px; flex: 0 0 300px; color: #8d99ad; }
-.about-v { -webkit-flex: 1; flex: 1; color: #e4efff; }
+/* «О программе», «⚙ Настройки», «📡 Провайдеры» and the language list: large in both menu layouts (owner 2026-10-28:
+   «для обеих режимов … крупнее эти три страницы»): rows 44 px, values 40 px, the hint bar's text 36 px and the gentle
+   focus of the Basic list. The table or list takes the room above the hint bar and scrolls with the cursor when taller. */
+.about { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; padding: 36px 120px 104px; display: -webkit-flex; display: flex;
+  -webkit-flex-direction: column; flex-direction: column; -webkit-align-items: center; align-items: center; background: #06090f; text-align: center; }
+.about-icon { -webkit-flex: none; flex: none; width: 72px; height: 72px; border-radius: 16px; }
+.about-title { -webkit-flex: none; flex: none; font-size: 56px; line-height: 64px; font-weight: 700; color: #4da3ff; margin: 4px 0 8px; }
+.about-dedication { -webkit-flex: none; flex: none; white-space: pre-line; font-size: 30px; line-height: 38px; color: #eef1f6; font-style: italic; margin-bottom: 14px; }
+.about-table { position: relative; -webkit-align-self: stretch; align-self: stretch; min-height: 0; overflow: hidden; text-align: left; border-top: 1px solid rgba(255,255,255,.12); }
+.about-row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 10px 24px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.about-k { -webkit-flex: 0 0 560px; flex: 0 0 560px; font-size: 44px; line-height: 52px; color: #aab3c0; }
+.about-v { -webkit-flex: 1; flex: 1; min-width: 0; font-size: 40px; line-height: 48px; color: #e4efff; }
 /* The hint on its own band at the bottom, set apart from the rows above (owner 2026-10-27: «всё налазит на нижнюю строчку … нужно как-то отделить»).
    72 px: the toast band over it is as tall (#toast over a full screen, above) — change both together. */
-.about-hint { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; line-height: 72px; font-size: 24px; color: #a9b4c6;
+.about-hint { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; line-height: 72px; font-size: 36px; color: #c8ced8;
   background: #121927; border-top: 1px solid rgba(141,153,173,.22); }
-.about-setting { margin-top: 8px; border-radius: 12px; background: rgba(47,126,232,.06); border-bottom: 0; }
-.about-setting.sel { background: rgba(47,126,232,.16); box-shadow: inset 4px 0 0 #4da3ff; }
+.about-setting { margin-top: 8px; border-radius: 14px; background: rgba(47,126,232,.06); border-bottom: 0; }
+.about-setting.sel { background: #52648c; }   /* the gentle focus: 3.0:1 on the row ground, its text 5.9:1 */
+.about-setting.sel .about-k, .about-setting.sel .about-v { color: #fff; }
 .about-setting .about-v { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; }
-.switch { position: relative; width: 64px; height: 34px; border-radius: 17px; background: #3a4456; margin-right: 18px;
+.switch { position: relative; -webkit-flex: none; flex: none; width: 84px; height: 44px; border-radius: 22px; background: #3a4456; margin-right: 22px;
   -webkit-transition: background .15s; transition: background .15s; }
-.switch i { position: absolute; left: 4px; top: 4px; width: 26px; height: 26px; border-radius: 50%; background: #fff;
+.switch i { position: absolute; left: 5px; top: 5px; width: 34px; height: 34px; border-radius: 50%; background: #fff;
   -webkit-transition: left .15s; transition: left .15s; }
 .switch.on { background: #2f7ee8; }
-.switch.on i { left: 34px; }
+.switch.on i { left: 45px; }
 /* The list-end line (ui.js listEnd): placed at the column's top and moved under the last visible row by a transform. */
 .more { position: absolute; left: 22px; right: 0; top: 4px; font-size: 24px; line-height: 26px; color: #8d99ad; word-wrap: break-word; }
 
+/* A list on these screens and its scroll bar beside it, in the side margin (owner 2026-10-28: «везде где есть список
+   должен быть ползунок который показывает положение в списке»): the Basic screens' bar, shown only when the list does
+   not fit (ui.js scrollBar). */
+.list-box { position: relative; -webkit-align-self: stretch; align-self: stretch; min-height: 0; display: -webkit-flex; display: flex;
+  -webkit-flex-direction: column; flex-direction: column; }
+.list-box .bar { top: 0; bottom: 0; right: -44px; width: 10px; border-radius: 5px; background: #2a3140; }
+.list-box .bar i { border-radius: 5px; background: #b4bfd0; -webkit-transition: none; transition: none; }
+
 /* «Источники» */
-.src-note { font-size: 26px; color: #8d99ad; margin-bottom: 22px; }
-.src-list { position: relative; max-height: 790px; overflow: hidden; text-align: left; border-top: 1px solid rgba(255,255,255,.12); }
-.src-row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; min-height: 58px;
-  padding: 6px 20px; font-size: 29px; color: #c4ccd8; border-bottom: 1px solid rgba(255,255,255,.08); word-wrap: break-word; }
+.src-note { -webkit-flex: none; flex: none; font-size: 32px; line-height: 40px; color: #aab3c0; margin-bottom: 18px; }
+.src-list { position: relative; -webkit-align-self: stretch; align-self: stretch; min-height: 0; overflow: hidden; text-align: left; border-top: 1px solid rgba(255,255,255,.12); }
+.src-row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; min-height: 84px;
+  padding: 10px 24px; font-size: 44px; line-height: 52px; color: #c4ccd8; border-bottom: 1px solid rgba(255,255,255,.08); word-wrap: break-word; }
+.src-row.free { -webkit-flex-wrap: wrap; flex-wrap: wrap; }
 .src-t { -webkit-flex: 1; flex: 1; min-width: 0; }
-.src-s { -webkit-flex: 0 1 560px; flex: 0 1 560px; margin-left: 20px; text-align: right; font-size: 24px; color: #8d99ad; }
+.src-s { -webkit-flex: 0 1 640px; flex: 0 1 640px; margin-left: 24px; text-align: right; font-size: 40px; line-height: 48px; color: #aab3c0; }
+.src-w { -webkit-flex: 0 0 100%; flex: 0 0 100%; margin: 6px 0 4px; font-size: 32px; line-height: 40px; color: #b4bfd0; }   /* the free channels' notice */
 .src-row.on .src-t { color: #4da3ff; font-weight: 700; }
-.src-row.sel { background: rgba(47,126,232,.26); color: #eef1f6; box-shadow: inset 6px 0 0 #2f7ee8; }
-.src-row.sel .src-s { color: #c9dcf7; }
+.src-row.sel { background: #52648c; color: #fff; }   /* the gentle focus */
+.src-row.sel .src-s, .src-row.sel .src-w, .src-row.sel.on .src-t { color: #fff; }
 /* The language list: the row and its ✓ follow the interface; each language's name is written in itself, in its own
    direction, and all four start on the interface's start edge (owner 2026-10-28: «Выровняй все языки по одному краю»). */
 #lang .src-s { -webkit-flex: none; flex: none; }
@@ -239,21 +254,132 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; 
 [dir="rtl"] .row .logo { margin-right: 0; margin-left: 18px; }
 [dir="rtl"] .row .s { margin-left: 0; margin-right: 24px; }
 [dir="rtl"] .grow .s, [dir="rtl"] .prow .s { margin-left: 0; margin-right: 12px; }
-[dir="rtl"] .grow.sel, [dir="rtl"] .src-row.sel { box-shadow: inset -6px 0 0 #2f7ee8; }
+[dir="rtl"] .grow.sel { box-shadow: inset -6px 0 0 #8a9bbd; }
 [dir="rtl"] .row.playing { box-shadow: inset -6px 0 0 #4da3ff; }
 [dir="rtl"] .row.playing.focus { box-shadow: inset -6px 0 0 #fff; }
-[dir="rtl"] .about-setting.sel { box-shadow: inset -4px 0 0 #4da3ff; }
 [dir="rtl"] .banner-logo { margin-right: 0; margin-left: 36px; }
 [dir="rtl"] .banner-clock { margin-left: 0; margin-right: 40px; }
 [dir="rtl"] .numentry { right: auto; left: 90px; }
 [dir="rtl"] .prog { right: auto; left: 60px; }
+[dir="rtl"] .prog-box .bar { right: auto; left: -18px; }
+[dir="rtl"] .list-box .bar { right: auto; left: -44px; }
 [dir="rtl"] .prog-hint { left: auto; right: 50px; }
 [dir="rtl"] #s-title { margin-right: 0; margin-left: 30px; }
 [dir="rtl"] .about-table, [dir="rtl"] .src-list { text-align: right; }
-[dir="rtl"] .src-s { margin-left: 0; margin-right: 20px; text-align: left; }
-[dir="rtl"] .switch { margin-right: 0; margin-left: 18px; }
+[dir="rtl"] .src-s { margin-left: 0; margin-right: 24px; text-align: left; }
+[dir="rtl"] .switch { margin-right: 0; margin-left: 22px; }
 [dir="rtl"] .banner-bar, [dir="rtl"] .scrub-ends { direction: ltr; }
 /* Hebrew has no italic: a slanted dedication is sheared Latin-style (review 4, D1). */
 [dir="rtl"] .about-dedication { font-style: normal; }
 /* …but the «behind live» sentence between the slider's ends is Hebrew and reads right to left. */
 [dir="rtl"] .scrub-delta { direction: rtl; unicode-bidi: embed; }
+
+/* «Вид меню: крупный» (overlays/basic.js; owner 2026-10-28: «крупные меню … для людей, которые плохо видят»): a group's
+   channel list and the group cards, each a full screen on an opaque ground: a header (title, «x / y», the clock), the rows
+   or cards, a help bar. Header, rows and help bar start their text on one edge. Focus is gentle (owner: «нежнее и не
+   такой токсичный»): a soft surface, no yellow ring, no saturated blue; no scaling, no transition, nothing moves. */
+.basic { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; padding: 44px 96px; background: #05070b;
+  display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; color: #fff; }
+/* Basic in use: laid out while hidden (prepared at idle), so opening a screen is a paint; Advanced in use: not laid out. */
+.basic.hidden.ready { display: -webkit-flex !important; display: flex !important; visibility: hidden; }
+/* …and Advanced's menu is not laid out while Basic is in use (overlays/basic.js layout). */
+.guide.hidden.off { display: none !important; }
+.b-head { -webkit-flex: none; flex: none; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; min-height: 72px; padding: 0 32px; }
+.b-title { -webkit-flex: 1; flex: 1; min-width: 0; font-size: 52px; line-height: 60px; font-weight: 700; word-wrap: break-word; }
+.b-pos { -webkit-flex: none; flex: none; margin-left: 40px; font-size: 40px; font-weight: 500; color: #c8ced8; white-space: nowrap; }
+.b-clock { -webkit-flex: none; flex: none; margin-left: 40px; font-size: 40px; white-space: nowrap; }
+.b-body { position: relative; -webkit-flex: 1; flex: 1; margin: 16px 0; }
+
+/* The cards (owner 2026-10-28, variant A2): 3 × 3 of 544 × 248 on their group's own hue; the name on one centre line
+   and the count on one bottom line, at the same place on every card. A name is one line: 60 px, or 52 / 44 / 36 px for a
+   word too wide (basic.js fit). Focus: a 3 px light outline over a 3 px dark gap (6.9:1 on the page). */
+.cards { position: absolute; left: 0; right: 0; top: 0; bottom: 0; padding: 12px; display: -webkit-flex; display: flex;
+  -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-align-content: flex-start; align-content: flex-start; }
+.card { -webkit-flex: none; flex: none; position: relative; width: 544px; height: 248px; margin-right: 36px; padding: 22px 16px 26px;
+  display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; -webkit-align-items: center; align-items: center;
+  border-radius: 28px; text-align: center; cursor: pointer; box-shadow: 0 10px 26px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08); }
+.card:nth-child(3n) { margin-right: 0; }
+.card:nth-child(n+4) { margin-top: 24px; }
+.card .n, .card .logo { display: none; }
+.card .t { -webkit-flex: 1; flex: 1; -webkit-align-self: stretch; align-self: stretch; display: -webkit-flex; display: flex;
+  -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center;
+  font-size: 60px; line-height: 68px; font-weight: 600; letter-spacing: -0.4px; color: #fff; }   /* full width: fit() measures this box */
+.card .t > i:first-child:not(:empty) { width: 72px; font-size: 52px; }   /* our icon's box */
+.card.long .t { font-size: 52px; }
+.card.longer .t { font-size: 44px; }
+.card.longest .t { font-size: 36px; line-height: 40px; }
+.card .s { -webkit-flex: none; flex: none; height: 44px; font-size: 40px; line-height: 44px; font-weight: 500; letter-spacing: .2px; color: #e6eaf0; white-space: nowrap; }
+.card.focus { box-shadow: 0 0 0 3px #05070b, 0 0 0 6px rgba(201,214,240,.7), 0 16px 34px rgba(0,0,0,.6); }
+.card.focus .s { color: #fff !important; }
+.card.h0 { background-color: #1d2634; background-image: linear-gradient(to bottom, #324058, #1d2634); }
+.card.h1 { background-color: #162327; background-image: linear-gradient(to bottom, #2a434b, #162327); }
+.card.h2 { background-color: #12211d; background-image: linear-gradient(to bottom, #27453d, #12211d); }
+.card.h3 { background-color: #132218; background-image: linear-gradient(to bottom, #274632, #132218); }
+.card.h4 { background-color: #241f14; background-image: linear-gradient(to bottom, #483e28, #241f14); }
+.card.h5 { background-color: #2e201a; background-image: linear-gradient(to bottom, #523a2e, #2e201a); }
+.card.h6 { background-color: #392024; background-image: linear-gradient(to bottom, #5d343b, #392024); }
+.card.h7 { background-color: #30213b; background-image: linear-gradient(to bottom, #4d355f, #30213b); }
+.card.sp { background-color: #1a2130; background-image: linear-gradient(to bottom, #2a3348, #1a2130); }
+.card.focus.h0 { background-color: #26344d; background-image: linear-gradient(to bottom, #374b6f, #26344d); }
+.card.focus.h1 { background-color: #1c3138; background-image: linear-gradient(to bottom, #2d4f5b, #1c3138); }
+.card.focus.h2 { background-color: #18302a; background-image: linear-gradient(to bottom, #285248, #18302a); }
+.card.focus.h3 { background-color: #183020; background-image: linear-gradient(to bottom, #285236, #183020); }
+.card.focus.h4 { background-color: #332b19; background-image: linear-gradient(to bottom, #55482a, #332b19); }
+.card.focus.h5 { background-color: #432c21; background-image: linear-gradient(to bottom, #654332, #432c21); }
+.card.focus.h6 { background-color: #52282f; background-image: linear-gradient(to bottom, #743943, #52282f); }
+.card.focus.h7 { background-color: #432a55; background-image: linear-gradient(to bottom, #5e3b78, #432a55); }
+.card.focus.sp { background-color: #232c42; background-image: linear-gradient(to bottom, #34405c, #232c42); }
+
+/* The list: each channel on its own quiet band, 8 px of page between bands (a transparent border, so ListView's measured
+   heights include it and only whole rows are shown — 7 one-line rows). Number, logo 120 × 80, the name 46 px over what
+   is on now 33 px, ★ ▶ in a fixed column, «ещё N мин» 34 px with the programme's progress under it (owner 2026-10-28).
+   Names and programmes wrap by whole words; nothing is cut. Focus: the soft fill alone, no outline (owner: «без белого
+   бордюра»): 3.0:1 against the band, its text 5.9:1. */
+.b-clip { position: absolute; left: 0; right: 0; top: 0; bottom: 0; overflow: hidden; }
+.brows { position: absolute; left: 12px; right: 12px; top: 12px; bottom: 12px; }
+.brow { display: -webkit-flex; display: flex; -webkit-align-items: flex-start; align-items: flex-start; padding: 6px 20px;
+  border-bottom: 8px solid transparent; border-radius: 16px; background-color: #111722; -webkit-background-clip: padding-box; background-clip: padding-box;
+  cursor: pointer; word-wrap: break-word; }
+.brow .n { -webkit-flex: none; flex: none; width: 84px; font-size: 34px; line-height: 52px; font-weight: 500; color: #aab3c0; white-space: nowrap; }
+.brow .logo { -webkit-flex: none; flex: none; width: 120px; height: 80px; margin-right: 24px; object-fit: contain; }   /* the banner's picture, the same URL */
+.brow .tx { -webkit-flex: 1; flex: 1; min-width: 0; position: relative; padding-right: 112px; }
+.brow .t { display: -webkit-flex; display: flex; -webkit-align-items: baseline; align-items: baseline; font-size: 46px; line-height: 52px; font-weight: 700; }
+.brow .t > i { position: absolute; top: 0; width: 50px; font-size: 34px; line-height: 52px; text-align: center; white-space: normal; }
+.brow .t > i:first-child { right: 56px; color: #ffd400; }
+.brow .t > i:last-child { right: 0; color: #6cb6ff; }
+.brow .s { display: -webkit-flex; display: flex; -webkit-align-items: baseline; align-items: baseline; font-size: 33px; line-height: 38px; color: #b4bfd0; }
+.brow .left { -webkit-flex: none; flex: none; width: 210px; margin-left: 16px; text-align: right; }
+.brow .lt { display: block; font-size: 34px; line-height: 52px; color: #b4bfd0; white-space: nowrap; }
+.brow .pg { display: block; height: 8px; margin-top: 8px; border-radius: 4px; background: #3a4252; visibility: hidden; direction: ltr; }
+.brow .pg b { display: block; height: 8px; border-radius: 4px; background: #c8ced8; -webkit-transform-origin: 0 0; transform-origin: 0 0;
+  -webkit-transform: scaleX(0); transform: scaleX(0); }
+.brow.playing .t { color: #6cb6ff; }
+.brow.focus { background-color: #52648c; box-shadow: none; }
+.brow.focus .t, .brow.focus .t > i:last-child { color: #fff; }
+.brow.focus .n, .brow.focus .s, .brow.focus .lt { color: #fff !important; }
+.brow.focus .pg { background: #05070b; }   /* the track stays visible on the focus fill (3.4:1) */
+.basic .bar { top: 12px; bottom: 12px; right: -30px; width: 10px; border-radius: 5px; background: #2a3140; }
+.basic .bar i { border-radius: 5px; background: #b4bfd0; -webkit-transition: none; transition: none; }
+
+/* The help bar: four hints at most, one line, the keys in white bold, a colour key as its word with a dot. */
+.b-hint { -webkit-flex: none; flex: none; height: 72px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center;
+  padding: 0 32px; border-top: 2px solid #5a6578; background: #121927; font-size: 36px; font-weight: 500; color: #c8ced8; white-space: nowrap; }
+.b-hint b { color: #fff; font-weight: 700; white-space: pre; }
+.b-hint span { white-space: pre; }
+.b-hint .dot { display: inline-block; width: 28px; height: 28px; margin-right: 12px; border-radius: 50%; }
+.b-hint .dot.y { background: #ffd400; }
+.b-hint .dot.b { background: #3d8bff; }
+/* A message over Basic lies on its help bar, never over the cards or rows. */
+#cards:not(.hidden) ~ #toast, #clist:not(.hidden) ~ #toast { top: auto; bottom: 44px; left: 96px; right: 96px; width: auto; max-width: none;
+  min-height: 72px; padding: 12px 40px; font-size: 36px; line-height: 48px; border-radius: 0; background: #24324a; -webkit-transform: none; transform: none; }
+[dir="rtl"] .b-pos, [dir="rtl"] .b-clock { margin-left: 0; margin-right: 40px; }
+[dir="rtl"] .card { margin-right: 0; margin-left: 36px; }
+[dir="rtl"] .card:nth-child(3n) { margin-left: 0; }
+[dir="rtl"] .brow .logo { margin-right: 0; margin-left: 24px; }
+[dir="rtl"] .brow .tx { padding-right: 0; padding-left: 112px; }
+[dir="rtl"] .brow .t > i:first-child { right: auto; left: 56px; }
+[dir="rtl"] .brow .t > i:last-child { right: auto; left: 0; }
+[dir="rtl"] .brow .left { margin-left: 0; margin-right: 16px; text-align: left; }
+[dir="rtl"] .basic .t .x[dir="ltr"] { text-align: right; }   /* a Latin or Cyrillic name keeps the interface's start edge */
+[dir="rtl"] .basic .bar { right: auto; left: -30px; }
+[dir="rtl"] .b-hint .dot { margin-right: 0; margin-left: 12px; }

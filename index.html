@@ -31,14 +31,14 @@
 
 <div id="prog" class="prog hidden">
   <div class="prog-title" id="p-title"></div>
-  <div class="prog-list" id="p-list"></div>
+  <div class="prog-box"><div class="prog-list" id="p-list"></div><div class="bar" id="p-bar"><i></i></div></div>
   <div class="prog-hint" data-t="h.prog">▲ ▼ — передачи · ◀ ▶ — день · OK — смотреть · Назад — закрыть</div>
 </div>
 
 <div id="search" class="search hidden">
   <div class="search-title" data-t="search.title">🔍 Поиск канала</div>
   <input id="search-input" class="search-input" type="text" autocomplete="off" spellcheck="false" placeholder="Название канала или номер" data-tp="search.placeholder">
-  <div class="list-wrap search-wrap"><div class="search-list" id="search-list"></div><div class="more" id="search-more"></div></div>
+  <div class="list-wrap search-wrap"><div class="search-list" id="search-list"></div><div class="more" id="search-more"></div><div class="bar" id="search-bar"><i></i></div></div>
   <div class="search-hint" data-t="h.search">Введите название → OK · ▲ ▼ — выбор · OK — смотреть · Назад — закрыть</div>
 </div>
 
@@ -66,7 +66,7 @@
 <div id="sources" class="about hidden">
   <div class="about-title" id="sources-title" data-t="src.title">Провайдеры</div>
   <div class="src-note" data-t="src.note">OTT Club · бесплатный iptv-org · ваши провайдеры</div>
-  <div class="src-list" id="sources-list"></div>
+  <div class="list-box"><div class="src-list" id="sources-list"></div><div class="bar" id="sources-bar"><i></i></div></div>
   <div class="about-hint" id="sources-hint" data-t="src.hint">OK — смотреть · Синяя — ключ OTT Club · Красная ×2 — удалить своего провайдера · Назад — в меню</div>
 </div>
 
@@ -75,14 +75,26 @@
   <div class="about-title" id="about-title" data-t="g.settings">⚙ Настройки</div>
   <div class="about-dedication" id="about-dedication" data-t="st.dedication">Эта программа сделана специально в честь моей супруги Анастасии и для неё —<br>
     чтобы в свободное время она включала телевизор, отдыхала и получала удовольствие от жизни. 💐</div>
-  <div class="about-table" id="about-table"></div>
+  <div class="list-box"><div class="about-table" id="about-table"></div><div class="bar" id="about-bar"><i></i></div></div>
   <div class="about-hint" id="about-hint" data-t="st.hint">▲▼ — выбрать · OK — открыть или переключить · Назад — закрыть</div>
 </div>
 
 <div id="lang" class="about hidden">
   <div class="about-title" id="lang-title" data-t="st.language">🌐 Язык интерфейса</div>
-  <div class="src-list" id="lang-list"></div>
+  <div class="list-box"><div class="src-list" id="lang-list"></div><div class="bar" id="lang-bar"><i></i></div></div>
   <div class="about-hint" id="lang-hint" data-t="lang.hint">▲▼ — выбрать · OK — применить · Назад — к настройкам</div>
+</div>
+
+<!-- «Вид меню: крупный» (overlays/basic.js): the group cards and a group's channel list; before #toast (its band rule). -->
+<div id="cards" class="basic hidden">
+  <div class="b-head"><span class="b-title" data-t="bc.title">Группы</span><span class="b-pos" id="cards-pos"></span><span class="b-clock" id="cards-clock"></span></div>
+  <div class="b-body"><div class="cards" id="cards-grid"></div><div class="bar" id="cards-bar"><i></i></div></div>
+  <div class="b-hint" id="cards-hint"></div>
+</div>
+<div id="clist" class="basic hidden">
+  <div class="b-head"><span class="b-title" id="clist-title"></span><span class="b-pos" id="clist-pos"></span><span class="b-clock" id="clist-clock"></span></div>
+  <div class="b-body"><div class="b-clip"><div class="brows" id="clist-rows"></div></div><div class="bar" id="clist-bar"><i></i></div></div>
+  <div class="b-hint" id="clist-hint"></div>
 </div>
 
 <div id="toast" class="toast hidden"></div>
@@ -110,6 +122,7 @@
 <script src="js/listview.js"></script>
 <script src="js/sources.js"></script>
 <script src="js/nowlines.js"></script>
+<script src="js/channelview.js"></script>
 <script src="js/avtracks.js"></script>
 <script src="js/htmlvideo.js"></script>
 <script src="js/player.js"></script>
@@ -119,6 +132,7 @@
 <script src="js/zap.js"></script>
 <script src="js/overlays/numentry.js"></script>
 <script src="js/overlays/menu.js"></script>
+<script src="js/overlays/basic.js"></script>
 <script src="js/overlays/panel.js"></script>
 <script src="js/overlays/scrub.js"></script>
 <script src="js/overlays/search.js"></script>

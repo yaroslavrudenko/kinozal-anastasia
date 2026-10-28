@@ -4,7 +4,7 @@
 var Util = (function () {
   var MIN_MS = 60000, DAY_MS = 86400000;
   var ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
-  var HIDDEN = /(^|\s)hidden(\s|$)/;
+  var HIDDEN = /(^|\s)hidden(\s|$)/, CLASS = {};
   var saveFailed = {};
 
   // A missing or unreadable value is null.
@@ -47,16 +47,26 @@ var Util = (function () {
     } catch (e) { fail((e && e.message) || String(e)); }
   }
 
+  // v as an index into a list of n: 0 … n − 1 (the cursor of a list column or a grid).
+  function clamp(v, n) { return Math.max(0, Math.min(n - 1, v)); }
   function pad2(n) { return n < 10 ? '0' + n : '' + n; }
   function hhmm(d) { return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+  // A programme's time span «21:00–22:00» (start, stop: ms) as one piece: U+2060 word joiners keep it on one line when the
+  // title after it wraps, the LRM marks keep it left to right in Hebrew (the banner's and the Basic list's "now" line).
+  function span(start, stop) { return '\u200e' + hhmm(new Date(start)) + '\u2060–\u2060' + hhmm(new Date(stop)) + '\u200e'; }
   function $(id) { return document.getElementById(id); }
 
   // Toggles exactly the class "hidden"; other classes (even ones containing the word) are kept.
   function isHidden(el) { return HIDDEN.test(el.className); }
-  function show(el, on) {
-    var hidden = isHidden(el);
-    if (hidden !== !!on) return;
-    el.className = on ? el.className.replace(/(^|\s)hidden(?=\s|$)/g, '').trim() : (el.className ? el.className + ' hidden' : 'hidden');
+  function show(el, on) { cls(el, 'hidden', !on); }
+  // Puts class `name` on el or takes it off; other classes (even ones containing the word) are kept.
+  function cls(el, name, on) {
+    var re = CLASS[name] || (CLASS[name] = new RegExp('(^|\\s)' + name + '(?=\\s|$)', 'g'));
+    re.lastIndex = 0;
+    var has = re.test(el.className);
+    if (has === !!on) return;
+    re.lastIndex = 0;
+    el.className = on ? (el.className ? el.className + ' ' + name : name) : el.className.replace(re, '').trim();
   }
 
   // An <img>'s onerror: a picture that does not load (a 404, a dead host) is hidden by visibility — no broken-picture
@@ -98,6 +108,6 @@ var Util = (function () {
 
   return {
     MIN_MS: MIN_MS, DAY_MS: DAY_MS,
-    load: load, save: save, saveJson: saveJson, remove: remove, pad2: pad2, hhmm: hhmm, $: $, show: show, isHidden: isHidden, hideBrokenImage: hideBrokenImage, esc: esc, dict: dict,
+    load: load, save: save, saveJson: saveJson, remove: remove, clamp: clamp, pad2: pad2, hhmm: hhmm, span: span, $: $, show: show, cls: cls, isHidden: isHidden, hideBrokenImage: hideBrokenImage, esc: esc, dict: dict,
     idle: idle, afterPaint: afterPaint, dayStart: dayStart, addDays: addDays, backoff: backoff, openUrl: openUrl };
 }());

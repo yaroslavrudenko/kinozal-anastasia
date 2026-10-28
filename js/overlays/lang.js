@@ -24,6 +24,7 @@
         '<span class="src-s">' + (l === cur ? '✓' : '') + '</span></div>';
     }
     Util.$('lang-list').innerHTML = html;
+    UI.scrollBar('lang-bar', UI.listShown(Util.$('lang-list')));
   }
 
   function choose(l) {

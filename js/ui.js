@@ -5,7 +5,8 @@ var UI = (function () {
   var el = {}, toastTimer = null, bannerTimer = null, spinnerTimer = null, scrubBarPx = 0;
   var IDS = ['banner', 'b-num', 'b-logo', 'b-title', 'b-state', 'b-now', 'b-next', 'b-tech', 'b-progress', 'b-clock', 'toast',
     'spinner', 'numentry', 'fatal', 'guide', 'prog', 'p-title', 'scrub', 's-title', 's-time', 's-start', 's-end',
-    's-delta', 's-played', 's-now', 's-knob', 'about', 'about-table', 'lang', 'sources', 'search', 'setup', 'search-more', 'groups-bar', 'channels-bar'];
+    's-delta', 's-played', 's-now', 's-knob', 'about', 'about-table', 'lang', 'sources', 'search', 'setup', 'search-more', 'groups-bar', 'channels-bar',
+    'cards', 'clist', 'cards-bar', 'clist-bar', 'about-bar', 'sources-bar', 'lang-bar', 'search-bar', 'p-bar'];
 
   // Desktop check only: fit the 1920×1080 TV layout into the browser window. Right to left the canvas overflows
   // the window to the left, so it is scaled toward its right edge (boot sets the language before the first fit).
@@ -98,6 +99,20 @@ var UI = (function () {
     if (thumb.style.transform !== t) { thumb.style.webkitTransform = t; thumb.style.transform = t; }
   }
 
+  // { first, count, total } of a list of rows scrolled by scrollTop or with rows taken out (📡, the languages, ⚙ / ℹ): the
+  // rows completely inside it — what scrollBar shows (owner 2026-10-28: «везде где есть список должен быть ползунок»).
+  // One layout read, on these screens only; null without a layout.
+  function listShown(list) {
+    var rows = list.children, top = list.scrollTop, h = list.clientHeight, first = -1, count = 0;
+    if (!h) return null;
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].style.display === 'none') continue;
+      var y = rows[i].offsetTop - top;
+      if (y >= -0.5 && y + rows[i].offsetHeight <= h + 0.5) { if (first < 0) first = i; count++; }
+    }
+    return { first: Math.max(0, first), count: count, total: rows.length };
+  }
+
   // The search results' list-end line (the menu's columns show their place with scroll bars instead).
   function listEnd(id, rest, at) {
     var e = el[id], text = rest === null ? '' : rest > 0
@@ -125,6 +140,6 @@ var UI = (function () {
   return {
     STICKY: STICKY, init: init, fitDesktop: fitDesktop, show: show, banner: banner, bannerTech: bannerTech, hideBanner: hideBanner, bannerShown: bannerShown,
     toast: toast, spinner: spinner, spinnerAfter: spinnerAfter, numEntry: numEntry, fatal: fatal, panelTitle: panelTitle, scrub: scrub, about: about,
-    listEnd: listEnd, scrollBar: scrollBar
+    listEnd: listEnd, scrollBar: scrollBar, listShown: listShown
   };
 }());

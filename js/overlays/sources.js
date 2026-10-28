@@ -47,8 +47,10 @@
     var html = '';
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i], on = r.id === active || holds(r, active);
-      html += '<div class="src-row' + (i === cursor ? ' sel' : '') + (on ? ' on' : '') + '">' +
-        '<span class="src-t">' + Util.esc(r.name) + '</span><span class="src-s">' + Util.esc(sub(r)) + '</span></div>';
+      // The free provider's row says what free channels are (owner 2026-10-28), on a line of its own under it.
+      html += '<div class="src-row' + (i === cursor ? ' sel' : '') + (on ? ' on' : '') + (r.kind === 'free' ? ' free' : '') + '">' +
+        '<span class="src-t">' + Util.esc(r.name) + '</span><span class="src-s">' + Util.esc(sub(r)) + '</span>' +
+        (r.kind === 'free' ? '<span class="src-w">' + Util.esc(I18n.t('src.freeNote')) + '</span>' : '') + '</div>';
     }
     var list = Util.$('sources-list');
     list.innerHTML = html;
@@ -56,6 +58,7 @@
     var sel = list.children[cursor];
     if (sel && sel.offsetTop + sel.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = sel.offsetTop + sel.offsetHeight - list.clientHeight;
     else if (sel && sel.offsetTop < list.scrollTop) list.scrollTop = sel.offsetTop;
+    UI.scrollBar('sources-bar', UI.listShown(list));
   }
 
   function disarm() { clearTimeout(armTimer); armTimer = null; armed = ''; }

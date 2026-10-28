@@ -61,9 +61,8 @@ var Banner = (function () {
     var t = at.t, nn = EPG.nowNext(c.id, t), cur = nn.cur, next = nn.next;
     return {
       num: c.num, logo: c.logo, title: I18n.iso(c.name) + (at.extra ? '   ·   ' + at.extra : ''), tech: at.tech,
-      // U+2060 word joiners keep "21:00–22:00" on one line when the title wraps.
       // The same programme and text as the menu row (EPG.shown / EPG.label); an ended one keeps «(шла до HH:MM)».
-      now: cur ? '\u200e' + Util.hhmm(new Date(cur.start)) + '\u2060–\u2060' + Util.hhmm(new Date(cur.stop)) + '\u200e  ' + EPG.label(nn.shown) : '',
+      now: cur ? Util.span(cur.start, cur.stop) + '  ' + EPG.label(nn.shown) : '',
       next: next ? I18n.t('b.next', Util.hhmm(new Date(next.start)), I18n.iso(next.title)) : '',
       progress: cur ? (t - cur.start) / (cur.stop - cur.start) * 100 : 0
     };

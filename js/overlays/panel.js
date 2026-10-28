@@ -30,6 +30,7 @@
       return { num: Util.hhmm(new Date(p.start)), logo: '', title: p.title, own: !!l.length, past: past,   // own: a programme, not our «loading»
         sub: onAir ? I18n.t('p.onAir') : (past && archive ? I18n.t('p.archived') : '') };
     } });
+    UI.scrollBar('p-bar', ListView.shown('programmes'));
   }
 
   function onAirIndex(l, now, isCur) {
