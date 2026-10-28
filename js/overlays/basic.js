@@ -8,7 +8,7 @@
 //    then «📡 Провайдеры», «⚙ Настройки», «ℹ О программе»): a provider group by its first word, ours by its name; the name
 //    and the count at one place on every card. OK opens a group's list, or our screen as the menu does; Back closes.
 // Both end with a help bar. Nothing wraps round: the edges stop. The layout is a setting («⚙ Настройки» → «Вид меню»),
-// Advanced by default; 'menu' opens the one chosen (Overlay.alias), decided at each opening, so a change needs no restart.
+// Basic by default (CONFIG.MENU_BASIC_DEFAULT); 'menu' opens the one chosen (Overlay.alias), decided at each opening, so a change needs no restart.
 // The rows, logos and "now" lines are the menu's own (ChannelView, ListRows, ListView, Logos, NowLines).
 var BasicMenu = (function () {
   var STORE = 'menuBasic';

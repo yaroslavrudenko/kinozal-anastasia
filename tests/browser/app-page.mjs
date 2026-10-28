@@ -58,7 +58,7 @@ export async function openApp(opts) {
     else done = req.abort();
     Promise.resolve(done).catch(() => {});
   });
-  await page.evaluateOnNewDocument((k, lang) => { localStorage.setItem('ottKey', JSON.stringify(k)); if (lang) localStorage.setItem('lang', JSON.stringify(lang)); }, f.FAKE_KEY, opts.lang || '');
+  await page.evaluateOnNewDocument((k, lang) => { localStorage.setItem('ottKey', JSON.stringify(k)); localStorage.setItem('menuBasic', 'false');   /* these pages test the Detailed menu */ if (lang) localStorage.setItem('lang', JSON.stringify(lang)); }, f.FAKE_KEY, opts.lang || '');
   await page.goto(ORIGIN + '/index.html', { waitUntil: 'load' });
   await page.waitForFunction(() => document.getElementById('b-title') && document.getElementById('b-title').textContent, { timeout: 15000 });
   await new Promise((r) => setTimeout(r, 1500));            // the guide of the first channel arrives

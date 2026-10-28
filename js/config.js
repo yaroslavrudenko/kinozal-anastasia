@@ -113,7 +113,7 @@ var CONFIG = {
   VISIBLE_ROWS: 13,
   // «Вид меню» (owner 2026-10-28): «Подробный» (Advanced, the groups and channels side by side) or «Крупный» (Basic, for
   // poor eyesight: big group cards, then a big full-screen channel list)
-  MENU_BASIC_DEFAULT: false,   // the layout until the viewer chooses one: Advanced, the menu as it was
+  MENU_BASIC_DEFAULT: true,    // the layout until the viewer chooses one: Basic, the large menu (owner 2026-10-28)
   BASIC_COLS: 3,               // Basic: cards per row (a 15-letter Russian group name stays whole at 60 px)
   BASIC_CARD_ROWS: 3,          // Basic: rows of cards on screen; the window moves one row at a time
   BASIC_ROWS: 8,               // Basic: the list's rows (the pool): 7 one-line rows fit whole, wrapped ones fewer (owner 2026-10-28)

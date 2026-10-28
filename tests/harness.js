@@ -548,7 +548,8 @@ function createApp(opts) {
   for (const src of index.scripts) {
     const file = path.join(ROOT, src);
     vm.runInContext(fs.readFileSync(file, 'utf8'), sandbox, { filename: file });
-    if (/(^|\/)config\.js$/.test(src) && sandbox.CONFIG) Object.assign(sandbox.CONFIG, o.config);
+    // The tests written for the Detailed menu run it unless they ask for the shipped default: MENU_BASIC_DEFAULT: true.
+    if (/(^|\/)config\.js$/.test(src) && sandbox.CONFIG) Object.assign(sandbox.CONFIG, { MENU_BASIC_DEFAULT: false }, o.config);
   }
 
   function dispatchDoc(type, event) {

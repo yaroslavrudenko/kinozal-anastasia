@@ -38,7 +38,18 @@ function toCard(app, name) {
 }
 
 // ---------- the setting ----------
-test('basic: Advanced by default; «Вид меню» is the last row of «⚙ Настройки»; OK switches to Basic (stored, said), Back opens the cards — no restart; only the layout in use is laid out (B7)', () => {
+test('basic: the large menu is the shipped default — config.js says so, and a fresh app with nothing stored opens it (owner 2026-10-28)', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'js', 'config.js'), 'utf8');
+  assert.match(src, /MENU_BASIC_DEFAULT:\s*true\b/);
+  const app = f.untilPlaying(f.ottApp({ channels: 12, config: { MENU_BASIC_DEFAULT: true } }));
+  app.advance(2000);
+  app.press(KEYS.ENTER, 300);
+  assert.ok(app.visible('clist') && !app.visible('guide'), 'OK on the picture did not open the large list');
+  app.press(KEYS.BACK, 300);
+  assert.ok(app.visible('cards'), 'Back did not show the cards');
+  assert.equal(app.storage.raw.get('menuBasic'), undefined, 'the default was written as a choice');
+});
+test('basic: Advanced when the shipped default is off; «Вид меню» is the last row of «⚙ Настройки»; OK switches to Basic (stored, said), Back opens the cards — no restart; only the layout in use is laid out (B7)', () => {
   const app = f.untilPlaying(f.ottApp({ channels: 12 }));
   app.advance(2000);
   app.press(KEYS.ENTER, 300);

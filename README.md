@@ -153,7 +153,7 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't: menus th
 
 - **A new app icon.** A pen-drawn eye with a gold iris above «Настин кинозал» in large gold script, on night blue. The lettering is twice as large as before, so the name reads from the sofa. After installing, the TV shows it in the app list once it has been restarted (hold the power button).
 - **A larger icon in ⚙ Settings and ℹ About**: 180 px instead of 72 px.
-- **A large menu for low vision.** A new setting, **⚙ Settings → Menu view**, switches between **Large** («Крупный») and **Detailed** («Подробный», the default and the menu you know).
+- **A large menu for low vision.** A new setting, **⚙ Settings → Menu view**, switches between **Large** («Крупный», the default) and **Detailed** («Подробный», the menu you know).
 - **Large menu, channels.** OK on the picture opens the channel list of the group you are watching, on the channel you are watching. Every channel has its own band with a big logo and a big name, what is on now under it (long titles wrap, nothing is cut off), **minutes left** with the programme's progress bar under them, ★ for favourites and ▶ for the channel playing. ◀ ▶ turn pages, as CH+ / CH− do; ◀ on the first page goes back to the groups, ▶ on the last page stops.
 - **Large menu, groups.** Back shows every group as a big card, three by three: one word for the name and the channel count on one line, so the eye finds both at once. **🔍 Search**, **📡 Providers**, **⚙ Settings** and **ℹ About** are cards too, and a help bar at the bottom names the keys.
 - **A gentle cursor.** The focus in the large menu is a calm, soft fill, and the detailed menu's bright blue cursor is now a gentle slate too (white text at 7.2:1 contrast).
