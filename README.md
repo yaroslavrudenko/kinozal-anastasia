@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/icon.png" width="160" alt="Настин кинозал icon: a pen-drawn eye with a gold iris above the name Настин кинозал in gold script">
+  <img src="docs/app-icon.png" width="160" alt="Настин кинозал icon: a pen-drawn eye with a gold iris above the name Настин кинозал in gold script">
 </p>
 
 <h1 align="center">Настин кинозал · Nastin Kinozal</h1>
