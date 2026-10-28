@@ -19,6 +19,7 @@ var I18n = (function () {
     'g.ua': ['Украина', 'Україна', 'אוקראינה', 'Ukraine'],
     'g.providers': ['📡 Провайдеры', '📡 Провайдери', '📡 ספקים', '📡 Providers'],
     'g.settings': ['⚙ Настройки', '⚙ Налаштування', '⚙ הגדרות', '⚙ Settings'],
+    'g.about': ['ℹ О программе', 'ℹ Про програму', 'ℹ אודות', 'ℹ About'],
     'g.none': ['Без группы', 'Без групи', 'ללא קבוצה', 'No group'],
     // the free provider and its playlists
     'p.iptvorg': ['iptv-org — бесплатные каналы', 'iptv-org — безкоштовні канали', 'iptv-org — ערוצים בחינם', 'iptv-org — free channels'],
@@ -61,6 +62,7 @@ var I18n = (function () {
     'set.empty': ['Поле пустое.', 'Поле порожнє.', 'השדה ריק.', 'The field is empty.'],
     // «Настройки»
     'st.hint': ['▲▼ — выбрать · OK — открыть или переключить · Назад — закрыть', '▲▼ — вибрати · OK — відкрити або перемкнути · Назад — закрити', '\u200e▲▼\u200e — בחירה · OK — פתיחה או החלפה · חזרה — סגירה', '▲▼ — choose · OK — open or switch · Back — close'],
+    'ab.hint': ['OK — открыть профиль автора · Назад — закрыть', 'OK — відкрити профіль автора · Назад — закрити', 'OK — פתיחת הפרופיל של היוצר · חזרה — סגירה', 'OK — open the author\'s profile · Back — close'],
     'st.dedication': ['Эта программа сделана специально в честь моей супруги Анастасии и для неё —\nчтобы в свободное время она включала телевизор, отдыхала и получала удовольствие от жизни. 💐', 'Цю програму зроблено спеціально на честь моєї дружини Анастасії й для неї —\nщоб у вільний час вона вмикала телевізор, відпочивала й насолоджувалася життям. 💐', 'התוכנה הזאת נעשתה במיוחד לכבוד רעייתי אנסטסיה ובשבילה —\nכדי שבזמנה הפנוי תדליק את הטלוויזיה, תנוח ותיהנה מהחיים. 💐', 'This app was made especially in honour of my wife Anastasia and for her —\nso that in her free time she can switch on the TV, rest and enjoy life. 💐'],
     // 🌐 first: the row is found by its shape in a language the viewer cannot read.
     'st.language': ['🌐 Язык интерфейса', '🌐 Мова інтерфейсу', '🌐 שפת הממשק', '🌐 Interface language'],

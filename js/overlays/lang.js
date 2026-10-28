@@ -28,7 +28,7 @@
 
   function choose(l) {
     if (restarting) return;                    // a second OK before the restart would change it again
-    if (l === I18n.code()) { Overlay.open('about'); return; }
+    if (l === I18n.code()) { Overlay.open('settings'); return; }
     restarting = true;
     var c = Playback.current();                // the landing-save timer would not fire before the reload
     if (c) Sources.rememberLanding(c);
@@ -42,7 +42,7 @@
     var n = I18n.langs().length;
     if (k === K.UP || k === K.DOWN) { cursor = (cursor + (k === K.UP ? -1 : 1) + n) % n; render(); }
     else if (k === K.ENTER) choose(I18n.langs()[cursor]);
-    else if (Keys.isBack(k)) Overlay.open('about');
+    else if (Keys.isBack(k)) Overlay.open('settings');
   }
 
   Overlay.register('lang', { open: open, close: close, onKey: onKey, render: render });

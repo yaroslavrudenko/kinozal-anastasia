@@ -60,15 +60,14 @@ test('picture fit: the setting «Картинка во весь экран» in 
 
 
 // Owner, 2026-10-27: «перейти на пункт автора, нажать «Ввод», и открылся браузер с моим LinkedIn-профайлом».
-test('settings: «Автор» (the last item); OK on it opens the author\'s LinkedIn profile in the TV\'s browser', () => {
+test('about: «Автор» is in «ℹ О программе»; OK on it opens the author\'s LinkedIn profile in the TV\'s browser', () => {
   const app = f.untilPlaying(f.ottApp({ channels: 3 }));
   app.press(KEYS.ENTER, 300);
   app.press(KEYS.LEFT, 100);
-  for (let i = 0; i < 40 && (app.cursorRow('groups') || '').indexOf('⚙ Настройки') !== 0; i++) app.press(KEYS.DOWN, 10);
+  for (let i = 0; i < 40 && (app.cursorRow('groups') || '').indexOf('ℹ О программе') !== 0; i++) app.press(KEYS.DOWN, 10);
   app.press(KEYS.ENTER, 300);
   assert.match(app.text('about-table') || '', /Автор\s*Ярослав Руденко/);
-  app.press(KEYS.UP, 100);                               // «Автор» is the last item: ▲ from the first wraps to it
-  app.press(KEYS.ENTER, 300);
+  app.press(KEYS.ENTER, 300);                            // «Автор» is the only item, under the cursor
   const opened = app.events.filter((e) => e.type === 'appcontrol');
   assert.deepEqual(opened.map((e) => [e.operation, e.uri]), [['http://tizen.org/appcontrol/operation/view', 'https://www.linkedin.com/in/yaroslav-rudenko-2303']]);
 });

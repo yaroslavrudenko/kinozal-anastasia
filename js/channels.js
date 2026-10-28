@@ -40,7 +40,8 @@ var Channels = (function () {
     // A provider group is keyed by its own text; the one for channels with none is ours (key 'none', translated).
     for (var j = 0; j < order.length; j++) groups.push({ key: order[j] ? 'grp:' + order[j] : 'none', name: names[order[j]], items: byGroup[order[j]], own: !!order[j] });
     groups.push({ key: 'sources', name: I18n.t('g.providers'), items: [], sources: true });
-    groups.push({ key: 'about', name: I18n.t('g.settings'), items: [], about: true });
+    groups.push({ key: 'settings', name: I18n.t('g.settings'), items: [], settings: true });
+    groups.push({ key: 'about', name: I18n.t('g.about'), items: [], about: true });
   }
   function byNameNumber(a, b) { return ORDER.nameNumber(list[a].name) - ORDER.nameNumber(list[b].name) || a - b; }
 
@@ -107,12 +108,12 @@ var Channels = (function () {
   function setShowAdult(on) { showAdult = on; Util.save('showAdult', on); rebuild(); }
   function adultShown() { return showAdult; }
 
-  // Groups the provider defines (not search, all, favourites, the pinned countries, «📡 Провайдеры» or «⚙ Настройки»).
+  // Groups the provider defines (not search, all, favourites, the pinned countries, «📡 Провайдеры», «⚙ Настройки» or «ℹ О программе»).
   function providerGroupCount() {
     var n = 0;
     for (var g = 0; g < groups.length; g++) {
       var x = groups[g];
-      if (!x.search && !x.all && !x.fav && !x.pinned && !x.about && !x.sources) n++;
+      if (!x.search && !x.all && !x.fav && !x.pinned && !x.settings && !x.about && !x.sources) n++;
     }
     return n;
   }

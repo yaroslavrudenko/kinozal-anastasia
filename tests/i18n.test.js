@@ -303,9 +303,11 @@ test('i18n: an entry with no name is not taken for an Israeli channel in Hebrew 
 test('i18n: the «⚙ Настройки» screen is titled as its menu row — in Russian, Ukrainian, Hebrew and English (owner 2026-10-28: «экран - Настройки»)', () => {
   for (const lang of ['ru', 'uk', 'he', 'en']) {
     const app = withLang(lang);
-    vm.runInContext('Overlay.open("about")', app.ctx);
-    assert.ok(app.visible('about'), lang);
-    assert.equal(app.text('about-title'), ev(app, 'I18n.t("g.settings")'), lang);
-    assert.ok(groupNames(app).indexOf(app.text('about-title')) >= 0, lang + ': not the menu row\'s name');
+    for (const [screen, key] of [['settings', 'g.settings'], ['about', 'g.about']]) {
+      vm.runInContext('Overlay.open("' + screen + '")', app.ctx);
+      assert.ok(app.visible('about'), lang + ' ' + screen);
+      assert.equal(app.text('about-title'), ev(app, 'I18n.t("' + key + '")'), lang + ' ' + screen);
+      assert.ok(groupNames(app).indexOf(app.text('about-title')) >= 0, lang + ' ' + screen + ': not the menu row\'s name');
+    }
   }
 });

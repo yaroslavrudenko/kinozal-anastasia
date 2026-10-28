@@ -90,7 +90,7 @@
   };
   T.groups = function () {
     var g = Channels.groups(), out = [], i;
-    for (i = 0; i < g.length; i++) out.push({ i: i, name: g[i].name, count: g[i].items.length, special: !!(g[i].search || g[i].about) });
+    for (i = 0; i < g.length; i++) out.push({ i: i, name: g[i].name, count: g[i].items.length, special: !!(g[i].search || g[i].settings || g[i].about) });
     return out;
   };
   T.chByNum = function (n) { var c = Channels.byNum(+n); return c ? { id: c.id, name: c.name, key: c.key, num: c.num } : null; };

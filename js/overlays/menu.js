@@ -60,17 +60,18 @@
     UI.scrollBar('channels-bar', ListView.shown('channels'));
     NowLines.update();
   }
-  // own: a provider's group. Our rows with an icon («🔍 Поиск», «★ Избранное», «📡 Провайдеры», «⚙ Настройки» — I18n's
+  // own: a provider's group. Our rows with an icon («🔍 Поиск», «★ Избранное», «📡 Провайдеры», «⚙ Настройки», «ℹ О программе» — I18n's
   // «<icon> <name>») show it in a box of its own (css .grow .t > i), so a small ⚙ and a wide 🔍 leave their names on one
   // edge (review 4, D6).
   function groupRow(i) {
-    var g = groups()[i], icon = g.search || g.fav || g.sources || g.about ? g.name.indexOf(' ') + 1 : 0;
-    return { num: '', logo: '', pre: g.name.substring(0, icon), title: g.name.substring(icon), own: !!g.own, sub: g.search || g.about || g.sources ? '' : g.items.length };
+    var g = groups()[i], icon = g.search || g.fav || g.sources || g.settings || g.about ? g.name.indexOf(' ') + 1 : 0;
+    return { num: '', logo: '', pre: g.name.substring(0, icon), title: g.name.substring(icon), own: !!g.own, sub: g.search || g.settings || g.about || g.sources ? '' : g.items.length };
   }
 
-  // Search, «📡 Провайдеры» and «⚙ Настройки» are rows of the group column that open their own screens.
+  // Search, «📡 Провайдеры», «⚙ Настройки» and «ℹ О программе» are rows of the group column that open their own screens.
   function openSpecial(g) {
     if (g.search) { Overlay.open('search'); return true; }
+    if (g.settings) { Overlay.open('settings'); return true; }
     if (g.about) { Overlay.open('about'); return true; }
     if (g.sources) { Overlay.open('sources'); return true; }
     return false;

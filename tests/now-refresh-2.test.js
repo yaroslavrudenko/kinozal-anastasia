@@ -240,13 +240,13 @@ test('now healthy (DEC-2026-10-26-now-refresh-2): after 30, 40 and 60 min on one
   const app = providerApp({ channels: 60 });
   app.press(KEYS.ENTER, 1000);
   const t0 = app.clock.now;
-  const groups = JSON.parse(vm.runInContext('JSON.stringify(Channels.groups().map(function (g) { return g.search || g.about || g.sources ? 0 : g.items.length; }))', app.ctx));
+  const groups = JSON.parse(vm.runInContext('JSON.stringify(Channels.groups().map(function (g) { return g.search || g.settings || g.about || g.sources ? 0 : g.items.length; }))', app.ctx));
   const bad = [];
   let seen = 0;
   for (const at of [30, 40, 60]) {
     app.advance(t0 + at * MIN - app.clock.now);
     app.press(KEYS.LEFT, 100);
-    for (let gi = 1; gi < groups.length - 2; gi++) {          // the last two rows: 📡 Провайдеры, ⚙ Настройки
+    for (let gi = 1; gi < groups.length - 3; gi++) {          // the last three rows: 📡 Провайдеры, ⚙ Настройки, ℹ О программе
       if (gi > 1) app.press(KEYS.DOWN, 100);
       app.press(KEYS.RIGHT, 100);
       for (let shown = 0; shown < groups[gi]; ) {
@@ -257,7 +257,7 @@ test('now healthy (DEC-2026-10-26-now-refresh-2): after 30, 40 and 60 min on one
       }
       app.press(KEYS.LEFT, 100);
     }
-    for (let gi = groups.length - 3; gi > 1; gi--) app.press(KEYS.UP, 100);
+    for (let gi = groups.length - 4; gi > 1; gi--) app.press(KEYS.UP, 100);
     app.press(KEYS.RIGHT, 100);
   }
   assert.ok(seen >= 3 * 2 * 60, 'only ' + seen + ' rows checked');

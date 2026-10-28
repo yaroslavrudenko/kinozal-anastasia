@@ -50,7 +50,7 @@ test('screen details: the key prompt wraps within 1400 px, centred, inside the s
   }
 });
 
-test('screen details: «🔍 Поиск», «★ Избранное», «📡 Провайдеры», «⚙ Настройки» start their names on one edge — ru and he (review 4, D6)', async () => {
+test('screen details: «🔍 Поиск», «★ Избранное», «📡 Провайдеры», «⚙ Настройки», «ℹ О программе» start their names on one edge — ru and he (review 4, D6)', async () => {
   for (const lang of ['ru', 'he']) {
     const a = await app(lang);
     await a.page.evaluate(() => { Favs.toggle(Channels.at(0).key); Channels.rebuild(); });
@@ -75,7 +75,7 @@ test('screen details: «🔍 Поиск», «★ Избранное», «📡 П
     await a.settle();
     for (const x of await look()) seen.set(x[0], x);
     const m = { icons: [...seen.values()].filter((x) => x[2]), plain: [...seen.values()].filter((x) => !x[2]) };
-    assert.deepEqual(m.icons.map((x) => x[0].slice(0, 2)).sort(), ['★ ', '⚙ ', '📡', '🔍'].sort(), lang + ': ' + JSON.stringify(m.icons));
+    assert.deepEqual(m.icons.map((x) => x[0].slice(0, 2)).sort(), ['★ ', '⚙ ', 'ℹ ', '📡', '🔍'].sort(), lang + ': ' + JSON.stringify(m.icons));
     const edges = m.icons.map((x) => x[1]);
     assert.ok(Math.max(...edges) - Math.min(...edges) <= 1, lang + ': names start at ' + JSON.stringify(m.icons));
     // A provider group has no icon box: its name starts at the row's start edge, as before.
@@ -155,7 +155,8 @@ test('screen details: a focused group does not grow — «⚙ Настройки
     const a = await app(lang);
     await a.press(K.ENTER);
     await a.press(lang === 'he' ? K.RIGHT : K.LEFT);
-    for (let i = 0; i < 30; i++) await a.key(K.DOWN);                 // the cursor on the last row, «⚙»
+    for (let i = 0; i < 30; i++) await a.key(K.DOWN);                 // the cursor on the last row, «ℹ»
+    await a.key(K.UP);                                                // and one up, on «⚙»
     await a.settle();
     const geo = () => a.page.evaluate(() => {
       const rtl = document.documentElement.dir === 'rtl', card = document.getElementById('groups').getBoundingClientRect();

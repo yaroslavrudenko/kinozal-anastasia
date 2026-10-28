@@ -52,6 +52,10 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't: menus th
 
 ## ✨ What's new
 
+### 1.9.3
+
+- **⚙ Settings and ℹ About are two separate rows of the menu.** Settings holds only what you switch; About holds the dedication, the version, the TV and the author.
+
 ### 1.9.2
 
 - **Logo work never delays startup:** logos are fetched only after the channel list and the first picture, so the list is ready as fast as before.
@@ -92,7 +96,7 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't: menus th
 | 💾 **Remembers you** | Each provider keeps your last channel and group; the app opens where you left off. |
 | 🛡 **Survives bad networks** | Every stall, error or network drop reconnects with backoff (0.5 s up to 15 s). If the list server is down, the last list is shown and updates by itself. |
 | 🔑 **Your key stays with OTT Club** | Used exactly as typed and only ever sent to OTT Club (pinned by tests). |
-| 👤 **About** | **⚙ Settings** shows the version, build, TV model, Tizen and engine version, player, provider, channel count and buffer settings; **Author** opens the author's LinkedIn profile in the TV's browser. |
+| 👤 **About** | **ℹ About** shows the version, build, TV model, Tizen and engine version, player, provider, channel count and buffer settings; **Author** opens the author's LinkedIn profile in the TV's browser. |
 
 ## See it in action
 
@@ -168,7 +172,7 @@ The provider you are watching is marked **● now**.
 
 **Change it:** **⚙ Settings → 🌐 Interface language → OK**. The list shows all four languages, each written in itself, the current one marked ✓. Pick one with ▲ ▼ and press OK. The app restarts in that language on the same channel and group. Back, or OK on the current language, changes nothing. The 🌐 sign leads the row, so you can find it even in a language you cannot read.
 
-- **Translated:** everything the app writes, including the groups the app forms itself — **🔍 Search, All channels, ★ Favourites, Israel, Ukraine, No group, 📡 Providers, ⚙ Settings**.
+- **Translated:** everything the app writes, including the groups the app forms itself — **🔍 Search, All channels, ★ Favourites, Israel, Ukraine, No group, 📡 Providers, ⚙ Settings, ℹ About**.
 - **Never translated:** the provider's group names, channel names and programme titles. They appear exactly as the provider writes them, in any interface language.
 - **Mixed scripts read correctly:** a Hebrew name in an English menu, or a Latin or Cyrillic one in the Hebrew menu, keeps its own direction, wrapped lines included. Technical text (host names, picture sizes) always reads left to right.
 
@@ -191,7 +195,7 @@ The basic Samsung Smart Remote is enough; number and colour keys are optional.
 
 ## ⚙ Settings
 
-OK (channel menu) → **⚙ Settings**, the last row of the groups. ▲ ▼ choose, OK opens or switches, Back closes.
+OK (channel menu) → **⚙ Settings**, the row after **📡 Providers**. ▲ ▼ choose, OK opens or switches, Back closes.
 
 | Row | What it does | Default |
 |---|---|---|
@@ -199,7 +203,8 @@ OK (channel menu) → **⚙ Settings**, the last row of the groups. ▲ ▼ choo
 | **Fast channel switching** | keeps the player between channels for faster switching | on |
 | **Full-screen picture** | yes — the picture fits the screen exactly · no — the stream's own proportions | yes |
 | **Adult channels** | shown in the menu · hidden | hidden |
-| **Author** | opens the author's LinkedIn profile in the TV's browser | — |
+
+**ℹ About**, the last row of the groups, shows the dedication, the version, build, TV, player, provider, channels and buffer settings. **Author** opens the author's LinkedIn profile in the TV's browser.
 
 ## ⚡ Performance: what improved and why
 
@@ -244,7 +249,7 @@ Performance never costs freshness: no refresh is made rarer to look faster, and 
 
 | | |
 |---|---|
-| **Automated tests** | **433 tests, all passing**, in 50 files: 38 behaviour suites and 12 headless‑browser layout suites. The browser suites check wrapping, paging, scroll bars, logo boxes, mixed‑direction text and the Hebrew right‑to‑left layout. |
+| **Automated tests** | **437 tests, all passing**, in 51 files: 39 behaviour suites and 12 headless‑browser layout suites. The browser suites check wrapping, paging, scroll bars, logo boxes, mixed‑direction text and the Hebrew right‑to‑left layout. |
 | **Mutation‑proven fixes** | For every fix, the guard is removed and the test must turn red, then the guard is restored and it must turn green again. |
 | **Independent reviews** | Every batch is reviewed by people who did not write it: a native code reviewer, Codex as an external reviewer, and a performance analyst (plus a designer for layout). The first full review raised 230 findings, and every one was given a status. |
 | **On the real TV** | Every release is measured on a 2017 UE50MU7000. The scenarios drive the app with remote key events through its inspector and read the results inside the TV page, on one clock. The raw logs are committed next to each scenario. |

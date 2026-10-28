@@ -89,12 +89,12 @@ for (const lang of ['ru', 'uk', 'he', 'en']) {
   test('i18n browser: in ' + lang + ' a message in «⚙ Settings» and «📡 Providers» covers neither the icon, the title nor a row', async () => {
     const { page } = await app(lang);
     const hits = [];
-    for (const screen of ['about', 'lang', 'sources']) {
+    for (const screen of ['settings', 'about', 'lang', 'sources']) {
       const r = await page.evaluate((screen) => {
         Overlay.open(screen);
         UI.toast(I18n.t('m.languageSet', I18n.name()) + ' · ' + I18n.t('st.opening', 'https://www.linkedin.com/in/yaroslav-rudenko-2303'), 5000);
         const t = document.getElementById('toast').getBoundingClientRect();
-        const root = document.getElementById(screen);
+        const root = document.getElementById(screen === 'settings' ? 'about' : screen);
         const parts = Array.from(root.querySelectorAll('.about-icon, .about-title, .src-note, .about-row, .src-row')).map((e) => [e.className, e.getBoundingClientRect()]);
         const over = parts.filter(([, b]) => b.height && b.left < t.right && b.right > t.left && b.top < t.bottom && b.bottom > t.top).map(([c]) => c);
         Overlay.close();
