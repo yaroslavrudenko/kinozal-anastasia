@@ -56,7 +56,20 @@ Owner's case: menu open, CH− ×3 then CH+ ×3, 250 ms apart. Per animation fra
 | Reopen menu | 74 | 87 | 90 · 75 · 79 | 75 · 76 · 99 | 75 · 76 · 94 |
 | Pick a channel → playing | 1149 | 1204 | 1386 · 1136 · 1181 | 1318 · 1232 · 1291 | 1222 · 1280 · 1351 |
 
-**Open item:** the first menu opening on build f is 10–35 ms slower than on builds a and b in the same group. On the desktop at 6× CPU it is unchanged. The cause is being attributed with a TV probe.
+**First opening, attributed** (`f-batch5/open-probe/`, `scenarios/s-openprobe.mjs`). Each run is a fresh launch in «Кино». P1 is the first opening; the figures are medians of key → 2nd frame.
+
+| Variant | P1 | Runs |
+|---|---|---|
+| As built | 118 ms | 105 · 118 · 148 |
+| Next-page prefetch off | 120 ms | 105 · 120 · 133 |
+| Logos off entirely | 128 ms | 104 · 128 · 132 |
+
+- **Findings:**
+  - `requestIdleCallback` exists on the TV, and no logo download starts before the frame.
+  - The JavaScript of the key (open, render, fill, logo calls) takes 17–25 ms.
+  - The rest, 85–126 ms, is the browser's first paint of the menu between the two frames. It is the same with the logos turned off.
+- **Verdict:** the logo pipeline is not the cause. The first opening varies by about one frame from launch to launch (b: 90–105, f: 105–148); reopening is 67–111 ms.
+- **No fix is applied.** It stays a watch item, and comparing first-paint cost across builds needs ≥10 launches each.
 
 ## Streams
 
