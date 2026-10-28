@@ -2457,3 +2457,32 @@ the P-2 held test renamed (the group is loaded in the background). Mutation: 12/
 **Acceptance (desktop 20× CPU, 3 runs per tree, `scratchpad/batch7/perf/agg.txt`):** logos seen arriving 0 in every phase
 (1.8.4: 9–72 per cold phase); key→2nd frame medians equal or better; frames over 34 ms fewer in total, but two phases have
 one frame more than 1.8.4 in one of three runs (▼ ×6 inside a page; CH− at 250 ms). TV measurement: the coordinator's run.
+
+## Fix batch 8 — the TV regressions of batch 7 (2026-10-28)
+
+The TV run of batch 7 (coordinator): logos seen arriving 0 and empty-box frames 0 in every phase; two regressions against
+1.8.4 to fix. R1, boot: «channels ready» after a reload 1087 vs 799 ms. R2, cold CH− paging: key → 2nd frame 56–62 vs
+44–54 ms.
+- R1: js/logos.js `start()` — no idle slot, so no download, until the list is applied and the first picture is up
+  (js/zap.js `onFirstFrame`), or until a screen of logos is opened (js/listrows.js `schedule`), so a stream that never
+  plays still gets logos in the menu; `retain` returns at once when nothing is known yet (the first list).
+- R2: js/listrows.js `fill` records each row's logo and `logos()` sets them once per render, after the last fill
+  (js/listview.js `columns`); js/logos.js `put` keeps the `<img>`'s src and visibility in `logoSrc` / `logoVis` and writes
+  them only on change (no `getAttribute` read); `track` hides a picture that fails through the same mirror.
+- Tests, new `tests/logos-boot-and-keys.test.js` (3): nothing downloaded before the first picture, then they load (a pin:
+  green before as well); a menu opened while no picture ever came gets its logos (red before: 13 downloaded while hidden
+  and no picture); a page key sets each row's logo once, ▲ inside a page writes nothing (red before: 26 src writes on a
+  page up with the layout's correcting fill).
+- Mutation (`scratchpad/batch8/mut-out.txt`): 4 killed (no start gate; an opened screen does not start; visibility written
+  when unchanged; logos set in every fill again). 3 survive: the correcting fill calling `logos()` once more (equivalent:
+  same start, the mirror writes nothing — replaced by the «every fill» mutant, killed), src written when unchanged (put
+  returns before it in every path a test reaches), and `retain`'s early return (performance only).
+- Continued (second implementer): the start gate had also taken the logos away from the menu laid out ahead at the
+  4th failed attempt (P4-2). On the desktop, which has no stream, this showed as 12 logos seen arriving and 25–28 frames with an
+  empty box on «open menu». The rule's other half, «a screen of logos opened starts them», came too late for a hidden menu.
+  js/app.js `prepareMenu` now starts Logos once a list is applied. New test 4: no download during the silent retries, then
+  the hidden menu loads its page and opens with every box full. It is red without the fix (0 logos) and red on batch 7 (the
+  banner's logo was downloaded during the silent retries).
+  Test 3 gained an in-frame check: right after a page key, every row whose logo is already loaded shows it. It killed a
+  mutant that deferred the logo writes to a 100 ms timer. A 0 ms timer survives: the harness runs due timers inside `press`.
+  Suite 402/402. By-name against batch 7 r40: 0 newly failing, 0 absent, 4 new.

@@ -7,7 +7,7 @@ var CONFIG = {
   OTT_KEY: '__OTT_KEY__',
   PLAYLIST_URL: '__PLAYLIST_URL__',
   EPG_URL: '',                 // empty = use url-tvg from the playlist header
-  VERSION: '1.9.1',            // must equal config.xml's version
+  VERSION: '1.9.2',            // must equal config.xml's version
   BUILD: '__BUILD__',          // filled by build.sh: commit and date
   // «📡 Провайдеры» (owner, 2026-10-27: a source is a provider; inside it the channels are grouped as the
   // provider gives them; a provider that gives separate playlists is a source of playlists): OTT Club (key),

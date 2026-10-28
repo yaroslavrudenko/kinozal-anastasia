@@ -63,7 +63,9 @@
     optional('keys', Keys.register);   // right away: CH± and digits pressed in the first seconds must work
   }
 
-  function prepareMenu() { Overlay.prepare('menu'); }
+  // At the first frame Zap has started Logos already; at the 4th failed attempt no picture competes for the network, so
+  // the menu laid out ahead gets its page's logos too (fix batch 8 kept them waiting for a picture that never came).
+  function prepareMenu() { if (Channels.count()) Logos.start(); Overlay.prepare('menu'); }
 
   // The big centre spinner of a stream (review3 S-1, S-6; owner 2026-10-27: the viewer must not keep seeing it, buffering
   // stays): an open shows it once buffering lasted SPINNER_GRACE_START_MS, a rebuffer SPINNER_GRACE_REBUFFER_MS; it goes

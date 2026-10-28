@@ -36,13 +36,14 @@ var ListRows = (function () {
   function fill(rows, view, start, dir) {
     for (var k = 0; k < rows.length; k++) {
       var r = rows[k], idx = start + k;
-      if (idx >= view.total) { set(r, 'vis', 'hidden'); set(r, 'cls', r.cls); setLogo(r, '', ''); continue; }
+      if (idx >= view.total) { set(r, 'vis', 'hidden'); set(r, 'cls', r.cls); r.nextLogo = r.nextKey = ''; continue; }
       var m = view.row(idx), title = m.title || '', sub = m.sub === undefined ? '' : String(m.sub);
       set(r, 'vis', 'inherit');           // never 'visible': it would show the row through a menu hidden by visibility
       set(r, 'cls', r.cls + (idx === view.cursor ? (view.active ? ' focus' : ' sel') : '') + (m.past ? ' past' : '') + (m.playing ? ' playing' : ''));
       set(r, 'i', String(idx));            // list index, for mouse clicks in the desktop preview
       set(r, 'num', m.num === undefined ? '' : String(m.num));
-      setLogo(r, m.logo || '', m.key || '');
+      r.nextLogo = m.logo || '';
+      r.nextKey = m.key || '';
       set(r, 'pre', m.pre || '');
       set(r, 'title', title);
       set(r, 'tdir', m.own ? I18n.otherDir(title) : '');
@@ -50,10 +51,16 @@ var ListRows = (function () {
       set(r, 'sub', sub);
       set(r, 'sdir', m.subOwn ? I18n.otherDir(sub) : '');
     }
-    schedule(rows, view, start, dir);
   }
 
-  function hideFrom(rows, k) { for (; k < rows.length; k++) { set(rows[k], 'vis', 'hidden'); setLogo(rows[k], '', ''); } }
+  function hideFrom(rows, k) { for (; k < rows.length; k++) { set(rows[k], 'vis', 'hidden'); rows[k].nextLogo = rows[k].nextKey = ''; } }
+  // The logos, once per render after its last fill (ListView): a page up's correcting fill no longer sets every row's
+  // picture twice in the key's task (TV: cold CH− key → 2nd frame 56–62 vs 1.8.4 44–54 ms), and a logo never changes
+  // the layout read between the fills (its box is fixed).
+  function logos(rows, view, start, dir) {
+    for (var k = 0; k < rows.length; k++) setLogo(rows[k], rows[k].nextLogo, rows[k].nextKey);
+    schedule(rows, view, start, dir);
+  }
 
   function set(r, field, v) {
     if (r.last[field] === v) return;
@@ -85,6 +92,7 @@ var ListRows = (function () {
     var n = rows.length, mode = POOLS[rows.name][3], d = rows.dir = dir || rows.dir || 1, up = d < 0 && start > 0;
     var open = function () { return Overlay.mode() === mode || view.ahead && Overlay.isNone(); };
     if (!open()) return;
+    if (Overlay.mode() === mode) Logos.start();   // a screen of logos is open (even if no picture ever came)
     Logos.want(rows.name, function () {
       var urls = [], k;
       for (k = 0; k < n; k++) urls.push(logoAt(view, start + k));
@@ -96,5 +104,5 @@ var ListRows = (function () {
   }
   function logoAt(view, i) { return i >= 0 && i < view.total ? view.logo(i) : ''; }
 
-  return { get: get, fill: fill, hideFrom: hideFrom };
+  return { get: get, fill: fill, hideFrom: hideFrom, logos: logos };
 }());

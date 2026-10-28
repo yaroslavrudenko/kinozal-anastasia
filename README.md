@@ -52,6 +52,11 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't: menus th
 
 ## ✨ What's new
 
+### 1.9.2
+
+- **Logo work never delays startup:** logos are fetched only after the channel list and the first picture, so the list is ready as fast as before.
+- **Paging into pages never seen before** is a little lighter on each key.
+
 ### 1.9.1
 
 - **The big spinner stays away.** It used to appear on every channel change. Now it shows only when a channel takes longer than ~1.6 s to start: **0–1 times in 16 channel changes** on the TV.
@@ -239,7 +244,7 @@ Performance never costs freshness: no refresh is made rarer to look faster, and 
 
 | | |
 |---|---|
-| **Automated tests** | **429 tests, all passing**, in 49 files: 37 behaviour suites and 12 headless‑browser layout suites. The browser suites check wrapping, paging, scroll bars, logo boxes, mixed‑direction text and the Hebrew right‑to‑left layout. |
+| **Automated tests** | **433 tests, all passing**, in 50 files: 38 behaviour suites and 12 headless‑browser layout suites. The browser suites check wrapping, paging, scroll bars, logo boxes, mixed‑direction text and the Hebrew right‑to‑left layout. |
 | **Mutation‑proven fixes** | For every fix, the guard is removed and the test must turn red, then the guard is restored and it must turn green again. |
 | **Independent reviews** | Every batch is reviewed by people who did not write it: a native code reviewer, Codex as an external reviewer, and a performance analyst (plus a designer for layout). The first full review raised 230 findings, and every one was given a status. |
 | **On the real TV** | Every release is measured on a 2017 UE50MU7000. The scenarios drive the app with remote key events through its inspector and read the results inside the TV page, on one clock. The raw logs are committed next to each scenario. |

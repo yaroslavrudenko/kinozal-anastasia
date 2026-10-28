@@ -49,6 +49,7 @@ var ListView = (function () {
       var fit = c.h ? fitCount(c.box, c.h) : c.rows.length;
       if (c.bottom !== undefined) fit = Math.min(fit, c.bottom - c.start + 1);   // a page-up page ends at its anchor
       if (c.h) { ListRows.hideFrom(c.rows, fit); scrollState(c); }
+      ListRows.logos(c.rows, c.view, c.start, c.dir);
       starts[c.name] = c.start;
       shown[c.name] = { first: c.start, count: Math.max(1, Math.min(fit, c.view.total - c.start)), total: c.view.total,
         bottom: c.h && c.box.length ? Math.min(c.h, c.box[Math.min(fit, c.box.length) - 1].bottom) : null };

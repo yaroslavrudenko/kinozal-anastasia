@@ -81,6 +81,7 @@ var Zap = (function () {
   // The landing channel's picture is up. Once zapping has settled (ZAP_IDLE_MS after the last press):
   // its guide, the "last channel" record and the offline list.
   function onFirstFrame() {
+    Logos.start();                       // the list is applied and a picture is up: logos may load now
     if (timer) return;                   // a burst is still choosing
     var c = Playback.current(), sel = Playback.selection();
     if (!c) return;
