@@ -453,6 +453,11 @@ printf 'CERT_PROFILE=kinozal\nDEVICE_PROFILE=%s\nTV=<tv-ip>:26101\n' ~/tizen-stu
 
 ---
 
+## License
+
+MIT © Yaroslav Rudenko. See [LICENSE](LICENSE). The same licence covers the sibling project [home-dashboard-tv](https://github.com/yaroslavrudenko/home-dashboard-tv).
+On the desktop preview the player loads [hls.js](https://github.com/video-dev/hls.js) from a CDN (Apache License 2.0); it is not bundled in this repository or in the TV package.
+
 <p align="center">
   <b>Made with love for Настя: a cinema at home, one that simply works.</b><br>
   If it brought your old TV back to life, <a href="https://github.com/yaroslavrudenko/nastin-kinozal">give it a ⭐</a>.
