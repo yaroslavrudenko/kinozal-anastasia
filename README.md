@@ -149,6 +149,11 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't: menus th
 
 ## ✨ What's new
 
+### 1.9.4 · update of 2026‑10‑30
+
+- **Plays on behind Home Dashboard.** When the companion app [Home Dashboard](https://github.com/yaroslavrudenko/home-dashboard-tv) is opened on top of the player, the channel's sound keeps playing under it. Any other app (YouTube and the rest) still stops the player, as before; back in front, the player carries on as usual. Checked by the owner on his UE50MU7000 on 2026‑10‑30: the channel played on in the background under the dashboard.
+- **The app icon is the eye alone**: the pen‑drawn eye with its gold iris, now without any lettering.
+
 ### 1.9.4
 
 - **A new app icon.** A pen-drawn eye with a gold iris on night blue, large enough to fill the tile, with no lettering on it. After installing, the TV shows it in the app list once it has been restarted (hold the power button).
@@ -215,6 +220,13 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't: menus th
 | 🔑 **Your key stays with OTT Club** | Used exactly as typed and only ever sent to OTT Club (pinned by tests). |
 | 🔒 **Private** | No account, no ads, no analytics code. Three TV permissions only: internet, the remote's keys and opening the author's link (`config.xml`). The diagnostic counters are kept on the TV and never sent anywhere (`js/diag.js`). |
 | 👤 **About** | **ℹ About** shows the version, build, TV model, Tizen and engine version, player, provider, channel count and buffer settings; **Author** opens the author's LinkedIn profile in the TV's browser. |
+| 🏠 **Works with Home Dashboard** | Open [Home Dashboard](#-works-with-home-dashboard) on top and the channel's sound keeps playing under it; any other app still stops the player. |
+
+## 🏠 Works with Home Dashboard
+
+[Home Dashboard](https://github.com/yaroslavrudenko/home-dashboard-tv) is the companion app for the same TV. When it comes to the front, it tells the player to keep the channel's sound playing behind it; when it goes away, the player is suspended again exactly as by any other app, and back in front it carries on as usual. Any other app (YouTube and the rest) still stops the player. Paused or with nothing playing, nothing starts.
+
+How it works: the dashboard sends `play-behind` and `stop-behind` over the Tizen message port `kinozal.control` ([`js/remote-control.js`](js/remote-control.js), handled in [`js/playback.js`](js/playback.js)). `config.xml` enables `background-support` with the background category `media`, so the hidden player keeps running and receives the message. Checked by the owner on his UE50MU7000 on 2026‑10‑30.
 
 ## 🆓 Start watching — free, in a minute
 
