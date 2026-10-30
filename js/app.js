@@ -60,6 +60,7 @@
       if (chosen) UI.toast(I18n.t(window.webapis ? 'h.first' : 'h.firstDesktop'), 7000);
     });
     optional('network', Playback.watchNetwork);
+    optional('control', function () { RemoteControl.listen({ 'play-behind': Playback.playBehind, 'stop-behind': Playback.stopBehind }); });
     optional('keys', Keys.register);   // right away: CH± and digits pressed in the first seconds must work
   }
 

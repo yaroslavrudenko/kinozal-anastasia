@@ -458,6 +458,7 @@ function createApp(opts) {
   // ----- the vm context -----
   const index = readIndex();
   const netListeners = [];
+  const ports = {};               // message port name -> listeners (tizen.messageport)
   const document = createDocument(index.bodyHtml);
   // Pictures, as the TV's engine (Chromium 47) loads them: every <img> / Image() src is a download unless this page already
   // loaded that URL (the memory cache: complete at once, no request); two elements asking for one URL share one download;
@@ -513,7 +514,11 @@ function createApp(opts) {
       application: { getCurrentApplication: () => ({ exit() { log('exit', {}); } }),
         launchAppControl(ctl, id, ok, err) { log('appcontrol', { operation: ctl.operation, uri: ctl.uri }); } },
       ApplicationControl: function (operation, uri) { this.operation = operation; this.uri = uri; },
-      systeminfo: { getCapability: () => '3.0', getPropertyValue(name, ok) { if (ok) ok({}); } }
+      systeminfo: { getCapability: () => '3.0', getPropertyValue(name, ok) { if (ok) ok({}); } },
+      // Local message ports by name; another app's message is delivered with app.message(port, data).
+      messageport: { requestLocalMessagePort(name) {
+        return { messagePortName: name, addMessagePortListener(fn) { (ports[name] || (ports[name] = [])).push(fn); return 1; } };
+      } }
     },
     Image: function () { return document.createElement('img'); },
     _winListeners: {},
@@ -597,6 +602,11 @@ function createApp(opts) {
     network(state) {
       const v = sandbox.webapis.network.NetworkState[state];
       runTask('network ' + state, function () { netListeners.forEach((fn) => fn(v)); });
+    },
+    // Another app sends data ([{ key, value }]) to this app's local message port `port`, in its own task.
+    message(port, data) {
+      log('message', { port });
+      runTask('message ' + port, function () { (ports[port] || []).forEach((fn) => fn(data, null)); });
     },
     rows(containerId) {
       const el = document.getElementById(containerId);

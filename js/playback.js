@@ -5,7 +5,7 @@ var Playback = (function () {
   var mode = 'idle';           // 'idle' | 'live' | 'archive' | 'paused'
   var ch = null;               // the playing channel's record; stays valid when a refresh drops the channel
   var anchorWallMs = 0, anchorMediaMs = null, frozenMs = 0, pausedAt = 0;   // anchorMediaMs null: until the first frame
-  var pipelineLost = false, hiddenMs = null, selection = 0, audioIdx = 0, hooks = {};
+  var pipelineLost = false, hiddenMs = null, behind = false, selection = 0, audioIdx = 0, hooks = {};   // behind: playing behind the dashboard
 
   // hooks: { onOpened(ch) } — a new stream started (banner, landing bookkeeping); onUnplayable() — a channel the TV
   // cannot play was chosen; onBanner().
@@ -90,19 +90,41 @@ var Playback = (function () {
 
   // The app went to the background (hidden = true) or came back.
   function onVisibility(hidden) {
-    if (hidden) {
-      if (mode === 'idle' || hiddenMs !== null) return;
-      hiddenMs = position();
-      selection++;                       // nothing pending (a zap, a probe) acts while in the background
-      if (mode === 'paused') pipelineLost = true;
-      Player.suspend();
-      return;
-    }
-    if (hiddenMs === null) return;       // Tizen reports "visible" right after launch too
+    if (hidden) { suspendHidden(); return; }
+    behind = false;                      // in front again: playing as usual
+    if (hiddenMs === null) return;       // Tizen reports "visible" right after launch too; or it played behind
     var at = hiddenMs;
     hiddenMs = null;
     if (mode === 'paused') return;       // stays paused; resuming reopens at the paused moment
-    if (mode === 'live') live(ch); else archive(ch, at);
+    reopen(at);
+  }
+  // Every app in front of the player stops it (the owner: «я не могу ютуб смотреть и плеер слушать»).
+  function suspendHidden() {
+    if (mode === 'idle' || hiddenMs !== null) return;
+    hiddenMs = position();
+    selection++;                         // nothing pending (a zap, a probe) acts while in the background
+    if (mode === 'paused') pipelineLost = true;
+    Player.suspend();
+  }
+  // The same stream again from the moment it was left: live, or the archive at that moment.
+  function reopen(at) { if (mode === 'live') live(ch); else archive(ch, at); }
+
+  // Our Home Dashboard is in front (RemoteControl 'play-behind', owner 2026-10-30: «чтобы дэшборд был поверх и не перебивал
+  // музыку»): a stream suspended by it plays on behind it. Paused or nothing playing: nothing. Returns whether it resumed.
+  function playBehind() {
+    if (hiddenMs === null || (mode !== 'live' && mode !== 'archive')) return false;
+    var at = hiddenMs;
+    hiddenMs = null;
+    behind = true;
+    reopen(at);
+    return true;
+  }
+  // The dashboard went away ('stop-behind'): suspended again exactly as by any other app; back in front, it resumes.
+  function stopBehind() {
+    if (!behind) return false;
+    behind = false;
+    suspendHidden();
+    return true;
   }
 
   // End of an archive recording: carry on from that moment (the next show), or live if it is now.
@@ -140,7 +162,7 @@ var Playback = (function () {
 
   return {
     setHooks: setHooks, live: live, archive: archive, position: position, retryTarget: retryTarget, togglePause: togglePause,
-    goLive: goLive, onVisibility: onVisibility, onFirstFrame: onFirstFrame, watchNetwork: watchNetwork, onEnded: onEnded, adopt: adopt, cycleAudio: cycleAudio,
+    goLive: goLive, onVisibility: onVisibility, playBehind: playBehind, stopBehind: stopBehind, onFirstFrame: onFirstFrame, watchNetwork: watchNetwork, onEnded: onEnded, adopt: adopt, cycleAudio: cycleAudio,
     current: function () { return ch; }, mode: function () { return mode; }, selection: function () { return selection; }
   };
 }());
