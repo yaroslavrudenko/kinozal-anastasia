@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/app-icon.png" width="160" alt="Настин кинозал icon: a pen-drawn eye with a gold iris above the name Настин кинозал in gold script">
+  <img src="docs/app-icon.png" width="160" alt="Настин кинозал icon: a pen-drawn eye with a gold iris on night blue">
 </p>
 
 <h1 align="center">Настин кинозал · Nastin Kinozal</h1>
@@ -151,7 +151,7 @@ That 2017 Samsung on your wall still has a great panel. Its apps don't: menus th
 
 ### 1.9.4
 
-- **A new app icon.** A pen-drawn eye with a gold iris above «Настин кинозал» in large gold script, on night blue. The lettering is twice as large as before, so the name reads from the sofa. After installing, the TV shows it in the app list once it has been restarted (hold the power button).
+- **A new app icon.** A pen-drawn eye with a gold iris on night blue, large enough to fill the tile, with no lettering on it. After installing, the TV shows it in the app list once it has been restarted (hold the power button).
 - **A larger icon in ⚙ Settings and ℹ About**: 180 px instead of 72 px.
 - **A large menu for low vision.** A new setting, **⚙ Settings → Menu view**, switches between **Large** («Крупный», the default) and **Detailed** («Подробный», the menu you know).
 - **Large menu, channels.** OK on the picture opens the channel list of the group you are watching, on the channel you are watching. Every channel has its own band with a big logo and a big name, what is on now under it (long titles wrap, nothing is cut off), **minutes left** with the programme's progress bar under them, ★ for favourites and ▶ for the channel playing. ◀ ▶ turn pages, as CH+ / CH− do; ◀ on the first page goes back to the groups, ▶ on the last page stops.
@@ -399,7 +399,7 @@ printf 'CERT_PROFILE=kinozal\nDEVICE_PROFILE=%s\nTV=<tv-ip>:26101\n' ~/tizen-stu
 ./build.sh                                                   # sign, push the device profile, install, start
 ```
 
-`build.local.env` stays on your machine and is never committed. The app icon (a gold eye over «Настин кинозал») appears among your TV's apps. A TV built with a key or a playlist in `build.local.env` skips **Choose what to watch** and starts on it. The choice also comes back whenever no provider is usable any more, so the player never tries to load an empty link.
+`build.local.env` stays on your machine and is never committed. The app icon (a pen-drawn eye with a gold iris) appears among your TV's apps. A TV built with a key or a playlist in `build.local.env` skips **Choose what to watch** and starts on it. The choice also comes back whenever no provider is usable any more, so the player never tries to load an empty link.
 
 **The TV's address can change** (the router hands it out): `./build.sh` and the TV test runs check the saved address and, if the TV is not there, scan the local network for it (`tools/find-tv.sh`; [docs/DEPLOY.md §3](docs/DEPLOY.md)).
 
